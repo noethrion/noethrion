@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- D2 Primary - Circular Mask Version -->
+<!-- Для платформ которые крошат avatar в круг (Twitter, Discord, etc.) -->
+<!-- Контент центрирован с safe zone -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <clipPath id="circleClip">
+      <circle cx="512" cy="512" r="512"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#circleClip)">
+    <rect width="1024" height="1024" fill="#0A0A0A"/>
+    <text x="512" y="640" font-family="Instrument Serif, Times New Roman, Georgia, serif" font-size="640" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+    <line x1="433" y1="710" x2="583" y2="710" stroke="#F5F1E8" stroke-width="4" stroke-linecap="round"/>
+  </g>
+</svg>

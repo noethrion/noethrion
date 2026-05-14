@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noethrion — Constitution v0.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --noir: #0A0A0A;
+    --noir-2: #111111;
+    --noir-3: #1A1A1A;
+    --noir-4: #242424;
+    --bone: #F5F1E8;
+    --bone-2: #C4BFB2;
+    --bone-3: #6B6862;
+    --bone-4: #3A3835;
+    --eta: #14F195;
+    --pulse: #B8FF3B;
+    --terra: #C8654A;
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+    --container: 880px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--noir);
+    color: var(--bone);
+    font-family: var(--font-body);
+    font-weight: 300;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+  }
+
+  .container {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  @media (max-width: 768px) {
+    .container { padding: 0 1.25rem; }
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    background: rgba(10, 10, 10, 0.85);
+    border-bottom: 1px solid var(--noir-4);
+    padding: 1rem 0;
+  }
+
+  .nav-inner {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .nav-inner { padding: 0 1.25rem; }
+  }
+
+  .nav-mark {
+    font-family: var(--font-display);
+    font-size: 24px;
+    line-height: 1;
+    color: var(--bone);
+  }
+
+  .nav-mark .eta-symbol {
+    color: var(--eta);
+    font-style: italic;
+    font-size: 30px;
+  }
+
+  .nav-doc {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--bone-3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 600px) {
+    .nav-doc { display: none; }
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .lang-toggle {
+    display: flex;
+    background: var(--noir-2);
+    border: 1px solid var(--noir-4);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .lang-btn {
+    background: transparent;
+    border: none;
+    color: var(--bone-3);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    padding: 7px 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .lang-btn.active { background: var(--eta); color: var(--noir); }
+  .lang-btn:not(.active):hover { color: var(--bone); }
+
+  /* LANG SWITCHING */
+  [data-lang-en], [data-lang-ru] { display: none; }
+  html[lang="en"] [data-lang-en] { display: inline; }
+  html[lang="ru"] [data-lang-ru] { display: inline; }
+  html[lang="en"] .block[data-lang-en] { display: block; }
+  html[lang="ru"] .block[data-lang-ru] { display: block; }
+
+  /* COVER */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 7rem 0 4rem;
+    border-bottom: 1px solid var(--noir-4);
+  }
+
+  .cover-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--eta);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .cover-eyebrow::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: var(--eta);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--eta);
+  }
+
+  .cover-eta {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(140px, 22vw, 280px);
+    line-height: 0.9;
+    color: var(--eta);
+    margin-bottom: 2rem;
+  }
+
+  .cover-title {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 7vw, 96px);
+    line-height: 1.0;
+    color: var(--bone);
+    letter-spacing: -0.025em;
+    margin-bottom: 2rem;
+    font-weight: 400;
+  }
+
+  .cover-title em { color: var(--eta); font-style: italic; }
+
+  .cover-sub {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 2.5vw, 32px);
+    line-height: 1.4;
+    color: var(--bone-2);
+    max-width: 700px;
+    margin-bottom: 3rem;
+    font-style: italic;
+  }
+
+  .cover-meta {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--noir-4);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 700px) {
+    .cover-meta { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .cover-meta-cell {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--bone-3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .cover-meta-cell strong {
+    color: var(--bone);
+    font-weight: 400;
+    display: block;
+    margin-top: 4px;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+  }
+
+  /* TOC */
+  .toc {
+    padding: 4rem 0;
+    border-bottom: 1px solid var(--noir-4);
+  }
+
+  .toc-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--bone-3);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .toc-label::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--eta);
+    border-radius: 50%;
+  }
+
+  .toc ul {
+    list-style: none;
+  }
+
+  .toc li {
+    border-bottom: 1px solid var(--noir-4);
+  }
+
+  .toc a {
+    display: grid;
+    grid-template-columns: 80px 1fr 60px;
+    gap: 1.5rem;
+    padding: 1.25rem 0;
+    color: var(--bone-2);
+    text-decoration: none;
+    transition: color 0.2s;
+    align-items: baseline;
+  }
+
+  .toc a:hover { color: var(--bone); }
+  .toc a:hover .toc-num { color: var(--eta); }
+
+  .toc-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    color: var(--bone-3);
+    transition: color 0.2s;
+  }
+
+  .toc-title {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 2vw, 26px);
+    line-height: 1.2;
+    color: inherit;
+    font-weight: 400;
+  }
+
+  .toc-pages {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--bone-4);
+    letter-spacing: 0.1em;
+    text-align: right;
+  }
+
+  /* ARTICLE */
+  article {
+    padding: 5rem 0;
+    border-bottom: 1px solid var(--noir-4);
+  }
+
+  .article-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--eta);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+
+  .article-title {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 5vw, 64px);
+    line-height: 1.05;
+    color: var(--bone);
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    font-weight: 400;
+  }
+
+  .article-title em { color: var(--eta); font-style: italic; }
+
+  .article-intro {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 2.2vw, 28px);
+    line-height: 1.4;
+    color: var(--bone-2);
+    margin-bottom: 3rem;
+    max-width: 720px;
+    font-style: italic;
+  }
+
+  .clause {
+    margin-bottom: 2.5rem;
+    padding-left: 0;
+  }
+
+  .clause-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--eta);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+  }
+
+  .clause-title {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 2.4vw, 30px);
+    line-height: 1.2;
+    color: var(--bone);
+    margin-bottom: 1rem;
+    font-weight: 400;
+  }
+
+  .clause-title em { color: var(--eta); font-style: italic; }
+
+  .clause-body {
+    font-family: var(--font-body);
+    font-size: clamp(16px, 1.4vw, 18px);
+    line-height: 1.7;
+    color: var(--bone-2);
+    max-width: 720px;
+  }
+
+  @media (max-width: 768px) {
+    .clause-body { font-size: 15px; }
+  }
+
+  .clause-body p {
+    margin-bottom: 1rem;
+  }
+
+  .clause-body strong {
+    color: var(--bone);
+    font-weight: 400;
+  }
+
+  .clause-body em {
+    color: var(--eta);
+    font-style: italic;
+  }
+
+  .clause-body ul, .clause-body ol {
+    margin: 1rem 0 1.5rem 1.5rem;
+  }
+
+  .clause-body li {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Quote / immutable block */
+  .immutable {
+    margin: 2rem 0;
+    padding: 1.5rem 2rem;
+    background: var(--noir-2);
+    border-left: 3px solid var(--eta);
+    font-family: var(--font-display);
+    font-size: clamp(20px, 2vw, 26px);
+    line-height: 1.4;
+    color: var(--bone);
+    font-style: italic;
+  }
+
+  .immutable .label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--eta);
+    margin-bottom: 0.5rem;
+    font-style: normal;
+    text-transform: uppercase;
+  }
+
+  /* Definitions box */
+  .definitions {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: var(--noir-2);
+    border: 1px solid var(--noir-4);
+    border-radius: 4px;
+  }
+
+  .definitions dt {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--eta);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 1rem;
+  }
+
+  .definitions dt:first-child { margin-top: 0; }
+
+  .definitions dd {
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--bone-2);
+    line-height: 1.6;
+    margin-top: 0.25rem;
+    margin-left: 0;
+  }
+
+  /* Signature block */
+  .signature {
+    text-align: center;
+    padding: 6rem 0;
+  }
+
+  .signature-eta {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(120px, 18vw, 220px);
+    color: var(--eta);
+    line-height: 0.9;
+    margin-bottom: 2rem;
+    display: block;
+  }
+
+  .signature-text {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 3.5vw, 44px);
+    line-height: 1.3;
+    color: var(--bone);
+    font-style: italic;
+    max-width: 700px;
+    margin: 0 auto 3rem;
+  }
+
+  .signature-text em {
+    color: var(--eta);
+  }
+
+  .signature-meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--bone-3);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    line-height: 2;
+  }
+
+  .signature-meta strong {
+    color: var(--bone);
+    font-weight: 400;
+  }
+
+  /* Footer */
+  footer {
+    padding: 3rem 0;
+    border-top: 1px solid var(--noir-4);
+  }
+
+  .footer-credits {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--bone-4);
+    letter-spacing: 0.1em;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" style="text-decoration: none;" class="nav-mark">
+      <span class="eta-symbol">η</span> noethrion
+    </a>
+    <div class="nav-right">
+      <div class="nav-doc">
+        <span data-lang-en>Constitution v0.1</span>
+        <span data-lang-ru>Конституция v0.1</span>
+      </div>
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ru">RU</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- COVER -->
+<section class="cover">
+  <div class="container">
+    <div class="cover-eyebrow">
+      <span data-lang-en>Foundational Document · Working Draft</span>
+      <span data-lang-ru>Учредительный документ · Рабочий черновик</span>
+    </div>
+
+    <div class="cover-eta">η</div>
+
+    <h1 class="cover-title">
+      <span data-lang-en>The <em>Constitution</em><br>of Noethrion</span>
+      <span data-lang-ru>Конституция<br><em>Noethrion</em></span>
+    </h1>
+
+    <p class="cover-sub">
+      <span data-lang-en>An open standard for hardware-attested energy production. Administered, not owned. Built to outlive its founders.</span>
+      <span data-lang-ru>Открытый стандарт для аппаратно-подтверждённой генерации энергии. Администрируемый, не принадлежащий. Создан, чтобы пережить своих основателей.</span>
+    </p>
+
+    <div class="cover-meta">
+      <div class="cover-meta-cell">
+        <span data-lang-en>Document</span>
+        <span data-lang-ru>Документ</span>
+        <strong>Constitution v0.1</strong>
+      </div>
+      <div class="cover-meta-cell">
+        <span data-lang-en>Status</span>
+        <span data-lang-ru>Статус</span>
+        <strong>
+          <span data-lang-en>Working Draft</span>
+          <span data-lang-ru>Рабочий черновик</span>
+        </strong>
+      </div>
+      <div class="cover-meta-cell">
+        <span data-lang-en>Date</span>
+        <span data-lang-ru>Дата</span>
+        <strong>05.05.2026</strong>
+      </div>
+      <div class="cover-meta-cell">
+        <span data-lang-en>Articles</span>
+        <span data-lang-ru>Статей</span>
+        <strong>VI</strong>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PREAMBLE -->
+<article>
+  <div class="container">
+    <div class="article-num">
+      <span data-lang-en>Preamble</span>
+      <span data-lang-ru>Преамбула</span>
+    </div>
+    <h2 class="article-title">
+      <span data-lang-en>Why this <em>exists</em>.</span>
+      <span data-lang-ru>Почему это <em>существует</em>.</span>
+    </h2>
+
+    <div class="clause-body">
+      <p data-lang-en>
+        We — the builders, contributors, validators, and supporters of Noethrion — establish this Constitution as the foundational document of an open protocol for hardware-attested energy production.
+      </p>
+      <p data-lang-ru>
+        Мы — строители, контрибьюторы, валидаторы и сторонники Noethrion — учреждаем эту Конституцию как учредительный документ открытого протокола для аппаратно-подтверждённой генерации энергии.
+      </p>
+
+      <p data-lang-en>
+        We do this not to create a company, not to launch a token, not to build an empire. We do this to establish a <strong>standard</strong> — a way of measuring, signing, and recording one kilowatt-hour of energy production that is open to all, owned by none, and verifiable by anyone with thirty seconds and an internet connection.
+      </p>
+      <p data-lang-ru>
+        Мы делаем это не для того, чтобы создать компанию, запустить токен или построить империю. Мы делаем это, чтобы установить <strong>стандарт</strong> — способ измерения, подписи и записи одного киловатт-часа произведённой энергии, открытый для всех, не принадлежащий никому и проверяемый любым человеком с тридцатью секундами времени и интернет-соединением.
+      </p>
+
+      <div class="immutable">
+        <span class="label">
+          <span data-lang-en>Statement of Purpose</span>
+          <span data-lang-ru>Заявление о цели</span>
+        </span>
+        <span data-lang-en>One kilowatt-hour. One signature. Settled at the source. Recorded forever.</span>
+        <span data-lang-ru>Один киловатт-час. Одна подпись. Подтверждено у источника. Записано навсегда.</span>
+      </div>
+
+      <p data-lang-en>
+        We acknowledge that <strong>energy is the substrate of civilization</strong>. Every act of production, every act of transport, every act of computation rests on the conversion of one form of energy into another. Yet today, the accounting of this conversion is broken: paper certificates, spreadsheet registries, self-reported data, and the comfortable assumption that those who measure energy are honest about what they measure.
+      </p>
+      <p data-lang-ru>
+        Мы признаём, что <strong>энергия — это субстрат цивилизации</strong>. Каждый акт производства, каждый акт транспортировки, каждый акт вычисления опирается на превращение одной формы энергии в другую. Но сегодня учёт этих превращений сломан: бумажные сертификаты, реестры в таблицах, самоотчётные данные и удобное предположение о том, что те, кто измеряет энергию, честны в своих измерениях.
+      </p>
+
+      <p data-lang-en>
+        We propose a different foundation. Energy production should sign itself, at the source, in hardware that cannot lie. The signature should be public, mathematically verifiable, and resistant to forgery by any party — including ourselves.
+      </p>
+      <p data-lang-ru>
+        Мы предлагаем другой фундамент. Производство энергии должно подписывать само себя, у источника, в железе, которое не может лгать. Подпись должна быть публичной, математически проверяемой и устойчивой к подделке любой стороной — включая нас самих.
+      </p>
+
+      <p data-lang-en>
+        This Constitution is the operating manual for that foundation. It is not a marketing document. It is not a pitch. It is the smallest possible set of rules that allow Noethrion to function as a public utility while resisting capture by any single party — corporate, governmental, or individual.
+      </p>
+      <p data-lang-ru>
+        Эта Конституция — операционное руководство для такого фундамента. Это не маркетинговый документ. Это не питч. Это минимально возможный набор правил, который позволяет Noethrion функционировать как общественная утилита, сопротивляясь захвату любой отдельной стороной — корпоративной, государственной или индивидуальной.
+      </p>
+
+      <p data-lang-en>
+        We adopt this Constitution knowing that it will be wrong in places, incomplete in others, and superseded eventually by amendment. We adopt it anyway, because <strong>the alternative — building without principles — is the failure mode of every project that came before us</strong>.
+      </p>
+      <p data-lang-ru>
+        Мы принимаем эту Конституцию, зная, что она будет неправильной в некоторых местах, неполной в других и в конце концов заменена поправками. Мы принимаем её всё равно, потому что <strong>альтернатива — строительство без принципов — это режим отказа каждого проекта до нас</strong>.
+      </p>
+    </div>
+  </div>
+</article>
+
+<!-- TOC -->
+<section class="toc">
+  <div class="container">
+    <div class="toc-label">
+      <span data-lang-en>Table of Contents</span>
+      <span data-lang-ru>Содержание</span>
+    </div>
+    <ul>
+      <li>
+        <a href="#article-1">
+          <span class="toc-num">I</span>
+          <span class="toc-title">
+            <span data-lang-en>Foundational Principles</span>
+            <span data-lang-ru>Основополагающие принципы</span>
+          </span>
+          <span class="toc-pages">
+            <span data-lang-en>Immutable</span>
+            <span data-lang-ru>Неизменно</span>
+          </span>
+        </a>
+      </li>
+      <li>
+        <a href="#article-2">
+          <span class="toc-num">II</span>
+          <span class="toc-title">
+            <span data-lang-en>The Foundation's Role</span>
+            <span data-lang-ru>Роль Фонда</span>
+          </span>
+          <span class="toc-pages">
+            <span data-lang-en>Mutable</span>
+            <span data-lang-ru>Изменяемо</span>
+          </span>
+        </a>
+      </li>
+      <li>
+        <a href="#article-3">
+          <span class="toc-num">III</span>
+          <span class="toc-title">
+            <span data-lang-en>Governance Structure</span>
+            <span data-lang-ru>Структура управления</span>
+          </span>
+          <span class="toc-pages">
+            <span data-lang-en>Mutable</span>
+            <span data-lang-ru>Изменяемо</span>
+          </span>
+        </a>
+      </li>
+      <li>
+        <a href="#article-4">
+          <span class="toc-num">IV</span>
+          <span class="toc-title">
+            <span data-lang-en>Token Economics</span>
+            <span data-lang-ru>Экономика токена</span>
+          </span>
+          <span class="toc-pages">
+            <span data-lang-en>Algorithmic</span>
+            <span data-lang-ru>Алгоритмическая</span>
+          </span>
+        </a>
+      </li>
+      <li>
+        <a href="#article-5">
+          <span class="toc-num">V</span>
+          <span class="toc-title">
+            <span data-lang-en>Hardware & Protocol Standards</span>
+            <span data-lang-ru>Стандарты железа и протокола</span>
+          </span>
+          <span class="toc-pages">
+            <span data-lang-en>Versioned</span>
+            <span data-lang-ru>Версионируемо</span>
+          </span>
+        </a>
+      </li>
+      <li>
+        <a href="#article-6">
+          <span class="toc-num">VI</span>
+          <span class="toc-title">
+            <span data-lang-en>Amendment & Dissolution</span>
+            <span data-lang-ru>Поправки и роспуск</span>
+          </span>
+          <span class="toc-pages">
+            <span data-lang-en>Procedural</span>
+            <span data-lang-ru>Процедурно</span>
+          </span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ARTICLE I -->
+<article id="article-1">
+  <div class="container">
+    <div class="article-num">
+      <span data-lang-en>Article I · Immutable</span>
+      <span data-lang-ru>Статья I · Неизменно</span>
+    </div>
+    <h2 class="article-title">
+      <span data-lang-en>Foundational <em>Principles</em></span>
+      <span data-lang-ru>Основополагающие <em>принципы</em></span>
+    </h2>
+    <p class="article-intro">
+      <span data-lang-en>These principles cannot be amended. They are the bedrock. If any of them must change, this Constitution dissolves and a successor begins.</span>
+      <span data-lang-ru>Эти принципы не могут быть изменены. Они — фундамент. Если любой из них должен измениться — эта Конституция распускается и начинается её преемник.</span>
+    </p>
+
+    <div class="clause">
+      <div class="clause-num">§ 1.1</div>
+      <h3 class="clause-title">
+        <span data-lang-en>The unit of account</span>
+        <span data-lang-ru>Единица учёта</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          One <strong>NOET</strong> token shall represent exactly one kilowatt-hour (1 kWh) of electrical energy production, attested at the moment of generation by hardware containing a tamper-resistant secure element with a private key that has never been exposed outside the chip.
+        </p>
+        <p data-lang-ru>
+          Один токен <strong>NOET</strong> должен представлять ровно один киловатт-час (1 кВт·ч) производства электрической энергии, подтверждённый в момент генерации железом, содержащим защищённый от вскрытия secure element с приватным ключом, который никогда не был раскрыт за пределами чипа.
+        </p>
+        <p data-lang-en>
+          This 1:1 relationship between NOET and kWh is the single immutable economic invariant of the protocol. It cannot be inflated, deflated, manipulated, suspended, or "temporarily adjusted" by any party — including the Foundation.
+        </p>
+        <p data-lang-ru>
+          Это соотношение 1:1 между NOET и кВт·ч — единственный неизменный экономический инвариант протокола. Его нельзя инфлировать, дефлировать, манипулировать им, приостановить или «временно скорректировать» любой стороной — включая Фонд.
+        </p>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 1.2</div>
+      <h3 class="clause-title">
+        <span data-lang-en>No central control</span>
+        <span data-lang-ru>Нет центрального контроля</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          No party — no individual, no corporation, no government, no Foundation — shall hold unilateral authority to mint, burn, freeze, blacklist, or redirect NOET tokens. The protocol issues tokens algorithmically against verified energy attestations. Any attempt to override this is, by definition, not Noethrion.
+        </p>
+        <p data-lang-ru>
+          Никакая сторона — ни индивидуум, ни корпорация, ни правительство, ни Фонд — не должна иметь односторонних полномочий выпускать, сжигать, замораживать, заносить в чёрный список или перенаправлять токены NOET. Протокол выпускает токены алгоритмически против верифицированных аттестаций энергии. Любая попытка обойти это, по определению, не является Noethrion.
+        </p>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 1.3</div>
+      <h3 class="clause-title">
+        <span data-lang-en>Open by default</span>
+        <span data-lang-ru>Открытость по умолчанию</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          The protocol specification, the reference implementation, the hardware attestation list, the on-chain code, and the verification tooling shall remain open-source under <strong>MIT or Apache 2.0</strong> licenses, in perpetuity. No proprietary extensions, no closed-source forks claiming compatibility, no patent claims by the Foundation against any user or implementer.
+        </p>
+        <p data-lang-ru>
+          Спецификация протокола, эталонная имплементация, список аппаратных аттестаций, on-chain код и инструменты верификации остаются open-source под лицензиями <strong>MIT или Apache 2.0</strong>, бессрочно. Никаких проприетарных расширений, никаких закрытых форков, претендующих на совместимость, никаких патентных претензий Фонда против любого пользователя или реализатора.
+        </p>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 1.4</div>
+      <h3 class="clause-title">
+        <span data-lang-en>Verify, don't trust</span>
+        <span data-lang-ru>Проверяй, не доверяй</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          Every kilowatt-hour minted as NOET shall be accompanied by a publicly verifiable cryptographic signature from a registered hardware attestation device. Any reading not accompanied by such a signature is not Noethrion energy. Any party — auditor, regulator, journalist, or curious individual — must be able to verify any NOET in existence with a single command and a public key.
+        </p>
+        <p data-lang-ru>
+          Каждый киловатт-час, выпущенный как NOET, должен сопровождаться публично проверяемой криптографической подписью от зарегистрированного устройства аппаратной аттестации. Любое показание, не сопровождаемое такой подписью, не является энергией Noethrion. Любая сторона — аудитор, регулятор, журналист или любопытный человек — должна иметь возможность проверить любой существующий NOET одной командой и публичным ключом.
+        </p>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 1.5</div>
+      <h3 class="clause-title">
+        <span data-lang-en>The Foundation does not own the protocol</span>
+        <span data-lang-ru>Фонд не владеет протоколом</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          The Noethrion Foundation administers the standard; it does not own it. The Foundation may employ developers, fund grants, host conferences, and represent the protocol in standards bodies — but it has no privileged transactional rights. If the Foundation ceases to exist, the protocol continues. If the protocol ceases to function, the Foundation has no purpose.
+        </p>
+        <p data-lang-ru>
+          Фонд Noethrion администрирует стандарт; он им не владеет. Фонд может нанимать разработчиков, выдавать гранты, проводить конференции и представлять протокол в органах стандартизации — но не имеет привилегированных транзакционных прав. Если Фонд прекращает существование — протокол продолжает работать. Если протокол прекращает функционировать — у Фонда нет цели.
+        </p>
+      </div>
+    </div>
+  </div>
+</article>
+
+<!-- ARTICLE II -->
+<article id="article-2">
+  <div class="container">
+    <div class="article-num">
+      <span data-lang-en>Article II · Mutable by Amendment</span>
+      <span data-lang-ru>Статья II · Изменяемо поправкой</span>
+    </div>
+    <h2 class="article-title">
+      <span data-lang-en>The Foundation's <em>Role</em></span>
+      <span data-lang-ru>Роль <em>Фонда</em></span>
+    </h2>
+    <p class="article-intro">
+      <span data-lang-en>The Foundation exists to do work that the protocol alone cannot do — and to refrain from work that no Foundation should do.</span>
+      <span data-lang-ru>Фонд существует, чтобы делать работу, которую протокол сам не может делать — и воздерживаться от работы, которую ни один Фонд не должен делать.</span>
+    </p>
+
+    <div class="clause">
+      <div class="clause-num">§ 2.1</div>
+      <h3 class="clause-title">
+        <span data-lang-en>What the Foundation does</span>
+        <span data-lang-ru>Что Фонд делает</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>The Foundation shall:</p>
+        <p data-lang-ru>Фонд должен:</p>
+        <ul>
+          <li data-lang-en><strong>Maintain the reference implementation</strong> of the protocol and publish updates publicly with full audit trail.</li>
+          <li data-lang-ru><strong>Поддерживать эталонную реализацию</strong> протокола и публиковать обновления публично с полным журналом изменений.</li>
+
+          <li data-lang-en><strong>Accredit hardware attestation devices</strong> through a transparent technical review process. Multiple competing accreditation bodies are encouraged.</li>
+          <li data-lang-ru><strong>Аккредитовать устройства аппаратной аттестации</strong> через прозрачный процесс технического review. Поощряется наличие нескольких конкурирующих аккредитационных органов.</li>
+
+          <li data-lang-en><strong>Award grants</strong> to ecosystem builders — implementers, integrators, researchers, hardware vendors — without preference for the Foundation's own staff or affiliates.</li>
+          <li data-lang-ru><strong>Выдавать гранты</strong> строителям экосистемы — реализаторам, интеграторам, исследователям, производителям железа — без предпочтения собственному персоналу или аффилированным лицам.</li>
+
+          <li data-lang-en><strong>Represent the protocol</strong> in standards bodies (IEEE, IEC, IETF, ISO) and regulatory consultations.</li>
+          <li data-lang-ru><strong>Представлять протокол</strong> в органах стандартизации (IEEE, IEC, IETF, ISO) и регуляторных консультациях.</li>
+
+          <li data-lang-en><strong>Host an annual public meeting</strong> open to all token holders, contributors, and observers, with full proceedings published.</li>
+          <li data-lang-ru><strong>Проводить ежегодное публичное собрание</strong>, открытое для всех держателей токенов, контрибьюторов и наблюдателей, с полной публикацией материалов.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 2.2</div>
+      <h3 class="clause-title">
+        <span data-lang-en>What the Foundation does <em>not</em> do</span>
+        <span data-lang-ru>Чего Фонд <em>не</em> делает</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>The Foundation shall <strong>not</strong>:</p>
+        <p data-lang-ru>Фонд <strong>не должен</strong>:</p>
+        <ul>
+          <li data-lang-en><strong>Sell to commercial customers directly.</strong> All commercial relationships are conducted through accredited third parties (consultants, integrators, certification bodies). The Foundation remains a neutral standards body, not a vendor.</li>
+          <li data-lang-ru><strong>Продавать коммерческим клиентам напрямую.</strong> Все коммерческие отношения ведутся через аккредитованных третьих лиц (консультантов, интеграторов, сертификационные органы). Фонд остаётся нейтральным органом стандартизации, не вендором.</li>
+
+          <li data-lang-en><strong>Hold a market-making position</strong> in NOET tokens. Treasury holdings shall not be deployed as trading capital.</li>
+          <li data-lang-ru><strong>Удерживать market-making позиции</strong> в токенах NOET. Казначейские резервы не должны использоваться как торговый капитал.</li>
+
+          <li data-lang-en><strong>Patent any innovation</strong> derived from protocol development. Patents are exclusion; exclusion is empire; empire is the failure mode.</li>
+          <li data-lang-ru><strong>Патентовать инновации</strong>, полученные в ходе разработки протокола. Патенты — это исключение; исключение — это империя; империя — это режим отказа.</li>
+
+          <li data-lang-en><strong>Lobby governments</strong> on behalf of any specific outcome beyond the technical viability of the protocol. The ecosystem lobbies; the Foundation does not.</li>
+          <li data-lang-ru><strong>Лоббировать правительства</strong> от имени любого конкретного исхода кроме технической жизнеспособности протокола. Экосистема лоббирует; Фонд — нет.</li>
+
+          <li data-lang-en><strong>Compete with ecosystem participants.</strong> If a builder is succeeding at a task, the Foundation does not start a parallel project.</li>
+          <li data-lang-ru><strong>Конкурировать с участниками экосистемы.</strong> Если строитель успешно выполняет задачу — Фонд не запускает параллельный проект.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 2.3</div>
+      <h3 class="clause-title">
+        <span data-lang-en>Self-dissolution clause</span>
+        <span data-lang-ru>Положение о саморасспуске</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          The Foundation shall dissolve itself when, for three consecutive years, the following conditions are simultaneously met: the protocol operates with at least three independent client implementations; at least 100,000 hardware attestation devices are active; no single jurisdiction or corporation controls more than 20% of accredited attestations; and the annual Council meeting confirms by ¾ majority that the Foundation's continued operation is no longer necessary for the protocol's health.
+        </p>
+        <p data-lang-ru>
+          Фонд распускает себя, когда в течение трёх лет подряд одновременно выполняются следующие условия: протокол работает минимум с тремя независимыми реализациями клиента; активно минимум 100,000 устройств аппаратной аттестации; ни одна юрисдикция или корпорация не контролирует более 20% аккредитованных аттестаций; и ежегодное собрание Совета подтверждает большинством в ¾, что продолжение работы Фонда более не необходимо для здоровья протокола.
+        </p>
+        <p data-lang-en>
+          Upon dissolution, all Foundation assets shall be distributed to active grant programs and ecosystem participants according to a public formula. <strong>The protocol survives the Foundation by design.</strong>
+        </p>
+        <p data-lang-ru>
+          При роспуске все активы Фонда распределяются между активными грантовыми программами и участниками экосистемы по публичной формуле. <strong>Протокол переживает Фонд по дизайну.</strong>
+        </p>
+      </div>
+    </div>
+  </div>
+</article>
+
+<!-- ARTICLE III -->
+<article id="article-3">
+  <div class="container">
+    <div class="article-num">
+      <span data-lang-en>Article III · Mutable by Amendment</span>
+      <span data-lang-ru>Статья III · Изменяемо поправкой</span>
+    </div>
+    <h2 class="article-title">
+      <span data-lang-en>Governance <em>Structure</em></span>
+      <span data-lang-ru>Структура <em>управления</em></span>
+    </h2>
+    <p class="article-intro">
+      <span data-lang-en>Power is distributed across three bodies, each with defined authority and defined limits. No body can unilaterally amend the Constitution.</span>
+      <span data-lang-ru>Власть распределена между тремя органами, каждый с определёнными полномочиями и пределами. Ни один орган не может в одностороннем порядке изменять Конституцию.</span>
+    </p>
+
+    <div class="clause">
+      <div class="clause-num">§ 3.1</div>
+      <h3 class="clause-title">
+        <span data-lang-en>The Foundation Council</span>
+        <span data-lang-ru>Совет Фонда</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          The Council consists of <strong>seven members</strong>, each serving a two-year term renewable once (maximum two consecutive terms). The Council is composed as follows:
+        </p>
+        <p data-lang-ru>
+          Совет состоит из <strong>семи членов</strong>, каждый со сроком в два года, продлеваемым один раз (максимум два срока подряд). Состав Совета:
+        </p>
+
+        <div class="definitions">
+          <dt>Seat 1 · Founder seat</dt>
+          <dd data-lang-en>Held for life by the founder, but with limited operational authority after Year 5. Founder seat carries no veto.</dd>
+          <dd data-lang-ru>Удерживается основателем пожизненно, но с ограниченной операционной властью после 5-го года. Место основателя не несёт права вето.</dd>
+
+          <dt>Seat 2 · Industry representative</dt>
+          <dd data-lang-en>Elected by accredited hardware vendors and integrators.</dd>
+          <dd data-lang-ru>Избирается аккредитованными производителями железа и интеграторами.</dd>
+
+          <dt>Seat 3 · Energy producer representative</dt>
+          <dd data-lang-en>Elected by registered renewable producers using the protocol.</dd>
+          <dd data-lang-ru>Избирается зарегистрированными производителями возобновляемой энергии, использующими протокол.</dd>
+
+          <dt>Seat 4 · Government / regulatory representative</dt>
+          <dd data-lang-en>Rotating two-year term among consenting jurisdictions (EU, US, Asia-Pacific). Advisory authority only.</dd>
+          <dd data-lang-ru>Ротационный двухлетний срок среди согласившихся юрисдикций (ЕС, США, Азиатско-Тихоокеанский регион). Только консультативные полномочия.</dd>
+
+          <dt>Seat 5 · Academic representative</dt>
+          <dd data-lang-en>Elected by accredited research institutions (universities, national labs).</dd>
+          <dd data-lang-ru>Избирается аккредитованными научными институтами (университеты, национальные лаборатории).</dd>
+
+          <dt>Seat 6 · Civil society representative</dt>
+          <dd data-lang-en>Elected by registered climate, energy-transparency, and consumer-rights NGOs.</dd>
+          <dd data-lang-ru>Избирается зарегистрированными климатическими, энерго-прозрачностными и потребительскими НКО.</dd>
+
+          <dt>Seat 7 · Independent technical representative</dt>
+          <dd data-lang-en>Elected by token holders. Must be a recognized cryptographer or systems engineer with no conflicts of interest.</dd>
+          <dd data-lang-ru>Избирается держателями токенов. Должен быть признанным криптографом или системным инженером без конфликтов интересов.</dd>
+        </div>
+
+        <p data-lang-en>
+          The Council operates by simple majority (4 of 7) for routine decisions and by supermajority (6 of 7) for amendments to this Constitution other than Article I.
+        </p>
+        <p data-lang-ru>
+          Совет работает простым большинством (4 из 7) для рутинных решений и квалифицированным большинством (6 из 7) для поправок к этой Конституции, кроме Статьи I.
+        </p>
+
+        <p data-lang-en>
+          <strong>No single jurisdiction may hold more than two seats simultaneously.</strong> No single corporation may have employees, contractors, or beneficial owners holding more than one seat. Violations of these limits void Council actions until corrected.
+        </p>
+        <p data-lang-ru>
+          <strong>Ни одна юрисдикция не может одновременно удерживать более двух мест.</strong> Ни одна корпорация не может иметь сотрудников, подрядчиков или бенефициарных владельцев, удерживающих более одного места. Нарушения этих лимитов аннулируют решения Совета до исправления.
+        </p>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 3.2</div>
+      <h3 class="clause-title">
+        <span data-lang-en>The Token House</span>
+        <span data-lang-ru>Палата токена</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          All NOET token holders may participate in the Token House, with voting weight proportional to NOET held but capped at 1% of total supply per voter (anti-whale provision). The Token House votes on:
+        </p>
+        <p data-lang-ru>
+          Все держатели токена NOET могут участвовать в Палате токена, с весом голоса пропорциональным удерживаемому NOET, но с ограничением 1% от общего предложения на одного голосующего (анти-китовое положение). Палата токена голосует по:
+        </p>
+        <ul>
+          <li data-lang-en>Constitutional amendments (other than Article I), requiring ¾ supermajority of votes cast.</li>
+          <li data-lang-ru>Конституционные поправки (кроме Статьи I), требуют квалифицированного большинства ¾ от поданных голосов.</li>
+
+          <li data-lang-en>Election of the Independent Technical Representative (Seat 7).</li>
+          <li data-lang-ru>Выборы Независимого технического представителя (место 7).</li>
+
+          <li data-lang-en>Approval of major treasury allocations exceeding 5% of treasury value in a single grant cycle.</li>
+          <li data-lang-ru>Одобрение крупных казначейских ассигнований, превышающих 5% стоимости казны за один грантовый цикл.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 3.3</div>
+      <h3 class="clause-title">
+        <span data-lang-en>The Builders House</span>
+        <span data-lang-ru>Палата строителей</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          Active contributors — defined as those who have contributed verifiable code, documentation, hardware integrations, or audited research to the protocol — earn reputation-weighted voting rights in the Builders House. Reputation is non-transferable, non-purchasable, and decays without continued contribution. The Builders House votes on:
+        </p>
+        <p data-lang-ru>
+          Активные контрибьюторы — определяются как те, кто внёс проверяемый код, документацию, аппаратные интеграции или прошедшие аудит исследования в протокол — получают репутационно-взвешенные права голоса в Палате строителей. Репутация непередаваема, непокупаема и убывает без продолжения вклада. Палата строителей голосует по:
+        </p>
+        <ul>
+          <li data-lang-en>Technical specification updates (Article V amendments), requiring ⅔ majority.</li>
+          <li data-lang-ru>Обновлениям технической спецификации (поправки к Статье V), требуют большинства ⅔.</li>
+
+          <li data-lang-en>Hardware accreditation appeals.</li>
+          <li data-lang-ru>Апелляции по аккредитации железа.</li>
+
+          <li data-lang-en>Reference implementation roadmap priorities.</li>
+          <li data-lang-ru>Приоритеты дорожной карты эталонной реализации.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 3.4</div>
+      <h3 class="clause-title">
+        <span data-lang-en>The founder transition</span>
+        <span data-lang-ru>Передача от основателя</span>
+      </h3>
+      <div class="clause-body">
+        <div class="immutable">
+          <span class="label">
+            <span data-lang-en>Founder Exit Provision</span>
+            <span data-lang-ru>Положение о выходе основателя</span>
+          </span>
+          <span data-lang-en>By the end of Year 5, the founder shall transition from operational leadership to advisory status. By Year 7, the founder retains only their Council seat (without veto) and emeritus role. By Year 10, the founder may choose full disengagement at any time without protocol disruption.</span>
+          <span data-lang-ru>К концу 5-го года основатель должен перейти от операционного руководства к консультативному статусу. К 7-му году основатель сохраняет только своё место в Совете (без права вето) и роль emeritus. К 10-му году основатель может выбрать полное прекращение участия в любое время без нарушения работы протокола.</span>
+        </div>
+        <p data-lang-en>
+          This is not a courtesy. This is a structural requirement. <strong>Gravitational systems work because there is no center to attack.</strong> A protocol with a visible, irreplaceable founder is a protocol with a single point of failure. We refuse to be that.
+        </p>
+        <p data-lang-ru>
+          Это не любезность. Это структурное требование. <strong>Гравитационные системы работают, потому что нет центра, на который можно нападать.</strong> Протокол с видимым, незаменимым основателем — это протокол с единой точкой отказа. Мы отказываемся быть таким.
+        </p>
+      </div>
+    </div>
+  </div>
+</article>
+
+<!-- ARTICLE IV -->
+<article id="article-4">
+  <div class="container">
+    <div class="article-num">
+      <span data-lang-en>Article IV · Algorithmic</span>
+      <span data-lang-ru>Статья IV · Алгоритмическая</span>
+    </div>
+    <h2 class="article-title">
+      <span data-lang-en>Token <em>Economics</em></span>
+      <span data-lang-ru>Экономика <em>токена</em></span>
+    </h2>
+    <p class="article-intro">
+      <span data-lang-en>Issuance is bound to physics. Every token corresponds to one verified kilowatt-hour. No discretionary minting, ever.</span>
+      <span data-lang-ru>Эмиссия привязана к физике. Каждый токен соответствует одному верифицированному киловатт-часу. Никакой дискреционной эмиссии, никогда.</span>
+    </p>
+
+    <div class="clause">
+      <div class="clause-num">§ 4.1</div>
+      <h3 class="clause-title">
+        <span data-lang-en>Issuance mechanism</span>
+        <span data-lang-ru>Механизм эмиссии</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          NOET tokens are issued exclusively through <strong>Proof-of-Generation</strong>: a hardware attestation device signs a (kWh, timestamp, deviceID) tuple, the signature is verified on-chain through a Merkle proof, and one NOET is minted to the producer's wallet for each verified kilowatt-hour.
+        </p>
+        <p data-lang-ru>
+          Токены NOET выпускаются исключительно через <strong>Proof-of-Generation</strong>: устройство аппаратной аттестации подписывает кортеж (кВт·ч, timestamp, deviceID), подпись проверяется on-chain через Merkle proof, и один NOET минтится в кошелёк производителя за каждый верифицированный киловатт-час.
+        </p>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 4.2</div>
+      <h3 class="clause-title">
+        <span data-lang-en>Genesis allocation</span>
+        <span data-lang-ru>Genesis-распределение</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>A one-time genesis allocation establishes initial circulation:</p>
+        <p data-lang-ru>Однократное genesis-распределение устанавливает начальную эмиссию:</p>
+
+        <div class="definitions">
+          <dt>5% — Foundation treasury</dt>
+          <dd data-lang-en>Vesting linearly over 4 years. Used for grants, operations, and ecosystem development. Cannot be used for market-making.</dd>
+          <dd data-lang-ru>Линейный вестинг 4 года. Используется для грантов, операций и развития экосистемы. Не может использоваться для market-making.</dd>
+
+          <dt>5% — Initial team & founder</dt>
+          <dd data-lang-en>Vesting linearly over 4 years with 1-year cliff.</dd>
+          <dd data-lang-ru>Линейный вестинг 4 года с cliff в 1 год.</dd>
+
+          <dt>5% — Early backers</dt>
+          <dd data-lang-en>Vesting linearly over 4 years. Acquired via fair-launch mechanisms (LBP), not via private discounted allocation.</dd>
+          <dd data-lang-ru>Линейный вестинг 4 года. Приобретается через механизмы fair-launch (LBP), не через частное дисконтное распределение.</dd>
+
+          <dt>10% — Ecosystem Acceleration Program</dt>
+          <dd data-lang-en>Vesting over 10 years. Distributed via grants to builders, contributors, hackathon winners, and academic researchers.</dd>
+          <dd data-lang-ru>Вестинг 10 лет. Распределяется через гранты строителям, контрибьюторам, победителям хакатонов и академическим исследователям.</dd>
+
+          <dt>75% — Algorithmic Proof-of-Generation</dt>
+          <dd data-lang-en>Distributed over time as energy is verifiably generated. No accelerated unlocks. No "emergency" mints.</dd>
+          <dd data-lang-ru>Распределяется со временем по мере проверяемой генерации энергии. Никаких ускоренных разблокировок. Никаких «экстренных» эмиссий.</dd>
+        </div>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 4.3</div>
+      <h3 class="clause-title">
+        <span data-lang-en>No discretionary minting</span>
+        <span data-lang-ru>Никакой дискреционной эмиссии</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          After genesis, no party — not the Council, not the Token House, not the Builders House, not all of them combined — has authority to mint NOET tokens outside of the Proof-of-Generation mechanism. Amendments to this clause require unanimous Council consent <em>and</em> ⅞ Token House majority. Any minting performed outside this mechanism is, by definition, a fork — not Noethrion.
+        </p>
+        <p data-lang-ru>
+          После genesis ни одна сторона — ни Совет, ни Палата токена, ни Палата строителей, ни все вместе — не имеет полномочий выпускать токены NOET вне механизма Proof-of-Generation. Поправки к этому пункту требуют единогласного согласия Совета <em>и</em> большинства ⅞ Палаты токена. Любая эмиссия, выполненная вне этого механизма, по определению является форком — не Noethrion.
+        </p>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 4.4</div>
+      <h3 class="clause-title">
+        <span data-lang-en>Token consumption</span>
+        <span data-lang-ru>Потребление токена</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          NOET is consumed (burned) when used to settle accounting against energy-attestation claims — for example, when a corporation uses NOET to demonstrate hardware-attested energy in ESG reporting. This creates a deflationary mechanism tied to actual utility, not speculation.
+        </p>
+        <p data-lang-ru>
+          NOET потребляется (сжигается), когда используется для расчётов по энерго-аттестационным заявкам — например, когда корпорация использует NOET для демонстрации аппаратно-подтверждённой энергии в ESG-отчётности. Это создаёт дефляционный механизм, привязанный к реальной утилитарности, а не спекуляции.
+        </p>
+      </div>
+    </div>
+  </div>
+</article>
+
+<!-- ARTICLE V -->
+<article id="article-5">
+  <div class="container">
+    <div class="article-num">
+      <span data-lang-en>Article V · Versioned</span>
+      <span data-lang-ru>Статья V · Версионируемо</span>
+    </div>
+    <h2 class="article-title">
+      <span data-lang-en>Hardware & Protocol <em>Standards</em></span>
+      <span data-lang-ru>Стандарты <em>железа и протокола</em></span>
+    </h2>
+    <p class="article-intro">
+      <span data-lang-en>The technical specification evolves with the technology. The principles do not. This article ensures that.</span>
+      <span data-lang-ru>Техническая спецификация эволюционирует вместе с технологией. Принципы — нет. Эта статья это обеспечивает.</span>
+    </p>
+
+    <div class="clause">
+      <div class="clause-num">§ 5.1</div>
+      <h3 class="clause-title">
+        <span data-lang-en>Reference specification</span>
+        <span data-lang-ru>Эталонная спецификация</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          The Noethrion Energy Attestation Specification (NEAS) is published as a versioned IETF Internet-Draft and on the Foundation's GitHub repository. The current version specifies:
+        </p>
+        <p data-lang-ru>
+          Спецификация аттестации энергии Noethrion (NEAS) публикуется как версионируемый IETF Internet-Draft и в репозитории GitHub Фонда. Текущая версия определяет:
+        </p>
+        <ul>
+          <li data-lang-en><strong>Cryptographic primitives:</strong> ECDSA P-256 (current); migration to ML-DSA (post-quantum) by Year 5.</li>
+          <li data-lang-ru><strong>Криптографические примитивы:</strong> ECDSA P-256 (текущий); миграция на ML-DSA (post-quantum) к 5-му году.</li>
+
+          <li data-lang-en><strong>Approved hardware:</strong> Microchip ATECC608B, Infineon OPTIGA Trust M, NXP EdgeLock SE050, Infineon TPM 2.0 SLB9670, and additions approved by the Builders House.</li>
+          <li data-lang-ru><strong>Утверждённое железо:</strong> Microchip ATECC608B, Infineon OPTIGA Trust M, NXP EdgeLock SE050, Infineon TPM 2.0 SLB9670 и дополнения, утверждённые Палатой строителей.</li>
+
+          <li data-lang-en><strong>Settlement layer:</strong> EVM-compatible Layer 2 rollups on Ethereum (specific chain selection deferred to a future spec amendment).</li>
+          <li data-lang-ru><strong>Расчётный слой:</strong> EVM-совместимые Layer 2 rollups на Ethereum (конкретный выбор сети откладывается до будущей поправки к спецификации).</li>
+
+          <li data-lang-en><strong>Data format:</strong> CBOR-encoded attestation tokens following IETF RFC 9711 (EAT) and RFC 9334 (RATS architecture).</li>
+          <li data-lang-ru><strong>Формат данных:</strong> CBOR-кодированные attestation tokens согласно IETF RFC 9711 (EAT) и RFC 9334 (архитектура RATS).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 5.2</div>
+      <h3 class="clause-title">
+        <span data-lang-en>Multiple implementations required</span>
+        <span data-lang-ru>Требование множества реализаций</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          By Year 3, the protocol shall have at least <strong>three independent client implementations</strong> developed by independent teams in independent jurisdictions. The Foundation shall actively encourage and fund alternative implementations, even when they compete with the reference client.
+        </p>
+        <p data-lang-ru>
+          К 3-му году протокол должен иметь минимум <strong>три независимые реализации клиента</strong>, разработанные независимыми командами в независимых юрисдикциях. Фонд должен активно поощрять и финансировать альтернативные реализации, даже когда они конкурируют с эталонным клиентом.
+        </p>
+        <p data-lang-en>
+          A protocol with a single client is not a protocol. It is a product.
+        </p>
+        <p data-lang-ru>
+          Протокол с единственным клиентом — не протокол. Это продукт.
+        </p>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 5.3</div>
+      <h3 class="clause-title">
+        <span data-lang-en>Hardware accreditation process</span>
+        <span data-lang-ru>Процесс аккредитации железа</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          New hardware attestation devices may be added to the approved list through:
+        </p>
+        <p data-lang-ru>
+          Новые устройства аппаратной аттестации могут быть добавлены в утверждённый список через:
+        </p>
+        <ol>
+          <li data-lang-en>Public submission with technical documentation, security certifications, and reference implementation.</li>
+          <li data-lang-ru>Публичную подачу с технической документацией, сертификатами безопасности и эталонной реализацией.</li>
+
+          <li data-lang-en>Independent security review by at least two accredited auditors.</li>
+          <li data-lang-ru>Независимый security review минимум двумя аккредитованными аудиторами.</li>
+
+          <li data-lang-en>Public comment period of at least 60 days.</li>
+          <li data-lang-ru>Публичный период комментариев минимум 60 дней.</li>
+
+          <li data-lang-en>Approval by ⅔ majority of the Builders House.</li>
+          <li data-lang-ru>Одобрение большинством ⅔ Палаты строителей.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</article>
+
+<!-- ARTICLE VI -->
+<article id="article-6">
+  <div class="container">
+    <div class="article-num">
+      <span data-lang-en>Article VI · Procedural</span>
+      <span data-lang-ru>Статья VI · Процедурно</span>
+    </div>
+    <h2 class="article-title">
+      <span data-lang-en>Amendment <em>& Dissolution</em></span>
+      <span data-lang-ru>Поправки <em>и роспуск</em></span>
+    </h2>
+    <p class="article-intro">
+      <span data-lang-en>This Constitution is meant to be amended — but slowly, deliberately, and only through procedures designed to resist capture.</span>
+      <span data-lang-ru>Эта Конституция должна изменяться — но медленно, обдуманно и только через процедуры, разработанные для сопротивления захвату.</span>
+    </p>
+
+    <div class="clause">
+      <div class="clause-num">§ 6.1</div>
+      <h3 class="clause-title">
+        <span data-lang-en>Amendment thresholds</span>
+        <span data-lang-ru>Пороги поправок</span>
+      </h3>
+      <div class="clause-body">
+        <div class="definitions">
+          <dt>
+            <span data-lang-en>Article I (Foundational Principles)</span>
+            <span data-lang-ru>Статья I (Основополагающие принципы)</span>
+          </dt>
+          <dd data-lang-en><strong>Cannot be amended.</strong> If circumstances require changing Article I, this Constitution dissolves and a successor must be ratified separately.</dd>
+          <dd data-lang-ru><strong>Не может быть изменена.</strong> Если обстоятельства требуют изменения Статьи I — эта Конституция распускается, и преемник должен быть ратифицирован отдельно.</dd>
+
+          <dt>
+            <span data-lang-en>Articles II, III, IV (Foundation, Governance, Tokenomics)</span>
+            <span data-lang-ru>Статьи II, III, IV (Фонд, управление, токеномика)</span>
+          </dt>
+          <dd data-lang-en>Require: ⅔ Council majority + ¾ Token House majority + ⅔ Builders House majority. All three thresholds must be met. Public comment period of 90 days minimum.</dd>
+          <dd data-lang-ru>Требуют: большинства ⅔ Совета + большинства ¾ Палаты токена + большинства ⅔ Палаты строителей. Все три порога должны быть достигнуты. Период публичных комментариев минимум 90 дней.</dd>
+
+          <dt>
+            <span data-lang-en>Article V (Technical Standards)</span>
+            <span data-lang-ru>Статья V (Технические стандарты)</span>
+          </dt>
+          <dd data-lang-en>Require: ⅔ Builders House majority + simple Council majority. 30-day comment period.</dd>
+          <dd data-lang-ru>Требуют: большинства ⅔ Палаты строителей + простого большинства Совета. Период комментариев 30 дней.</dd>
+
+          <dt>
+            <span data-lang-en>Article VI (Amendment process)</span>
+            <span data-lang-ru>Статья VI (Процесс поправок)</span>
+          </dt>
+          <dd data-lang-en>Cannot be amended in ways that lower the thresholds defined above. May only be amended to add procedural clarity or add additional safeguards.</dd>
+          <dd data-lang-ru>Не может быть изменена способом, понижающим пороги, определённые выше. Может изменяться только для добавления процедурной ясности или дополнительных защитных мер.</dd>
+        </div>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 6.2</div>
+      <h3 class="clause-title">
+        <span data-lang-en>Emergency provisions</span>
+        <span data-lang-ru>Чрезвычайные положения</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          In the event of a critical security vulnerability, quantum cryptography breakthrough, or hostile regulatory action threatening the protocol's continued operation, the Council may invoke <strong>emergency procedures</strong> requiring:
+        </p>
+        <p data-lang-ru>
+          В случае критической уязвимости безопасности, прорыва в квантовой криптографии или враждебных регуляторных действий, угрожающих продолжению работы протокола, Совет может ввести <strong>чрезвычайные процедуры</strong>, требующие:
+        </p>
+        <ul>
+          <li data-lang-en>Unanimous Council consent (7 of 7).</li>
+          <li data-lang-ru>Единогласного согласия Совета (7 из 7).</li>
+
+          <li data-lang-en>Public disclosure of the emergency rationale within 48 hours.</li>
+          <li data-lang-ru>Публичного раскрытия обоснования чрезвычайной ситуации в течение 48 часов.</li>
+
+          <li data-lang-en>Time-limited application (maximum 30 days, renewable once).</li>
+          <li data-lang-ru>Ограниченного применения (максимум 30 дней, продлеваемых один раз).</li>
+
+          <li data-lang-en>Ratification by Token House and Builders House within the application period; otherwise, automatic expiration.</li>
+          <li data-lang-ru>Ратификации Палатой токена и Палатой строителей в период применения; иначе — автоматическое истечение.</li>
+        </ul>
+        <p data-lang-en>
+          Emergency procedures cannot override Article I under any circumstances.
+        </p>
+        <p data-lang-ru>
+          Чрезвычайные процедуры ни при каких обстоятельствах не могут отменить Статью I.
+        </p>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 6.3</div>
+      <h3 class="clause-title">
+        <span data-lang-en>Dissolution of the Constitution</span>
+        <span data-lang-ru>Роспуск Конституции</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          This Constitution dissolves under one of two conditions:
+        </p>
+        <p data-lang-ru>
+          Эта Конституция распускается при одном из двух условий:
+        </p>
+        <ol>
+          <li data-lang-en><strong>Successor ratification:</strong> A successor Constitution is drafted and ratified by ⅞ Token House + ⅞ Builders House + 6 of 7 Council. Upon ratification, this Constitution is archived and the successor takes effect.</li>
+          <li data-lang-ru><strong>Ратификация преемника:</strong> Конституция-преемник составляется и ратифицируется ⅞ Палаты токена + ⅞ Палаты строителей + 6 из 7 Совета. После ратификации эта Конституция архивируется, и преемник вступает в силу.</li>
+
+          <li data-lang-en><strong>Foundation dissolution per § 2.3:</strong> When the conditions of self-dissolution are met, this Constitution remains in force for the protocol but the Foundation's role within it terminates.</li>
+          <li data-lang-ru><strong>Роспуск Фонда согласно § 2.3:</strong> Когда условия саморасспуска выполнены — эта Конституция остаётся в силе для протокола, но роль Фонда в ней прекращается.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-num">§ 6.4</div>
+      <h3 class="clause-title">
+        <span data-lang-en>Final clause</span>
+        <span data-lang-ru>Заключительный пункт</span>
+      </h3>
+      <div class="clause-body">
+        <p data-lang-en>
+          This Constitution is the working agreement among those who build, run, and depend on Noethrion. It is not a legal contract enforceable in any single jurisdiction. It is a coordination document — a Schelling point for honest behavior.
+        </p>
+        <p data-lang-ru>
+          Эта Конституция — рабочее соглашение между теми, кто строит, эксплуатирует и зависит от Noethrion. Это не юридический контракт, исполнимый в какой-либо одной юрисдикции. Это координационный документ — точка Шеллинга для честного поведения.
+        </p>
+        <p data-lang-en>
+          Its authority comes from the willingness of participants to abide by it, not from the threat of sanction. Those who violate it are not punished by the Constitution; they are simply no longer participants in Noethrion.
+        </p>
+        <p data-lang-ru>
+          Его авторитет исходит из готовности участников соблюдать его, а не из угрозы санкций. Те, кто нарушает его, не наказываются Конституцией; они просто больше не являются участниками Noethrion.
+        </p>
+      </div>
+    </div>
+  </div>
+</article>
+
+<!-- SIGNATURE -->
+<section class="signature">
+  <div class="container">
+    <span class="signature-eta">η</span>
+
+    <p class="signature-text">
+      <span data-lang-en>Energy speaks for itself.<br>We just give it a <em>signature</em>.</span>
+      <span data-lang-ru>Энергия говорит сама за себя.<br>Мы просто даём ей <em>подпись</em>.</span>
+    </p>
+
+    <div class="signature-meta">
+      <strong>
+        <span data-lang-en>Adopted as Working Draft v0.1</span>
+        <span data-lang-ru>Принято как Рабочий черновик v0.1</span>
+      </strong><br>
+      05 May 2026 — Founder, A. Chursin<br>
+      <span data-lang-en>To be ratified by the first Council upon convening.</span>
+      <span data-lang-ru>Подлежит ратификации первым Советом при созыве.</span>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-credits">
+      <span>noethrion / constitution / v0.1</span>
+      <span>η = E_useful / E_total</span>
+      <span>
+        <span data-lang-en>05.05.2026 · working draft</span>
+        <span data-lang-ru>05.05.2026 · рабочий черновик</span>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const langButtons = document.querySelectorAll('.lang-btn');
+  const html = document.documentElement;
+
+  try {
+    const savedLang = localStorage.getItem('noethrion-lang');
+    if (savedLang === 'ru' || savedLang === 'en') setLang(savedLang);
+  } catch (e) {}
+
+  langButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      setLang(lang);
+      try { localStorage.setItem('noethrion-lang', lang); } catch (e) {}
+    });
+  });
+
+  function setLang(lang) {
+    html.setAttribute('lang', lang);
+    langButtons.forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === lang);
+    });
+  }
+</script>
+
+</body>
+</html>

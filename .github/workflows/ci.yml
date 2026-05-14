@@ -1,0 +1,171 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-markdown:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: '**/*.md'
+          config: '.markdownlint.json'
+        continue-on-error: true
+
+  contracts-test:
+    name: Foundry Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Show Forge version
+        run: forge --version
+
+      - name: Install dependencies (OpenZeppelin + forge-std)
+        run: forge install OpenZeppelin/openzeppelin-contracts foundry-rs/forge-std --shallow
+
+      - name: Run forge fmt check
+        run: forge fmt --check
+        continue-on-error: true
+
+      - name: Run forge build
+        run: forge build --sizes
+        id: build
+
+      - name: Run forge tests
+        run: forge test -vvv
+        id: test
+
+  halmos-symbolic:
+    name: Halmos symbolic verification (${{ matrix.contract }})
+    runs-on: ubuntu-latest
+    needs: contracts-test
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both Halmos test contracts run as separate matrix legs so a failure
+        # on one is attributable on first read of the run page. The Attester
+        # suite has 19 proofs; the Token suite has 6.
+        contract: [NoethrionAttesterHalmosTest, NoethrionTokenHalmosTest]
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Install dependencies (OpenZeppelin + forge-std)
+        run: forge install OpenZeppelin/openzeppelin-contracts foundry-rs/forge-std --shallow
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Halmos (pinned)
+        # Pinned to 0.3.x — a future Halmos may change SMT defaults,
+        # assertion semantics, or vm.assume handling, which would
+        # silently retroactively change the proofs against this SHA.
+        # Bump after a manual local re-run on the same source.
+        run: pip install 'halmos==0.3.3'
+
+      - name: Show Halmos version
+        run: halmos --version
+
+      - name: Run Halmos symbolic checks
+        # `--match-contract` pins this leg to one of the two suites; the run
+        # fails if any single `check_*` returns a counterexample. Failures
+        # are protocol-breaking — the contract surface lets some adversarial
+        # input through a symbolic property we claimed was universal.
+        # We capture stdout so a subsequent step can assert that at least one
+        # `check_*` actually ran — guarding against a future rename that
+        # would silently collect zero tests under `--match-contract`.
+        run: |
+          set -o pipefail
+          halmos --contract ${{ matrix.contract }} | tee /tmp/halmos-${{ matrix.contract }}.log
+
+      - name: Assert at least one symbolic check executed
+        # Defensive: catches a future refactor (e.g., suite rename) where
+        # `--match-contract` matches zero functions and Halmos exits 0 with
+        # "no tests collected". Without this, CI would silently green even
+        # if the whole symbolic surface vanished. The summary line we match
+        # is the only plain-text line in the halmos output that does not
+        # carry ANSI escape sequences.
+        run: |
+          grep -qE 'Symbolic test result: [1-9][0-9]* passed; 0 failed' /tmp/halmos-${{ matrix.contract }}.log
+
+  lifecycle-smoke:
+    name: Lifecycle smoke test (threshold=${{ matrix.threshold }})
+    runs-on: ubuntu-latest
+    needs: contracts-test
+    strategy:
+      fail-fast: false
+      matrix:
+        # threshold=1 exercises the single-validator path (proposer is the
+        # only voter). threshold=3 exercises the m-of-n quorum: deployer +
+        # two extra validators, voteBatch loop, voteCount sanity check.
+        threshold: [1, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Install dependencies (OpenZeppelin + forge-std)
+        working-directory: contracts
+        run: forge install OpenZeppelin/openzeppelin-contracts foundry-rs/forge-std --shallow
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tools/requirements.txt
+
+      - name: Run lifecycle smoke test
+        env:
+          THRESHOLD: ${{ matrix.threshold }}
+        run: ./tools/run_lifecycle.sh
+
+  firmware-build:
+    name: Firmware Build (placeholder)
+    runs-on: ubuntu-latest
+    if: false  # enable when firmware/ has real code
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+      - name: Build firmware
+        run: pio run -d firmware

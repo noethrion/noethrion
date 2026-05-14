@@ -1,0 +1,83 @@
+# Static analysis on the smart contracts via Slither (Trail of Bits).
+#
+# Runs on every push to main and every PR that touches contracts/src/ or this
+# workflow file. Findings are uploaded as SARIF to the repo's Security tab
+# and the job fails on medium-or-higher severity by default (configurable
+# via the `fail-on` input below).
+#
+# Findings the project has already evaluated and accepts are filtered through
+# contracts/.slither.config.json — see that file for rationale per detector.
+
+name: Security
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'contracts/src/**'
+      - 'contracts/foundry.toml'
+      - 'contracts/remappings.txt'
+      - '.github/workflows/security.yml'
+      - 'contracts/.slither.config.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'contracts/src/**'
+      - 'contracts/foundry.toml'
+      - 'contracts/remappings.txt'
+      - '.github/workflows/security.yml'
+      - 'contracts/.slither.config.json'
+  workflow_dispatch:
+
+jobs:
+  slither:
+    name: Slither static analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # required to upload SARIF to Security tab
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Run Slither
+        id: slither
+        uses: crytic/slither-action@v0.4.0
+        with:
+          target: contracts/
+          slither-config: contracts/.slither.config.json
+          # Fail the job only on medium-or-higher findings; low / informational
+          # surface as PR comments but do not block the merge.
+          fail-on: medium
+          sarif: results.sarif
+        continue-on-error: true
+
+      - name: Upload SARIF to GitHub Security tab
+        if: always() && steps.slither.outputs.sarif != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.slither.outputs.sarif }}
+        # Soft-fail. GitHub Advanced Security (required for SARIF upload on
+        # PRIVATE repos) is not enabled here. Once the repo is flipped public
+        # OR a paid plan is enabled, this becomes a hard check automatically.
+        # Until then, Slither still runs and surfaces findings in the job log.
+        continue-on-error: true
+
+      - name: Surface Slither exit status
+        if: always()
+        run: |
+          if [ "${{ steps.slither.outcome }}" = "failure" ]; then
+            echo "::warning::Slither reported medium-or-higher findings — see the Security tab and the job log above."
+            exit 1
+          fi
+          echo "Slither completed without medium-or-higher findings."

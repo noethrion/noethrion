@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noethrion — Hardware-attested energy production protocol</title>
+<meta name="description" content="One kilowatt-hour. One signature. Settled at the source.">
+<link rel="canonical" href="https://noethrion.com/">
+
+<!-- Open Graph — link-preview metadata for social platforms. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Noethrion — Hardware-attested energy production protocol">
+<meta property="og:description" content="An open standard for verifiable clean energy. 1 NOET = 1 verified kWh, signed at the meter, anchored on a public ledger.">
+<meta property="og:url" content="https://noethrion.com/">
+<meta property="og:site_name" content="Noethrion">
+<meta property="og:image" content="/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<!-- Twitter / X card metadata. -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Noethrion — Hardware-attested energy production protocol">
+<meta name="twitter:description" content="An open standard for verifiable clean energy. 1 NOET = 1 verified kWh, signed at the meter, anchored on a public ledger.">
+<meta name="twitter:image" content="/og-image.png">
+
+<!-- Favicon: η in Eta-green on Noir, inline SVG so no extra request and no 404. -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'&gt;&lt;rect width='64' height='64' fill='%230A0A0A'/&gt;&lt;text x='32' y='50' font-family='Georgia,serif' font-style='italic' font-size='52' text-anchor='middle' fill='%2314F195'&gt;&#951;&lt;/text&gt;&lt;/svg&gt;">
+
+<!-- FOUC prevention — set lang from localStorage before first paint. Must run
+     synchronously in <head> so the body never flashes the wrong language. -->
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('noethrion-lang');
+      if (saved === 'en' || saved === 'ru') {
+        document.documentElement.lang = saved;
+      }
+    } catch (e) { /* localStorage blocked — leave default lang */ }
+  })();
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --noir: #0A0A0A;
+    --noir-2: #111111;
+    --noir-3: #1A1A1A;
+    --noir-4: #242424;
+    --noir-5: #2E2E2E;
+    --bone: #F5F1E8;
+    --bone-2: #C4BFB2;
+    --bone-3: #6B6862;
+    --bone-4: #3A3835;
+    --eta: #14F195;
+    --eta-dim: #0CB371;
+    --pulse: #B8FF3B;
+    --terra: #C8654A;
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+    --container: 1200px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  /* Accessibility — REC-1 + REC-2 + REC-5 per docs/audit/accessibility-audit.md */
+  .skip-nav {
+    position: absolute;
+    top: -60px;
+    left: 1rem;
+    background: var(--eta);
+    color: var(--noir);
+    padding: 12px 20px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-decoration: none;
+    border-radius: 4px;
+    z-index: 200;
+    transition: top 0.15s ease-in;
+  }
+  .skip-nav:focus { top: 1rem; }
+
+  :focus-visible {
+    outline: 2px solid var(--eta);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  body {
+    background: var(--noir);
+    color: var(--bone);
+    font-family: var(--font-body);
+    font-weight: 300;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+  }
+
+  .container {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  @media (max-width: 768px) {
+    .container { padding: 0 1.25rem; }
+  }
+
+  /* ============================================
+     NAV
+     ============================================ */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    background: rgba(10, 10, 10, 0.75);
+    border-bottom: 1px solid var(--noir-4);
+    padding: 1rem 0;
+  }
+
+  .nav-inner {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .nav-inner { padding: 0 1.25rem; }
+  }
+
+  .nav-mark {
+    font-family: var(--font-display);
+    font-size: 26px;
+    line-height: 1;
+    color: var(--bone);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .nav-mark .eta-symbol {
+    color: var(--eta);
+    font-style: italic;
+    font-size: 32px;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .nav-links a {
+    color: var(--bone-3);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--bone); }
+
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+  }
+
+  .lang-toggle {
+    display: flex;
+    background: var(--noir-2);
+    border: 1px solid var(--noir-4);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .lang-btn {
+    background: transparent;
+    border: none;
+    color: var(--bone-3);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    padding: 7px 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .lang-btn.active {
+    background: var(--eta);
+    color: var(--noir);
+  }
+
+  .lang-btn:not(.active):hover { color: var(--bone); }
+
+  /* ============================================
+     HERO
+     ============================================ */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 7rem 0 4rem;
+    position: relative;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--eta);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: fadeIn 1s ease 0.2s both;
+  }
+
+  @media (max-width: 768px) {
+    .hero-eyebrow { font-size: 13px; }
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: var(--eta);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--eta);
+    animation: pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .hero-headline {
+    font-family: var(--font-display);
+    font-size: clamp(56px, 8vw, 120px);
+    line-height: 1.0;
+    color: var(--bone);
+    letter-spacing: -0.025em;
+    margin-bottom: 2rem;
+    max-width: 1100px;
+    animation: fadeInUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s both;
+  }
+
+  .hero-headline em {
+    color: var(--eta);
+    font-style: italic;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .hero-sub {
+    font-family: var(--font-body);
+    font-size: clamp(19px, 1.6vw, 22px);
+    line-height: 1.5;
+    color: var(--bone-2);
+    max-width: 640px;
+    margin-bottom: 3rem;
+    font-weight: 300;
+    animation: fadeInUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s both;
+  }
+
+  @media (max-width: 768px) {
+    .hero-sub { font-size: 18px; }
+  }
+
+  .hero-cta-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 5rem;
+    animation: fadeInUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.7s both;
+  }
+
+  .btn-primary {
+    background: var(--eta);
+    color: var(--noir);
+    padding: 14px 28px;
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 4px;
+  }
+
+  .btn-primary:hover {
+    background: var(--pulse);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary .arrow { transition: transform 0.2s; }
+  .btn-primary:hover .arrow { transform: translateX(3px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--bone);
+    padding: 14px 28px;
+    border: 1px solid var(--noir-5);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 4px;
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--eta);
+    color: var(--eta);
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--noir-4);
+    animation: fadeInUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.9s both;
+  }
+
+  @media (max-width: 700px) {
+    .hero-stats { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  }
+
+  .stat-cell { font-family: var(--font-mono); }
+
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 3vw, 44px);
+    color: var(--bone);
+    line-height: 1;
+    font-weight: 400;
+  }
+
+  .stat-num em {
+    color: var(--eta);
+    font-style: italic;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--bone-3);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  /* ============================================
+     SECTIONS
+     ============================================ */
+  section {
+    padding: 8rem 0;
+    border-top: 1px solid var(--noir-4);
+    position: relative;
+  }
+
+  @media (max-width: 768px) {
+    section { padding: 5rem 0; }
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--bone-3);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  @media (max-width: 768px) {
+    .section-label { font-size: 12px; }
+  }
+
+  .section-label .num { color: var(--eta); }
+
+  .section-headline {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 5vw, 64px);
+    line-height: 1.1;
+    color: var(--bone);
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    max-width: 900px;
+    font-weight: 400;
+  }
+
+  .section-headline em {
+    color: var(--eta);
+    font-style: italic;
+  }
+
+  .section-intro {
+    font-family: var(--font-body);
+    font-size: clamp(18px, 1.4vw, 20px);
+    color: var(--bone-2);
+    max-width: 700px;
+    line-height: 1.6;
+    margin-bottom: 4rem;
+  }
+
+  /* ============================================
+     STEPS
+     ============================================ */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 3rem;
+  }
+
+  @media (max-width: 900px) {
+    .steps { grid-template-columns: 1fr; gap: 1.5rem; }
+  }
+
+  .step {
+    background: var(--noir-2);
+    border: 1px solid var(--noir-4);
+    padding: 2.5rem 2rem;
+    transition: all 0.3s;
+    border-radius: 4px;
+  }
+
+  .step:hover {
+    border-color: var(--eta);
+    transform: translateY(-4px);
+  }
+
+  .step-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--eta);
+    letter-spacing: 0.2em;
+    margin-bottom: 1.5rem;
+  }
+
+  .step-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--noir-5);
+    border-radius: 50%;
+  }
+
+  .step-icon svg {
+    width: 28px;
+    height: 28px;
+    stroke: var(--eta);
+    fill: none;
+    stroke-width: 1.5;
+  }
+
+  .step-title {
+    font-family: var(--font-display);
+    font-size: clamp(26px, 2.5vw, 30px);
+    color: var(--bone);
+    margin-bottom: 1rem;
+    line-height: 1.2;
+    font-weight: 400;
+  }
+
+  .step-desc {
+    font-family: var(--font-body);
+    font-size: 16px;
+    color: var(--bone-2);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .step-desc { font-size: 15px; }
+  }
+
+  .step-meta {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--bone-3);
+    padding-top: 1rem;
+    border-top: 1px solid var(--noir-4);
+    letter-spacing: 0.05em;
+  }
+
+  .step-meta strong {
+    color: var(--eta);
+    font-weight: 400;
+  }
+
+  /* ============================================
+     ETA BLOCK
+     ============================================ */
+  .eta-block {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    background: var(--noir-2);
+    padding: 4rem;
+    border: 1px solid var(--noir-4);
+    border-radius: 4px;
+  }
+
+  @media (max-width: 900px) {
+    .eta-block { grid-template-columns: 1fr; gap: 2rem; padding: 2.5rem 2rem; }
+  }
+
+  .eta-display {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(200px, 22vw, 320px);
+    line-height: 0.85;
+    text-align: center;
+    color: var(--eta);
+    position: relative;
+  }
+
+  .eta-meaning h3 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 2.8vw, 36px);
+    color: var(--bone);
+    margin-bottom: 1.5rem;
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .eta-meaning p {
+    font-family: var(--font-body);
+    color: var(--bone-2);
+    margin-bottom: 1rem;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    .eta-meaning p { font-size: 15px; }
+  }
+
+  .eta-meaning strong {
+    color: var(--bone);
+    font-weight: 400;
+  }
+
+  .formula-box {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--eta);
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+    background: var(--noir);
+    border-left: 2px solid var(--eta);
+    border-radius: 2px;
+  }
+
+  /* ============================================
+     SPEC + CODE
+     ============================================ */
+  .spec-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .spec-grid { grid-template-columns: 1fr; gap: 2rem; }
+  }
+
+  .spec-text h3 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 2.8vw, 36px);
+    color: var(--bone);
+    margin-bottom: 1.5rem;
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .spec-text p {
+    color: var(--bone-2);
+    margin-bottom: 1rem;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    .spec-text p { font-size: 15px; }
+  }
+
+  .spec-list {
+    list-style: none;
+    margin-top: 1.5rem;
+  }
+
+  .spec-list li {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--noir-4);
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 1rem;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    align-items: center;
+  }
+
+  .spec-list .key {
+    color: var(--bone-3);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 10px;
+  }
+
+  .spec-list .val { color: var(--bone); }
+  .spec-list .val em { color: var(--eta); font-style: italic; }
+
+  .code-block {
+    background: var(--noir-2);
+    border: 1px solid var(--noir-4);
+    padding: 2rem 2rem 2rem 2rem;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--bone-2);
+    overflow-x: auto;
+    border-radius: 4px;
+    position: relative;
+  }
+
+  @media (max-width: 768px) {
+    .code-block { font-size: 12px; padding: 1.5rem; }
+  }
+
+  .code-block::before {
+    content: 'TERMINAL';
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    font-size: 9px;
+    color: var(--bone-4);
+    letter-spacing: 0.2em;
+  }
+
+  .code-block .prompt { color: var(--eta); user-select: none; }
+  .code-block .check { color: var(--eta); }
+  .code-block .comment { color: var(--bone-4); }
+  .code-block .meta { color: var(--bone-3); }
+  .code-block .num { color: var(--pulse); }
+
+  /* ============================================
+     PRINCIPLES
+     ============================================ */
+  .principles {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0;
+    margin-top: 2rem;
+  }
+
+  @media (max-width: 768px) {
+    .principles { grid-template-columns: 1fr; }
+  }
+
+  .principle {
+    padding: 2.5rem;
+    border: 1px solid var(--noir-4);
+    margin: -1px 0 0 -1px;
+    transition: background 0.3s;
+  }
+
+  .principle:hover { background: var(--noir-2); }
+
+  .principle-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--eta);
+    letter-spacing: 0.2em;
+    margin-bottom: 1rem;
+  }
+
+  .principle h4 {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 2.2vw, 28px);
+    color: var(--bone);
+    margin-bottom: 0.75rem;
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .principle p {
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--bone-2);
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    .principle p { font-size: 14px; }
+  }
+
+  /* ============================================
+     CTA
+     ============================================ */
+  .cta-section {
+    text-align: center;
+    padding: 8rem 0;
+    border-top: 1px solid var(--noir-4);
+  }
+
+  @media (max-width: 768px) {
+    .cta-section { padding: 5rem 0; }
+  }
+
+  .cta-eta {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(140px, 18vw, 240px);
+    color: var(--eta);
+    line-height: 0.9;
+    margin-bottom: 2rem;
+    display: block;
+  }
+
+  .cta-headline {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 4.5vw, 56px);
+    line-height: 1.1;
+    color: var(--bone);
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    font-weight: 400;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .cta-headline em {
+    color: var(--eta);
+    font-style: italic;
+  }
+
+  .cta-sub {
+    font-family: var(--font-body);
+    font-size: clamp(17px, 1.4vw, 20px);
+    color: var(--bone-2);
+    max-width: 600px;
+    margin: 0 auto 3rem;
+    line-height: 1.6;
+  }
+
+  .cta-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* ============================================
+     FOOTER
+     ============================================ */
+  footer {
+    padding: 3rem 0;
+    border-top: 1px solid var(--noir-4);
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 3rem;
+  }
+
+  @media (max-width: 768px) {
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
+  }
+
+  @media (max-width: 480px) {
+    .footer-grid { grid-template-columns: 1fr; }
+  }
+
+  .footer-mark {
+    font-family: var(--font-display);
+    font-size: 28px;
+    color: var(--bone);
+  }
+
+  .footer-mark .eta-symbol {
+    color: var(--eta);
+    font-style: italic;
+    font-size: 36px;
+  }
+
+  .footer-tagline {
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--bone-3);
+    margin-top: 1rem;
+    max-width: 280px;
+    line-height: 1.5;
+  }
+
+  .footer-col h5 {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--bone-3);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    font-weight: 400;
+  }
+
+  .footer-col ul {
+    list-style: none;
+  }
+
+  .footer-col ul li {
+    margin-bottom: 0.5rem;
+  }
+
+  .footer-col ul li a {
+    color: var(--bone-2);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+  }
+
+  .footer-col ul li a:hover { color: var(--eta); }
+
+  .footer-bottom {
+    padding-top: 2rem;
+    border-top: 1px solid var(--noir-4);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--bone-4);
+    letter-spacing: 0.1em;
+  }
+
+  /* ============================================
+     LANG SWITCHING
+     ============================================ */
+  [data-lang-en], [data-lang-ru] { display: none; }
+  html[lang="en"] [data-lang-en] { display: inline; }
+  html[lang="ru"] [data-lang-ru] { display: inline; }
+  html[lang="en"] .block[data-lang-en] { display: block; }
+  html[lang="ru"] .block[data-lang-ru] { display: block; }
+
+  /* Reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- Skip-nav for screen-reader / keyboard users (WCAG 2.4.1) -->
+<a class="skip-nav" href="#main">Skip to main content</a>
+
+<!-- ============================================ -->
+<!-- NAV                                            -->
+<!-- ============================================ -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" style="text-decoration: none;" class="nav-mark">
+      <span class="eta-symbol">η</span>
+      <span>noethrion</span>
+    </a>
+    <div class="nav-right">
+      <div class="nav-links">
+        <a href="#how"><span data-lang-en>How it works</span><span data-lang-ru>Как работает</span></a>
+        <a href="#spec"><span data-lang-en>Spec</span><span data-lang-ru>Спецификация</span></a>
+        <a href="#principles"><span data-lang-en>Principles</span><span data-lang-ru>Принципы</span></a>
+        <a href="https://github.com/noethrion/noethrion" style="color: var(--bone);">Github</a>
+      </div>
+      <div class="lang-toggle" role="group" aria-label="Language toggle">
+        <button class="lang-btn active" data-lang="en" aria-label="Switch to English" aria-pressed="true">EN</button>
+        <button class="lang-btn" data-lang="ru" aria-label="Переключить на русский" aria-pressed="false">RU</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ============================================ -->
+<!-- HERO                                           -->
+<!-- ============================================ -->
+<section class="hero" id="main">
+  <div class="container">
+    <div class="hero-eyebrow">
+      <span data-lang-en>Energy Attestation Protocol · Working Draft v0.1</span>
+      <span data-lang-ru>Протокол аттестации энергии · Рабочий черновик v0.1</span>
+    </div>
+
+    <h1 class="hero-headline">
+      <span data-lang-en>One kilowatt-hour.<br><em>One signature.</em><br>Settled at the source.</span>
+      <span data-lang-ru>Один киловатт-час.<br><em>Одна подпись.</em><br>Подтверждено у источника.</span>
+    </h1>
+
+    <p class="hero-sub">
+      <span data-lang-en>Noethrion is an open standard for hardware-attested energy production. Read the spec, run a node, audit the math. We administer the protocol — we do not own it.</span>
+      <span data-lang-ru>Noethrion — открытый стандарт для аппаратно-подтверждённой генерации энергии. Читай спецификацию, запускай ноду, проверяй математику. Мы администрируем протокол — мы им не владеем.</span>
+    </p>
+
+    <div class="hero-cta-row">
+      <a href="#how" class="btn-primary">
+        <span data-lang-en>Read the spec</span>
+        <span data-lang-ru>Читать спецификацию</span>
+        <span class="arrow">→</span>
+      </a>
+      <a href="https://github.com/noethrion/noethrion" class="btn-ghost">
+        <span data-lang-en>View on Github</span>
+        <span data-lang-ru>Открыть на Github</span>
+      </a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-cell">
+        <div class="stat-num"><em>η</em> = 1</div>
+        <div class="stat-label">
+          <span data-lang-en>kWh per token</span>
+          <span data-lang-ru>кВт·ч на токен</span>
+        </div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">P-256</div>
+        <div class="stat-label">
+          <span data-lang-en>Curve · ATECC608</span>
+          <span data-lang-ru>Кривая · ATECC608</span>
+        </div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">L2</div>
+        <div class="stat-label">
+          <span data-lang-en>L2 · Settlement</span>
+          <span data-lang-ru>L2 · Расчёты</span>
+        </div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">MIT</div>
+        <div class="stat-label">
+          <span data-lang-en>License · Forever</span>
+          <span data-lang-ru>Лицензия · Навсегда</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- HOW IT WORKS                                   -->
+<!-- ============================================ -->
+<section id="how">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">01</span>
+      <span data-lang-en>How it works</span>
+      <span data-lang-ru>Как это работает</span>
+    </div>
+
+    <h2 class="section-headline">
+      <span data-lang-en>Three steps. <em>No middlemen.</em></span>
+      <span data-lang-ru>Три шага. <em>Без посредников.</em></span>
+    </h2>
+
+    <p class="section-intro">
+      <span data-lang-en>Energy is generated. The meter signs it. The blockchain records it. There is no "we'll trust you on this" step — every kilowatt-hour carries cryptographic proof of where, when, and how it was produced.</span>
+      <span data-lang-ru>Энергия произведена. Счётчик её подписывает. Блокчейн её фиксирует. Нет шага "поверим тебе на слово" — каждый киловатт-час несёт криптографическое доказательство того, где, когда и как он был произведён.</span>
+    </p>
+
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-num">STEP 01</div>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </div>
+        <h3 class="step-title">
+          <span data-lang-en>Generate</span>
+          <span data-lang-ru>Генерация</span>
+        </h3>
+        <p class="step-desc">
+          <span data-lang-en>A solar panel, wind turbine, or battery produces electricity. A smart meter reads the kilowatt-hours in real time.</span>
+          <span data-lang-ru>Солнечная панель, ветрогенератор или батарея производит электричество. Умный счётчик читает киловатт-часы в реальном времени.</span>
+        </p>
+        <div class="step-meta">
+          <span data-lang-en>Hardware: ATECC608B + ESP32</span>
+          <span data-lang-ru>Железо: ATECC608B + ESP32</span><br>
+          <strong>$0.87 / chip</strong>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="step-num">STEP 02</div>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2L4 7v10l8 5 8-5V7l-8-5z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <h3 class="step-title">
+          <span data-lang-en>Sign</span>
+          <span data-lang-ru>Подпись</span>
+        </h3>
+        <p class="step-desc">
+          <span data-lang-en>The secure element inside the meter signs the reading with an ECDSA P-256 signature. The private key never leaves the chip.</span>
+          <span data-lang-ru>Защищённый элемент внутри счётчика подписывает показание подписью ECDSA P-256. Приватный ключ никогда не покидает чип.</span>
+        </p>
+        <div class="step-meta">
+          <span data-lang-en>Tamper-resistant key storage</span>
+          <span data-lang-ru>Защита от подделки ключа</span><br>
+          <strong>CC EAL 6+</strong>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="step-num">STEP 03</div>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+        </div>
+        <h3 class="step-title">
+          <span data-lang-en>Settle</span>
+          <span data-lang-ru>Расчёт</span>
+        </h3>
+        <p class="step-desc">
+          <span data-lang-en>The signed reading is bundled into a Merkle tree, posted to Layer 2, and one NOET token is minted per verified kilowatt-hour.</span>
+          <span data-lang-ru>Подписанное показание упаковано в дерево Меркла, опубликовано на Layer 2, и один токен NOET создаётся за каждый верифицированный киловатт-час.</span>
+        </p>
+        <div class="step-meta">
+          <span data-lang-en>Settlement layer: EVM-compatible L2</span>
+          <span data-lang-ru>Расчётный слой: EVM-совместимый L2</span><br>
+          <strong>~$0.001 / tx</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- ETA EXPLANATION                                -->
+<!-- ============================================ -->
+<section>
+  <div class="container">
+    <div class="section-label">
+      <span class="num">02</span>
+      <span data-lang-en>The mark</span>
+      <span data-lang-ru>Знак</span>
+    </div>
+
+    <div class="eta-block reveal">
+      <div class="eta-display">η</div>
+      <div class="eta-meaning">
+        <h3>
+          <span data-lang-en>Why <em>η</em></span>
+          <span data-lang-ru>Почему <em>η</em></span>
+        </h3>
+        <p>
+          <span data-lang-en>The Greek letter <strong>eta</strong> is the universal symbol for <strong>efficiency</strong> in physics — the ratio of useful energy to total energy.</span>
+          <span data-lang-ru>Греческая буква <strong>эта</strong> — универсальный символ <strong>КПД</strong> в физике — отношение полезной энергии к затраченной.</span>
+        </p>
+
+        <div class="formula-box">η = E<sub>useful</sub> / E<sub>total</sub></div>
+
+        <p>
+          <span data-lang-en>It also honors <strong>Emmy Noether</strong>, whose 1915 theorem connects every continuous symmetry in nature to a conservation law — including the conservation of energy itself.</span>
+          <span data-lang-ru>Знак также отдаёт дань <strong>Эмми Нётер</strong>, чья теорема 1915 года связывает каждую непрерывную симметрию в природе с законом сохранения — включая закон сохранения энергии.</span>
+        </p>
+
+        <p>
+          <span data-lang-en>Without Noether, modern physics has no foundation. Without foundation, no civilization. Her name is encoded in ours: <strong>Noether</strong> → <strong>Noethrion</strong>.</span>
+          <span data-lang-ru>Без Нётер у современной физики нет фундамента. Без фундамента — нет цивилизации. Её имя зашифровано в нашем: <strong>Noether</strong> → <strong>Noethrion</strong>.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SPEC                                           -->
+<!-- ============================================ -->
+<section id="spec">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">03</span>
+      <span data-lang-en>Specification</span>
+      <span data-lang-ru>Спецификация</span>
+    </div>
+
+    <h2 class="section-headline">
+      <span data-lang-en>Audit the standard. <em>Run a node.</em><br>Read the spec.</span>
+      <span data-lang-ru>Проверь стандарт. <em>Запусти ноду.</em><br>Читай спецификацию.</span>
+    </h2>
+
+    <p class="section-intro" style="margin-bottom: 4rem;">
+      <span data-lang-en>The protocol is open. The reference implementation is open. The hardware is commodity. There is no proprietary lock-in. There never will be.</span>
+      <span data-lang-ru>Протокол открыт. Эталонная имплементация открыта. Железо — стандартное. Никакой проприетарной привязки. Никогда не будет.</span>
+    </p>
+
+    <div class="spec-grid">
+      <div class="spec-text">
+        <h3>
+          <span data-lang-en>Technical foundations</span>
+          <span data-lang-ru>Технические основы</span>
+        </h3>
+        <p>
+          <span data-lang-en>Built on proven primitives. No experimental cryptography. No custom Layer 1. No reinventing what already works.</span>
+          <span data-lang-ru>Построен на проверенных примитивах. Никакой экспериментальной криптографии. Никакого собственного Layer 1. Не изобретаем то, что уже работает.</span>
+        </p>
+
+        <ul class="spec-list">
+          <li>
+            <span class="key">
+              <span data-lang-en>Token</span>
+              <span data-lang-ru>Токен</span>
+            </span>
+            <span class="val"><em>1 NOET = 1 kWh</em></span>
+          </li>
+          <li>
+            <span class="key">
+              <span data-lang-en>Signature</span>
+              <span data-lang-ru>Подпись</span>
+            </span>
+            <span class="val">ECDSA P-256</span>
+          </li>
+          <li>
+            <span class="key">
+              <span data-lang-en>Hardware</span>
+              <span data-lang-ru>Железо</span>
+            </span>
+            <span class="val">ATECC608B / SE050</span>
+          </li>
+          <li>
+            <span class="key">
+              <span data-lang-en>Settlement</span>
+              <span data-lang-ru>Расчёты</span>
+            </span>
+            <span class="val">EVM-compatible L2</span>
+          </li>
+          <li>
+            <span class="key">
+              <span data-lang-en>License</span>
+              <span data-lang-ru>Лицензия</span>
+            </span>
+            <span class="val">MIT / Apache 2.0</span>
+          </li>
+          <li>
+            <span class="key">
+              <span data-lang-en>Quantum-ready</span>
+              <span data-lang-ru>Квантово-устойчиво</span>
+            </span>
+            <span class="val">ML-DSA roadmap</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="code-block reveal">
+<pre><span class="comment"># <span data-lang-en>verify a kilowatt-hour reading</span><span data-lang-ru>проверка показания счётчика</span></span>
+<span class="prompt">$</span> noethrion verify --meter 0xA3F7...8D2C
+
+<span class="check">✓</span> <span class="meta"><span data-lang-en>signature valid</span><span data-lang-ru>подпись валидна</span></span>
+  <span class="meta">curve: P-256 · ECDSA</span>
+  <span class="meta">chip:  ATECC608B-MAHDA-T</span>
+
+<span class="check">✓</span> <span class="meta"><span data-lang-en>kWh attested</span><span data-lang-ru>кВт·ч подтверждён</span></span>
+  <span class="meta">value: <span class="num">1.0473</span> kWh</span>
+  <span class="meta">at:    2026-05-05T10:32:18Z</span>
+  <span class="meta">by:    meter 0xA3F7...8D2C</span>
+
+<span class="check">✓</span> <span class="meta"><span data-lang-en>merkle root settled</span><span data-lang-ru>корень меркла зафиксирован</span></span>
+  <span class="meta">block: <span class="num">8412934</span> · l2</span>
+  <span class="meta">tx:    0x9F2D...4A1B</span>
+  <span class="meta">gas:   <span class="num">$0.0008</span></span>
+
+<span class="comment"># <span data-lang-en>1 NOET minted to producer wallet</span><span data-lang-ru>1 NOET начислен кошельку производителя</span></span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- PRINCIPLES                                     -->
+<!-- ============================================ -->
+<section id="principles">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">04</span>
+      <span data-lang-en>Principles</span>
+      <span data-lang-ru>Принципы</span>
+    </div>
+
+    <h2 class="section-headline">
+      <span data-lang-en>Standard, <em>not startup.</em></span>
+      <span data-lang-ru>Стандарт, <em>не стартап.</em></span>
+    </h2>
+
+    <p class="section-intro">
+      <span data-lang-en>The Foundation administers the protocol. It does not own it. It does not direct ecosystem development. It does not compete with builders. The protocol succeeds when the ecosystem succeeds — not the other way around.</span>
+      <span data-lang-ru>Фонд администрирует протокол. Он им не владеет. Не направляет развитие экосистемы. Не конкурирует со строителями. Протокол побеждает, когда побеждает экосистема — не наоборот.</span>
+    </p>
+
+    <div class="principles">
+      <div class="principle">
+        <div class="principle-num">PRINCIPLE 01</div>
+        <h4>
+          <span data-lang-en>Open by default</span>
+          <span data-lang-ru>Открытость по умолчанию</span>
+        </h4>
+        <p>
+          <span data-lang-en>Specification, reference implementation, and hardware list are public. Any party can run a node, fork the code, or build on top — without permission, without fees, without negotiation.</span>
+          <span data-lang-ru>Спецификация, эталонная имплементация и список железа публичны. Любой может запустить ноду, форкнуть код или строить сверху — без разрешения, без платы, без переговоров.</span>
+        </p>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">PRINCIPLE 02</div>
+        <h4>
+          <span data-lang-en>Verify, don't trust</span>
+          <span data-lang-ru>Проверяй, не доверяй</span>
+        </h4>
+        <p>
+          <span data-lang-en>Every claim about energy is backed by a hardware signature. Every signature is verifiable on-chain. Every reading is auditable in 30 seconds with a single command.</span>
+          <span data-lang-ru>Любое утверждение об энергии подкреплено аппаратной подписью. Любую подпись можно проверить on-chain. Любое показание проверяется за 30 секунд одной командой.</span>
+        </p>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">PRINCIPLE 03</div>
+        <h4>
+          <span data-lang-en>No middlemen</span>
+          <span data-lang-ru>Без посредников</span>
+        </h4>
+        <p>
+          <span data-lang-en>The meter signs. The blockchain settles. There is no certifier issuing paper receipts. There is no registry charging fees. There is no spreadsheet to lose.</span>
+          <span data-lang-ru>Счётчик подписывает. Блокчейн фиксирует. Нет сертификатора с бумажными квитанциями. Нет реестра с платой за услуги. Нет таблицы, которую можно потерять.</span>
+        </p>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">PRINCIPLE 04</div>
+        <h4>
+          <span data-lang-en>Built to outlive us</span>
+          <span data-lang-ru>Создано, чтобы пережить нас</span>
+        </h4>
+        <p>
+          <span data-lang-en>The Foundation will eventually have no founders, no CEO, and no single jurisdiction. The protocol will run regardless. This is not a feature — it is a precondition.</span>
+          <span data-lang-ru>У Фонда со временем не будет ни основателей, ни CEO, ни единой юрисдикции. Протокол продолжит работать. Это не функция — это предусловие.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- CTA                                            -->
+<!-- ============================================ -->
+<section class="cta-section">
+  <div class="container">
+    <span class="cta-eta">η</span>
+    <h2 class="cta-headline">
+      <span data-lang-en>Energy speaks for itself.<br>We just give it a <em>signature.</em></span>
+      <span data-lang-ru>Энергия говорит сама за себя.<br>Мы просто даём ей <em>подпись.</em></span>
+    </h2>
+    <p class="cta-sub">
+      <span data-lang-en>The protocol is in early development. The community is small. The work is real. If you build hardware, write Solidity, run renewables, or care about climate verification done right — we want to hear from you.</span>
+      <span data-lang-ru>Протокол в ранней разработке. Сообщество небольшое. Работа реальная. Если ты делаешь железо, пишешь на Solidity, работаешь с возобновляемыми источниками или тебе важна правильная климатическая верификация — мы хотим услышать тебя.</span>
+    </p>
+    <div class="cta-buttons">
+      <a href="https://github.com/noethrion/noethrion" class="btn-primary">
+        <span data-lang-en>Join on Github</span>
+        <span data-lang-ru>Зайти на Github</span>
+        <span class="arrow">→</span>
+      </a>
+      <a href="mailto:team@noethrion.com" class="btn-ghost">
+        <span data-lang-en>team@noethrion.com</span>
+        <span data-lang-ru>team@noethrion.com</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- FOOTER                                         -->
+<!-- ============================================ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-mark">
+          <span class="eta-symbol">η</span>
+          noethrion
+        </div>
+        <p class="footer-tagline">
+          <span data-lang-en>An open standard for hardware-attested energy production. Built to outlive its founders.</span>
+          <span data-lang-ru>Открытый стандарт для аппаратно-подтверждённой генерации энергии. Создан, чтобы пережить своих основателей.</span>
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h5>
+          <span data-lang-en>Protocol</span>
+          <span data-lang-ru>Протокол</span>
+        </h5>
+        <ul>
+          <li><a href="#"><span data-lang-en>Specification</span><span data-lang-ru>Спецификация</span></a></li>
+          <li><a href="#"><span data-lang-en>Whitepaper</span><span data-lang-ru>Whitepaper</span></a></li>
+          <li><a href="#">Github</a></li>
+          <li><a href="#"><span data-lang-en>Reference impl.</span><span data-lang-ru>Эталонная имплементация</span></a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>
+          <span data-lang-en>Foundation</span>
+          <span data-lang-ru>Фонд</span>
+        </h5>
+        <ul>
+          <li><a href="#"><span data-lang-en>About</span><span data-lang-ru>О проекте</span></a></li>
+          <li><a href="#"><span data-lang-en>Constitution</span><span data-lang-ru>Конституция</span></a></li>
+          <li><a href="#"><span data-lang-en>Governance</span><span data-lang-ru>Управление</span></a></li>
+          <li><a href="#"><span data-lang-en>Brand book</span><span data-lang-ru>Брендбук</span></a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>
+          <span data-lang-en>Community</span>
+          <span data-lang-ru>Сообщество</span>
+        </h5>
+        <ul>
+          <li><a href="#">Telegram</a></li>
+          <li><a href="#">Twitter / X</a></li>
+          <li><a href="#">Discord</a></li>
+          <li><a href="#">Mirror.xyz</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>η = E<sub>useful</sub> / E<sub>total</sub></span>
+      <span>
+        <span data-lang-en>v0.1 · working draft · 05.05.2026</span>
+        <span data-lang-ru>v0.1 · рабочий черновик · 05.05.2026</span>
+      </span>
+      <span>
+        <span data-lang-en>built with care</span>
+        <span data-lang-ru>сделано с заботой</span>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ============================================
+  // LANGUAGE SWITCHING
+  // ============================================
+  const langButtons = document.querySelectorAll('.lang-btn');
+  const html = document.documentElement;
+
+  // Try to load saved language preference
+  const savedLang = localStorage.getItem('noethrion-lang');
+  if (savedLang === 'ru' || savedLang === 'en') {
+    setLang(savedLang);
+  }
+
+  langButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      setLang(lang);
+      try { localStorage.setItem('noethrion-lang', lang); } catch (e) {}
+    });
+  });
+
+  function setLang(lang) {
+    html.setAttribute('lang', lang);
+    langButtons.forEach(b => {
+      const isActive = b.dataset.lang === lang;
+      b.classList.toggle('active', isActive);
+      // REC-4 from docs/audit/accessibility-audit.md — keep aria-pressed in sync
+      b.setAttribute('aria-pressed', String(isActive));
+    });
+  }
+
+  // ============================================
+  // REVEAL ON SCROLL
+  // ============================================
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

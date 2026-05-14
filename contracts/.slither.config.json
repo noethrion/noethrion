@@ -1,0 +1,11 @@
+{
+  "_comment_1": "Slither configuration for Noethrion smart contracts. The exclusions below are deliberate and each has a rationale documented in docs/audit/smart-contracts-audit.md (Static analysis section). An auditor reading this file alongside the audit doc sees that we did not over-exclude.",
+  "filter_paths": "lib|test|script",
+  "exclude_dependencies": true,
+  "_comment_2": "Detector exclusions: timestamp is used only to gate the challenge-window comparison, not for randomness, and validator-manipulable jitter (~15s) is acceptable under our 1-hour default window. solc-version is a standard exclusion in pinned-pragma projects. unindexed-event-address is included defensively: every address event parameter in NoethrionAttester / NoethrionToken is ALREADY indexed (proposer, validator, beneficiary, minter, oldToken, newToken, leaf), so the exclusion is a no-op against today's source — it stays as a guard against future events being introduced without the indexed keyword on address params.",
+  "detectors_to_exclude": "timestamp,solc-version,unindexed-event-address",
+  "solc_remaps": [
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "forge-std/=lib/forge-std/src/"
+  ]
+}

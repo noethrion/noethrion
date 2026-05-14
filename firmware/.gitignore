@@ -1,0 +1,15 @@
+# PlatformIO build artifacts
+.pio/
+.pioenvs/
+.piolibdeps/
+.cache/
+compile_commands.json
+dependencies.lock
+.vscode/
+.clang_complete
+.gcc-flags.json
+
+# Editor / OS
+.idea/
+*.swp
+.DS_Store

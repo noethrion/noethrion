@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Noethrion · Twitter / X profile avatar · 400×400 square
+     Centered η + baseline rule on Noir. PNG sibling rendered by tools/render_social_assets.py. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <rect width="400" height="400" fill="#0A0A0A"/>
+
+  <!-- Large eta -->
+  <text x="200" y="280" font-family="Georgia, 'Times New Roman', serif" font-size="280" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+
+  <!-- Baseline rule — 55% of glyph visual width, centered -->
+  <line x1="125" y1="300" x2="275" y2="300" stroke="#F5F1E8" stroke-width="2" stroke-linecap="round"/>
+</svg>

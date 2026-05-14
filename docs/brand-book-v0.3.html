@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Noethrion · Brand Book v0.3 (Working Draft)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --noir: #0A0A0A;
+      --noir-2: #111111;
+      --noir-3: #1A1A1A;
+      --noir-4: #242424;
+      --bone: #F5F1E8;
+      --bone-2: #C4BFB2;
+      --bone-3: #6B6862;
+      --eta: #14F195;
+      --eta-dim: #0CB371;
+      --pulse: #B8FF3B;
+      --terra: #C8654A;
+      --font-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+      --font-body: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      font-weight: 300;
+      background: var(--noir);
+      color: var(--bone);
+      line-height: 1.6;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 64px 32px; }
+    section { margin-bottom: 96px; scroll-margin-top: 32px; }
+    h1, h2, h3, h4 { font-family: var(--font-body); font-weight: 400; color: var(--bone); }
+    h1 { font-size: 56px; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 24px; }
+    h2 { font-size: 36px; letter-spacing: -0.5px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--noir-4); }
+    h3 { font-size: 22px; margin: 40px 0 16px; }
+    h4 { font-size: 16px; margin: 24px 0 12px; color: var(--bone-2); text-transform: uppercase; letter-spacing: 2px; }
+    p { margin-bottom: 16px; color: var(--bone-2); max-width: 70ch; }
+    p strong { color: var(--bone); font-weight: 500; }
+    a { color: var(--eta); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; }
+    a:hover { border-bottom-color: var(--eta); }
+    code, .mono { font-family: var(--font-mono); font-size: 0.9em; color: var(--bone); background: var(--noir-2); padding: 2px 6px; border-radius: 3px; }
+    .caption {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--bone-3);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .display-italic { font-family: var(--font-display); font-style: italic; color: var(--eta); }
+
+    /* Cover */
+    .cover {
+      min-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      border-bottom: 1px solid var(--noir-4);
+      padding-bottom: 96px;
+    }
+    .cover .logo-frame { margin-bottom: 48px; }
+    .cover h1 {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 72px;
+      font-weight: 400;
+    }
+    .cover .subtitle {
+      color: var(--bone-2);
+      font-size: 20px;
+      margin-top: 16px;
+      max-width: 600px;
+    }
+    .cover .meta {
+      margin-top: 48px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 3px;
+      color: var(--bone-3);
+      text-transform: uppercase;
+    }
+
+    /* Validation banner */
+    .validation-banner {
+      background: linear-gradient(180deg, var(--noir-3), var(--noir-2));
+      border: 1px solid var(--noir-4);
+      border-left: 3px solid var(--pulse);
+      border-radius: 4px;
+      padding: 32px;
+      margin-bottom: 48px;
+    }
+    .validation-banner h3 {
+      margin-top: 0;
+      color: var(--pulse);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .validation-banner ul {
+      list-style: none;
+      margin: 16px 0;
+      padding: 0;
+    }
+    .validation-banner li {
+      padding: 8px 0;
+      color: var(--bone);
+      font-family: var(--font-mono);
+      font-size: 14px;
+    }
+    .validation-banner li::before {
+      content: "[ ] ";
+      color: var(--bone-3);
+      margin-right: 4px;
+    }
+
+    /* Color swatches */
+    .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin: 32px 0; }
+    .swatch {
+      border: 1px solid var(--noir-4);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .swatch-color { height: 140px; }
+    .swatch-info { padding: 20px; background: var(--noir-2); }
+    .swatch-info .name { font-size: 18px; color: var(--bone); margin-bottom: 4px; }
+    .swatch-info .hex { font-family: var(--font-mono); font-size: 13px; color: var(--bone-3); letter-spacing: 1px; }
+    .swatch-info .role { margin-top: 8px; font-size: 13px; color: var(--bone-2); }
+
+    /* Logo grid */
+    .logo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 24px;
+      margin: 24px 0;
+    }
+    .logo-card {
+      background: var(--noir-2);
+      border: 1px solid var(--noir-4);
+      border-radius: 4px;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .logo-card:hover { border-color: var(--bone-3); transform: translateY(-2px); }
+    .logo-card.primary { border-color: var(--eta); border-width: 2px; box-shadow: 0 0 24px rgba(20, 241, 149, 0.15); }
+    .logo-card .logo-display {
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--noir);
+    }
+    .logo-card .logo-display svg { max-width: 90%; max-height: 90%; height: auto; }
+    .logo-card .logo-meta { padding: 16px; }
+    .logo-card .logo-meta .id { font-family: var(--font-mono); font-size: 12px; color: var(--bone-3); letter-spacing: 2px; }
+    .logo-card .logo-meta .name { color: var(--bone); margin-top: 4px; font-size: 14px; }
+    .logo-card .logo-meta .badge {
+      display: inline-block;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--noir);
+      background: var(--eta);
+      padding: 2px 8px;
+      border-radius: 2px;
+      text-transform: uppercase;
+    }
+
+    .logo-card.wide .logo-display { height: 100px; padding: 16px; }
+    .logo-card.tall .logo-display { height: 280px; }
+    .logo-card.light .logo-display { background: var(--bone); }
+
+    /* Baseline demos */
+    .baseline-demos {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      margin: 32px 0;
+    }
+    .baseline-demo {
+      background: var(--noir-2);
+      border: 1px solid var(--noir-4);
+      border-radius: 4px;
+      padding: 16px;
+    }
+    .baseline-demo.correct { border-color: var(--eta); }
+    .baseline-demo.wrong { border-color: var(--terra); }
+    .baseline-demo .label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .baseline-demo.correct .label { color: var(--eta); }
+    .baseline-demo.wrong .label { color: var(--terra); }
+    .baseline-demo .desc { font-size: 13px; color: var(--bone-3); margin-top: 8px; }
+    .baseline-demo .demo-svg-wrap { background: var(--noir); border-radius: 4px; padding: 16px; display:flex; justify-content:center; }
+
+    /* DON'Ts grid */
+    .donts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .dont {
+      background: var(--noir-2);
+      border-left: 3px solid var(--terra);
+      padding: 16px 20px;
+      border-radius: 0 4px 4px 0;
+    }
+    .dont .icon { color: var(--terra); font-weight: 700; margin-right: 8px; font-family: var(--font-mono); }
+    .dont .text { color: var(--bone); font-size: 14px; }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--noir-4);
+    }
+    th {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--bone-3);
+      text-transform: uppercase;
+      font-weight: 400;
+      background: var(--noir-2);
+    }
+    td { color: var(--bone-2); }
+    td.id { font-family: var(--font-mono); color: var(--eta); font-size: 12px; }
+    td strong { color: var(--bone); }
+
+    /* Pillar list */
+    .pillars { list-style: none; margin: 16px 0; padding: 0; }
+    .pillars li {
+      padding: 12px 0;
+      padding-left: 32px;
+      position: relative;
+      color: var(--bone-2);
+      border-bottom: 1px solid var(--noir-4);
+    }
+    .pillars li:last-child { border-bottom: none; }
+    .pillars li::before {
+      content: "η";
+      position: absolute;
+      left: 0;
+      top: 12px;
+      font-family: var(--font-display);
+      font-style: italic;
+      color: var(--eta);
+      font-size: 18px;
+    }
+    .pillars li strong { color: var(--bone); }
+
+    /* TOC */
+    nav.toc {
+      position: sticky;
+      top: 0;
+      background: rgba(10, 10, 10, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--noir-4);
+      z-index: 10;
+      padding: 12px 0;
+    }
+    nav.toc .toc-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 32px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+    }
+    nav.toc .brand-mark { font-family: var(--font-display); font-style: italic; color: var(--eta); font-size: 20px; margin-right: 16px; }
+    nav.toc a {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--bone-3);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    nav.toc a:hover { color: var(--eta); border-bottom: none; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--noir-4);
+      padding: 48px 0;
+      text-align: center;
+      color: var(--bone-3);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+    footer .formula { font-family: var(--font-display); font-style: italic; font-size: 18px; color: var(--eta); margin: 16px 0; letter-spacing: 0; }
+
+    /* Spec block */
+    .spec-block {
+      background: var(--noir-2);
+      border: 1px solid var(--noir-4);
+      border-radius: 4px;
+      padding: 24px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--bone);
+      margin: 16px 0;
+      line-height: 1.8;
+    }
+    .spec-block .key { color: var(--bone-3); }
+    .spec-block .val { color: var(--eta); }
+
+    /* Type spec */
+    .type-spec { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin: 24px 0; }
+    .type-card { background: var(--noir-2); border: 1px solid var(--noir-4); border-radius: 4px; padding: 24px; }
+    .type-card .sample { font-size: 48px; margin-bottom: 16px; color: var(--bone); }
+    .type-card .role { font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; color: var(--bone-3); text-transform: uppercase; }
+    .type-card .name { color: var(--bone); margin-top: 8px; font-size: 16px; }
+    .type-card .desc { color: var(--bone-3); font-size: 13px; margin-top: 8px; }
+
+    /* Validation protocol */
+    .protocol {
+      background: var(--noir-2);
+      border-left: 3px solid var(--eta);
+      padding: 24px 28px;
+      border-radius: 0 4px 4px 0;
+      margin: 24px 0;
+    }
+    .protocol ol { margin: 16px 0 0 24px; color: var(--bone-2); }
+    .protocol ol li { margin: 8px 0; }
+    .protocol p { color: var(--bone); }
+
+    @media (max-width: 720px) {
+      h1 { font-size: 36px; }
+      h2 { font-size: 26px; }
+      .cover h1 { font-size: 48px; }
+      .container { padding: 32px 20px; }
+      nav.toc { display: none; }
+      section { margin-bottom: 64px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── TOC ─── -->
+<nav class="toc">
+  <div class="toc-inner">
+    <span class="brand-mark">η</span>
+    <a href="#cover">Cover</a>
+    <a href="#validation">Status</a>
+    <a href="#mission">Mission</a>
+    <a href="#primary">Primary</a>
+    <a href="#palette">Palette</a>
+    <a href="#typography">Type</a>
+    <a href="#baseline">Baseline</a>
+    <a href="#system">System</a>
+    <a href="#donts">DON'Ts</a>
+    <a href="#usage">Usage</a>
+    <a href="#protocol">Protocol</a>
+    <a href="#filemap">Files</a>
+  </div>
+</nav>
+
+<div class="container">
+
+<!-- ─── 1 · COVER ─── -->
+<section class="cover" id="cover">
+  <div class="logo-frame">
+    <!-- D2 inline 256×256 preview -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="256" height="256">
+      <rect width="1024" height="1024" fill="#0A0A0A"/>
+      <text x="512" y="680" font-family="Instrument Serif, Times New Roman, Georgia, serif" font-size="720" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+      <line x1="423" y1="755" x2="591" y2="755" stroke="#F5F1E8" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="caption">// Noethrion · Brand Book</div>
+  <h1>Brand Book<br><em style="font-style:italic;">v0.3</em></h1>
+  <p class="subtitle">Primary identity, logo system, usage rules — current working draft.</p>
+  <div class="meta">v0.3 · 2026-05-06 · Working Draft</div>
+</section>
+
+<!-- ─── 2 · VALIDATION STATUS ─── -->
+<section id="validation">
+  <h2>Validation Status</h2>
+  <p>This brand book reflects current working choices. None of the items below are locked yet — they are the best current guess after internal review and will be re-tested before public launch.</p>
+
+  <div class="validation-banner">
+    <h3>// Pending Validation</h3>
+    <ul>
+      <li><strong>D2 primary mark</strong> — visual recognition test (N ≥ 5 reviewers)</li>
+      <li><strong>Color palette</strong> — accessibility &amp; brand recall test</li>
+      <li><strong>Baseline rule</strong> — readability check at small sizes (16px, 32px)</li>
+    </ul>
+    <p style="font-size:13px; color: var(--bone-3); font-family: var(--font-mono); margin-top: 12px;">After validation — either lock or revise. Until then, treat all choices as <strong style="color:var(--bone);">best current guess, not law.</strong></p>
+  </div>
+</section>
+
+<!-- ─── 3 · MISSION & DOCTRINE ─── -->
+<section id="mission">
+  <h2>Mission &amp; Doctrine</h2>
+  <p>The visual identity exists to serve the protocol. Every design choice in this book traces back to a strategic pillar.</p>
+  <ul class="pillars">
+    <li><strong>Gravitational, not imperial.</strong> The Foundation administrates an open standard; it does not own the ecosystem.</li>
+    <li><strong>A physics law for energy economy.</strong> Noethrion is the verification primitive for generation, expressed through code and hardware.</li>
+    <li><strong>Does not threaten sovereign currencies.</strong> Noethrion serves USD / EUR / CNY as an energy infrastructure layer.</li>
+    <li><strong>100% algorithmic emission</strong> of NOET (rule-based, no discretionary issuance); Foundation receives max 5% treasury with 4-year vesting.</li>
+    <li><strong>Distribution via certified integration partners.</strong> The Foundation administers the open standard; partners build the products that use it. Enterprise relationships are mediated through certified third parties.</li>
+    <li><strong>Multi-client implementation</strong> — 3–5 independent reference clients for resilience.</li>
+  </ul>
+</section>
+
+<!-- ─── 4 · WORKING PRIMARY MARK ─── -->
+<section id="primary">
+  <h2>Working Primary Mark — D2</h2>
+  <p><strong>D2 is the working primary mark as of 2026-05-06.</strong> It is used for consistency across all surfaces during the pre-launch phase. Subject to revision before public launch.</p>
+
+  <div style="display:flex; justify-content:center; align-items:center; padding:48px; background: var(--noir-2); border:1px solid var(--noir-4); border-radius: 4px; margin: 24px 0;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="512" height="512">
+      <rect width="1024" height="1024" fill="#0A0A0A"/>
+      <text x="512" y="680" font-family="Instrument Serif, Times New Roman, Georgia, serif" font-size="720" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+      <line x1="423" y1="755" x2="591" y2="755" stroke="#F5F1E8" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <h3>Where D2 is currently in use</h3>
+  <ul class="pillars">
+    <li>Twitter / X profile picture</li>
+    <li>YouTube channel avatar</li>
+    <li>GitHub organization icon</li>
+    <li>Discord / Telegram avatars</li>
+    <li>Paragraph publication header</li>
+  </ul>
+  <p><strong>If in doubt about which logo to use → use D2.</strong></p>
+
+  <div class="spec-block">
+    <div><span class="key">file:</span> <span class="val">assets/logos/D/D2_primary_1024.svg</span></div>
+    <div><span class="key">canvas:</span> <span class="val">1024 × 1024</span></div>
+    <div><span class="key">η font:</span> <span class="val">Instrument Serif, italic, 400, size 720</span></div>
+    <div><span class="key">η fill:</span> <span class="val">#14F195</span></div>
+    <div><span class="key">baseline:</span> <span class="val">x = 307 → 717, y = 755, stroke 4, round caps, #F5F1E8</span></div>
+    <div><span class="key">background:</span> <span class="val">#0A0A0A (noir)</span></div>
+  </div>
+</section>
+
+<!-- ─── 5 · COLOR PALETTE ─── -->
+<section id="palette">
+  <h2>Color Palette · Working Selection</h2>
+  <p>Three colors carry the entire identity. Every Noethrion surface lives inside this palette.</p>
+
+  <div class="swatches">
+    <div class="swatch">
+      <div class="swatch-color" style="background:#0A0A0A; border-bottom: 1px solid var(--noir-4);"></div>
+      <div class="swatch-info">
+        <div class="name">Noir</div>
+        <div class="hex">#0A0A0A</div>
+        <div class="role">Background — dark mode surfaces, default canvas.</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#14F195;"></div>
+      <div class="swatch-info">
+        <div class="name">Signal Green (η)</div>
+        <div class="hex">#14F195</div>
+        <div class="role">η symbol, accents, primary CTA. The brand color.</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#F5F1E8;"></div>
+      <div class="swatch-info">
+        <div class="name">Cream (Bone)</div>
+        <div class="hex">#F5F1E8</div>
+        <div class="role">Baseline line, light text on noir, light-mode background.</div>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top: 16px; font-size: 13px; color: var(--bone-3);">These three are the current selection. Pending an accessibility audit before lock. Extended palette tokens (noir-2, bone-2, eta-dim, pulse, terra) exist in the addendum but should be used sparingly.</p>
+</section>
+
+<!-- ─── 6 · TYPOGRAPHY ─── -->
+<section id="typography">
+  <h2>Typography</h2>
+  <p>The η is the design. Typography around it stays quiet.</p>
+  <div class="type-spec">
+    <div class="type-card">
+      <div class="sample" style="font-family: var(--font-display); font-style: italic; color: var(--eta);">η</div>
+      <div class="role">// Symbol · Display</div>
+      <div class="name">Instrument Serif</div>
+      <div class="desc">Italic, weight 400. Used <strong style="color:var(--bone);">only</strong> for the η character and editorial display moments.</div>
+    </div>
+    <div class="type-card">
+      <div class="sample" style="font-family: var(--font-body); font-weight: 300;">Aa</div>
+      <div class="role">// Body · UI</div>
+      <div class="name">Inter Tight</div>
+      <div class="desc">Weights 300, 400, 500, 600. All body copy, navigation, buttons, marketing copy. Default 300.</div>
+    </div>
+    <div class="type-card">
+      <div class="sample" style="font-family: var(--font-mono);">[η]</div>
+      <div class="role">// Code · Tech</div>
+      <div class="name">JetBrains Mono</div>
+      <div class="desc">Code blocks, technical metadata, mono captions, <code>[η]</code> mono lockups.</div>
+    </div>
+  </div>
+  <p><strong>Don't mix fonts.</strong> If a surface looks busy, remove a font, not add one. The η is the design.</p>
+</section>
+
+<!-- ─── 7 · BASELINE RULE ─── -->
+<section id="baseline">
+  <h2>Baseline Rule (Formal)</h2>
+  <p>The horizontal baseline below η is a <strong>defining brand element</strong>. v0.3 formalizes it.</p>
+
+  <h3>Semantic meaning</h3>
+  <p>The baseline represents:</p>
+  <ul class="pillars">
+    <li><strong>Physical grounding</strong> — the protocol is anchored to physical electricity generation, not abstract claims.</li>
+    <li><strong>The horizon line</strong> — energy is generated from sources that exist in physical reality.</li>
+    <li><strong>A signature line</strong> — like a contract, every kWh is signed at a specific point in time.</li>
+  </ul>
+
+  <h3>Geometric rules (from Addendum §3.2.1)</h3>
+  <p>When the baseline is present, it must be:</p>
+  <ul class="pillars">
+    <li>Horizontal (no diagonals, curves, or breaks except in approved variants like B3 wave or B4 pulse).</li>
+    <li>Centered horizontally on the η character.</li>
+    <li>Width: <strong>50–65%</strong> of the visual width of η at the same scale (default 55%).</li>
+    <li>Positioned <strong>directly below the descender of η</strong> (the right-side descender).</li>
+    <li>Stroke weight: <strong>0.6–1.5%</strong> of the height of η (default 0.7%).</li>
+  </ul>
+
+  <h3>D2 implementation (1024 × 1024 canvas, η in fallback Times New Roman Italic)</h3>
+  <p style="font-size: 13px; color: var(--bone-3);">η visual width measured at <strong style="color:var(--bone);">~307px</strong> on a 1024 canvas (font-size 720). 55% of that = 168px baseline span, centered on the visual ink center of η.</p>
+  <div class="spec-block">
+    <div><span class="key">x1, x2:</span> <span class="val">423 → 591</span> (span 168px = 55% of η visual width)</div>
+    <div><span class="key">y:</span> <span class="val">755</span> (just below η descender)</div>
+    <div><span class="key">stroke:</span> <span class="val">4px, round linecap</span></div>
+    <div><span class="key">color:</span> <span class="val">#F5F1E8 (Cream / Bone)</span></div>
+  </div>
+  <p style="font-size: 13px; color: var(--bone-3);">Note: Instrument Serif Italic does not include Greek glyphs — η renders via the fallback chain (Times New Roman Italic on macOS/iOS, Georgia Italic on some Android). Measurements above are taken from Times New Roman Italic. Visual width in Georgia Italic is ~14% wider; this falls inside the 50–65% addendum range and does not require canvas-specific adjustment.</p>
+
+  <h3>Visual demonstrations</h3>
+  <div class="baseline-demos">
+
+    <div class="baseline-demo correct">
+      <div class="label">✓ Correct</div>
+      <div class="demo-svg-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="200" height="200">
+          <rect width="1024" height="1024" fill="#0A0A0A"/>
+          <text x="512" y="680" font-family="Instrument Serif, Times New Roman, serif" font-size="720" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="423" y1="755" x2="591" y2="755" stroke="#F5F1E8" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="desc">Centered, below descender, correct width &amp; stroke. This is D2.</div>
+    </div>
+
+    <div class="baseline-demo wrong">
+      <div class="label">✗ Wrong · crosses</div>
+      <div class="demo-svg-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="200" height="200">
+          <rect width="1024" height="1024" fill="#0A0A0A"/>
+          <text x="512" y="680" font-family="Instrument Serif, Times New Roman, serif" font-size="720" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="423" y1="550" x2="591" y2="550" stroke="#F5F1E8" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="desc">Line crosses through the η. The baseline must sit below the descender, never through the symbol.</div>
+    </div>
+
+    <div class="baseline-demo wrong">
+      <div class="label">✗ Wrong · off-center</div>
+      <div class="demo-svg-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="200" height="200">
+          <rect width="1024" height="1024" fill="#0A0A0A"/>
+          <text x="512" y="680" font-family="Instrument Serif, Times New Roman, serif" font-size="720" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="300" y1="755" x2="468" y2="755" stroke="#F5F1E8" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="desc">Correct width (55%) but shifted left. Baseline must be centered on the visual ink center of η.</div>
+    </div>
+
+    <div class="baseline-demo wrong">
+      <div class="label">✗ Wrong · touches</div>
+      <div class="demo-svg-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="200" height="200">
+          <rect width="1024" height="1024" fill="#0A0A0A"/>
+          <text x="512" y="680" font-family="Instrument Serif, Times New Roman, serif" font-size="720" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="423" y1="720" x2="591" y2="720" stroke="#F5F1E8" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="desc">Line touches the η descender. Maintain visible clearance — y=755 minimum on a 1024 canvas with font-size 720.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── 8 · LOGO SYSTEM ─── -->
+<section id="system">
+  <h2>Logo System — Four Categories</h2>
+  <p>The logo system has four formal categories. Each has a defined purpose and is mapped to specific surfaces in the Usage Matrix.</p>
+
+  <h3>Category D — Brand Marks (square monograms)</h3>
+  <p>The η on noir. The default brand identity. Used for avatars and primary surfaces.</p>
+  <div class="logo-grid">
+
+    <div class="logo-card primary">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="180" height="180">
+          <rect width="400" height="400" fill="#0A0A0A"/>
+          <text x="200" y="265" font-family="Instrument Serif, Times New Roman, serif" font-size="280" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="165" y1="295" x2="231" y2="295" stroke="#F5F1E8" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">D2</div>
+        <div class="name">Green η + Bone Baseline</div>
+        <span class="badge">Working Primary</span>
+      </div>
+    </div>
+
+    <div class="logo-card">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="180" height="180">
+          <rect width="400" height="400" fill="#0A0A0A"/>
+          <text x="200" y="265" font-family="Instrument Serif, Times New Roman, serif" font-size="280" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">D1</div>
+        <div class="name">Pure Green η</div>
+      </div>
+    </div>
+
+    <div class="logo-card">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="180" height="180">
+          <rect width="400" height="400" fill="#0A0A0A"/>
+          <text x="200" y="265" font-family="Instrument Serif, Times New Roman, serif" font-size="280" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="165" y1="295" x2="231" y2="295" stroke="#14F195" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">D3</div>
+        <div class="name">Full Green</div>
+      </div>
+    </div>
+
+    <div class="logo-card">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="180" height="180">
+          <rect width="400" height="400" fill="#0A0A0A"/>
+          <text x="200" y="265" font-family="Instrument Serif, Times New Roman, serif" font-size="280" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="165" y1="295" x2="231" y2="295" stroke="#F5F1E8" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="215" cy="295" r="4" fill="#B8FF3B"/>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">D4</div>
+        <div class="name">η + Pulse Dot (Signal)</div>
+      </div>
+    </div>
+
+  </div>
+
+  <h3>Category E — Mono Marks (technical contexts)</h3>
+  <p><code>[η]</code> in JetBrains Mono. Required for GitHub, npm, technical docs, terminal screenshots.</p>
+  <div class="logo-grid">
+
+    <div class="logo-card">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="180" height="180">
+          <rect width="400" height="400" fill="#0A0A0A"/>
+          <text x="115" y="240" font-family="JetBrains Mono, Courier, monospace" font-size="180" font-weight="400" text-anchor="middle" fill="#6B6862">[</text>
+          <text x="200" y="240" font-family="Instrument Serif, Times New Roman, serif" font-size="180" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <text x="285" y="240" font-family="JetBrains Mono, Courier, monospace" font-size="180" font-weight="400" text-anchor="middle" fill="#6B6862">]</text>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">E1</div>
+        <div class="name">Mono Bracket [η]</div>
+      </div>
+    </div>
+
+    <div class="logo-card wide">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="320" height="80">
+          <rect width="800" height="200" fill="#0A0A0A"/>
+          <text x="80" y="125" font-family="JetBrains Mono, Courier, monospace" font-size="80" font-weight="400" text-anchor="middle" fill="#6B6862">[</text>
+          <text x="135" y="125" font-family="Instrument Serif, Times New Roman, serif" font-size="80" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <text x="190" y="125" font-family="JetBrains Mono, Courier, monospace" font-size="80" font-weight="400" text-anchor="middle" fill="#6B6862">]</text>
+          <text x="240" y="120" font-family="JetBrains Mono, Courier, monospace" font-size="44" font-weight="400" fill="#F5F1E8">noethrion</text>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">E2</div>
+        <div class="name">Code Label</div>
+      </div>
+    </div>
+
+    <div class="logo-card wide">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="320" height="80">
+          <rect width="800" height="200" fill="#0A0A0A"/>
+          <text x="40" y="120" font-family="JetBrains Mono, Courier, monospace" font-size="36" font-weight="400" fill="#14F195">$</text>
+          <text x="80" y="120" font-family="JetBrains Mono, Courier, monospace" font-size="36" font-weight="400" fill="#F5F1E8">noethrion --status</text>
+          <text x="490" y="120" font-family="JetBrains Mono, Courier, monospace" font-size="36" font-weight="400" fill="#6B6862">→</text>
+          <text x="540" y="125" font-family="Instrument Serif, Times New Roman, serif" font-size="56" font-style="italic" font-weight="400" fill="#14F195">η</text>
+          <text x="595" y="120" font-family="JetBrains Mono, Courier, monospace" font-size="28" font-weight="400" fill="#6B6862">live</text>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">E3</div>
+        <div class="name">Terminal Style</div>
+      </div>
+    </div>
+
+  </div>
+
+  <h3>Category F — Display (editorial / hero)</h3>
+  <p>Editorial compositions for landing pages, pitch decks, banners. Default for marketing surfaces.</p>
+  <div class="logo-grid">
+
+    <div class="logo-card wide">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="400" height="200">
+          <rect width="1200" height="600" fill="#0A0A0A"/>
+          <text x="60" y="100" font-family="JetBrains Mono, Courier, monospace" font-size="11" font-weight="400" fill="#6B6862">// PRIMARY MARK · v0.3</text>
+          <text x="60" y="120" font-family="JetBrains Mono, Courier, monospace" font-size="11" font-weight="400" fill="#6B6862">// η = E_useful / E_total</text>
+          <text x="600" y="450" font-family="Instrument Serif, Times New Roman, serif" font-size="500" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="380" y1="490" x2="820" y2="490" stroke="#F5F1E8" stroke-width="1.5"/>
+          <text x="60" y="560" font-family="JetBrains Mono, Courier, monospace" font-size="11" font-weight="400" fill="#6B6862">// noethrion · open standard for verifiable energy</text>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">F1</div>
+        <div class="name">Hero Display</div>
+      </div>
+    </div>
+
+    <div class="logo-card tall">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="180" height="240">
+          <rect width="600" height="800" fill="#0A0A0A"/>
+          <text x="300" y="80" font-family="JetBrains Mono, Courier, monospace" font-size="11" font-weight="400" letter-spacing="2" text-anchor="middle" fill="#6B6862">// EFFICIENCY · ATTESTATION · ENERGY</text>
+          <text x="300" y="490" font-family="Instrument Serif, Times New Roman, serif" font-size="440" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="180" y1="525" x2="420" y2="525" stroke="#F5F1E8" stroke-width="1.5"/>
+          <text x="300" y="640" font-family="Inter Tight, sans-serif" font-size="36" font-weight="300" letter-spacing="10" text-anchor="middle" fill="#F5F1E8">NOETHRION</text>
+          <text x="300" y="690" font-family="Instrument Serif, Times New Roman, serif" font-size="22" font-style="italic" font-weight="400" text-anchor="middle" fill="#C4BFB2">Open standard for verifiable energy</text>
+          <text x="300" y="740" font-family="JetBrains Mono, Courier, monospace" font-size="13" font-weight="400" letter-spacing="2" text-anchor="middle" fill="#6B6862">1 NOET = 1 kWh · verified</text>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">F2</div>
+        <div class="name">Editorial Vertical</div>
+      </div>
+    </div>
+
+    <div class="logo-card wide">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 500" width="450" height="150">
+          <rect width="1500" height="500" fill="#0A0A0A"/>
+          <text x="200" y="365" font-family="Instrument Serif, Times New Roman, serif" font-size="320" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="80" y1="395" x2="320" y2="395" stroke="#F5F1E8" stroke-width="1.5"/>
+          <text x="450" y="200" font-family="JetBrains Mono, Courier, monospace" font-size="14" font-weight="400" letter-spacing="3" fill="#6B6862">// PRESENTING</text>
+          <text x="450" y="290" font-family="Instrument Serif, Times New Roman, serif" font-size="80" font-style="italic" font-weight="400" fill="#F5F1E8">Noethrion</text>
+          <text x="450" y="340" font-family="Inter Tight, sans-serif" font-size="20" font-weight="300" letter-spacing="2" fill="#C4BFB2">Open standard for verifiable energy.</text>
+          <text x="450" y="365" font-family="Inter Tight, sans-serif" font-size="20" font-weight="300" letter-spacing="2" fill="#C4BFB2">1 unit · 1 kWh · cryptographically signed.</text>
+          <text x="450" y="430" font-family="JetBrains Mono, Courier, monospace" font-size="13" font-weight="400" fill="#14F195">noethrion.com</text>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">F3</div>
+        <div class="name">Wide Banner</div>
+      </div>
+    </div>
+
+  </div>
+
+  <h3>Category G — Contextual (specialized formats)</h3>
+  <p>Avatars, favicons, light mode, official seal. Use when context requires a specific format.</p>
+  <div class="logo-grid">
+
+    <div class="logo-card">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="180" height="180">
+          <rect width="400" height="400" fill="#0A0A0A"/>
+          <text x="200" y="285" font-family="Instrument Serif, Times New Roman, serif" font-size="320" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="100" y1="320" x2="300" y2="320" stroke="#F5F1E8" stroke-width="3"/>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">G1</div>
+        <div class="name">Social Avatar</div>
+      </div>
+    </div>
+
+    <div class="logo-card">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128">
+          <rect width="64" height="64" fill="#0A0A0A"/>
+          <text x="32" y="48" font-family="Instrument Serif, Times New Roman, serif" font-size="56" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="14" y1="54" x2="50" y2="54" stroke="#F5F1E8" stroke-width="1"/>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">G2</div>
+        <div class="name">Favicon (64×64)</div>
+      </div>
+    </div>
+
+    <div class="logo-card wide">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="280" height="70">
+          <rect width="320" height="80" fill="#0A0A0A"/>
+          <text x="40" y="58" font-family="Instrument Serif, Times New Roman, serif" font-size="56" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="20" y1="64" x2="60" y2="64" stroke="#F5F1E8" stroke-width="1"/>
+          <text x="80" y="48" font-family="Inter Tight, sans-serif" font-size="20" font-weight="400" letter-spacing="2" fill="#F5F1E8">NOETHRION</text>
+          <text x="80" y="65" font-family="JetBrains Mono, Courier, monospace" font-size="10" font-weight="400" fill="#6B6862">team@noethrion.com</text>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">G3</div>
+        <div class="name">Email Signature</div>
+      </div>
+    </div>
+
+    <div class="logo-card light">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="180" height="180">
+          <rect width="400" height="400" fill="#F5F1E8"/>
+          <text x="200" y="265" font-family="Instrument Serif, Times New Roman, serif" font-size="280" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="120" y1="295" x2="280" y2="295" stroke="#0A0A0A" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">G4</div>
+        <div class="name">Light Mode</div>
+      </div>
+    </div>
+
+    <div class="logo-card">
+      <div class="logo-display">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="180" height="180">
+          <rect width="500" height="500" fill="#0A0A0A"/>
+          <circle cx="250" cy="250" r="220" fill="none" stroke="#F5F1E8" stroke-width="1.5"/>
+          <circle cx="250" cy="250" r="195" fill="none" stroke="#F5F1E8" stroke-width="0.5"/>
+          <text x="250" y="320" font-family="Instrument Serif, Times New Roman, serif" font-size="240" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+          <line x1="170" y1="345" x2="330" y2="345" stroke="#F5F1E8" stroke-width="1.5"/>
+          <defs>
+            <path id="topArcPreview" d="M 75,250 A 175,175 0 0 1 425,250" fill="none"/>
+            <path id="bottomArcPreview" d="M 75,250 A 175,175 0 0 0 425,250" fill="none"/>
+          </defs>
+          <text font-family="JetBrains Mono, Courier, monospace" font-size="18" font-weight="400" letter-spacing="6" fill="#F5F1E8">
+            <textPath href="#topArcPreview" startOffset="50%" text-anchor="middle">NOETHRION FOUNDATION</textPath>
+          </text>
+          <text font-family="JetBrains Mono, Courier, monospace" font-size="13" font-weight="400" letter-spacing="4" fill="#6B6862">
+            <textPath href="#bottomArcPreview" startOffset="50%" text-anchor="middle">EST · 2026</textPath>
+          </text>
+        </svg>
+      </div>
+      <div class="logo-meta">
+        <div class="id">G5</div>
+        <div class="name">Foundation Seal</div>
+      </div>
+    </div>
+
+  </div>
+
+  <h3>v2 archive — historical, do not use for new applications</h3>
+  <p>The v2 series (A1–A4 baselines, B1–B4 line variants, C1–C4 lockups) was the working set before v3 categorization. Archived for historical reference only — not redistributed in this repository. <strong>Don't use for new surfaces.</strong> Use the v3 D / E / F / G categories instead.</p>
+</section>
+
+<!-- ─── 9 · DON'Ts ─── -->
+<section id="donts">
+  <h2>Logo DON'Ts</h2>
+  <p>These are formally prohibited. Violations break brand integrity and must be rejected at design review.</p>
+  <div class="donts">
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't rotate the η.</strong> It is upright italic, never angled differently.</span></div>
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't change colors.</strong> The current palette is locked for consistency, even if not yet validated.</span></div>
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't add effects.</strong> No drop shadows, glows, embosses, bevels, gradients, or 3D treatments.</span></div>
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't crop the η.</strong> The full character must remain visible.</span></div>
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't break the baseline rule</strong> (geometry per Section 7).</span></div>
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't stretch.</strong> Aspect ratio is always preserved — no horizontal-only or vertical-only scaling.</span></div>
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't place on busy backgrounds.</strong> Minimum 0.5× η-height clearspace on all sides.</span></div>
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't combine η with other letters</strong> in a "wordmark style" (only the approved E2 mono lockup).</span></div>
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't use η as a bullet point</strong> or decorative element in body text. It is a logo, not a glyph.</span></div>
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't put η inside circles or shapes</strong> (except the approved G5 Foundation Seal).</span></div>
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't change the wordmark font.</strong> "NOETHRION" is set in Inter Tight Light (300) with letter-spacing.</span></div>
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't use the "Initial Development Co." name</strong> in branded materials. Always say "Noethrion".</span></div>
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't modify provided SVGs</strong> without explicit permission from brand stewardship.</span></div>
+    <div class="dont"><span class="icon">✗</span><span class="text"><strong>Don't create new variants</strong> outside the brand stewardship process.</span></div>
+  </div>
+</section>
+
+<!-- ─── 10 · USAGE MATRIX ─── -->
+<section id="usage">
+  <h2>Usage Matrix · Where to Use What</h2>
+  <p>When in doubt about which logo variant fits a context, consult this table. For surfaces not listed, use D2.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Surface</th>
+        <th>Logo</th>
+        <th>Format</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Twitter / X avatar</strong></td><td class="id">D2 / G1</td><td>Square SVG, 400×400</td><td>Dark mode optimized</td></tr>
+      <tr><td><strong>Twitter / X header</strong></td><td class="id">F3</td><td>1500×500</td><td>Wide banner</td></tr>
+      <tr><td><strong>YouTube avatar</strong></td><td class="id">D2</td><td>Square SVG</td><td>Dark</td></tr>
+      <tr><td><strong>YouTube channel art</strong></td><td class="id">F3</td><td>2560×1440</td><td>Use F3 wide composition</td></tr>
+      <tr><td><strong>GitHub org icon</strong></td><td class="id">D2 / E1</td><td>460×460</td><td>D2 for brand, E1 for dev-first signal</td></tr>
+      <tr><td><strong>GitHub repo OG image</strong></td><td class="id">F3</td><td>1200×630</td><td>Standard OG dimensions</td></tr>
+      <tr><td><strong>Discord server icon</strong></td><td class="id">D2 / G1</td><td>512×512</td><td>Dark</td></tr>
+      <tr><td><strong>Telegram channel logo</strong></td><td class="id">D2 / G1</td><td>512×512</td><td>Dark</td></tr>
+      <tr><td><strong>Paragraph publication</strong></td><td class="id">D2 / F2</td><td>varies</td><td>D2 for header, F2 for editorial</td></tr>
+      <tr><td><strong>LinkedIn company logo</strong></td><td class="id">G1 / D2</td><td>300×300</td><td>Square, dark</td></tr>
+      <tr><td><strong>LinkedIn cover image</strong></td><td class="id">F3</td><td>1584×396</td><td>Wide banner</td></tr>
+      <tr><td><strong>Email signature</strong></td><td class="id">G3</td><td>320×80</td><td>Inline horizontal</td></tr>
+      <tr><td><strong>Document cover (whitepaper, deck)</strong></td><td class="id">F1 / F2</td><td>16:9 or A4</td><td>F1 hero or F2 editorial vertical</td></tr>
+      <tr><td><strong>Document interior pages</strong></td><td class="id">D2 small</td><td>~80×80 corner</td><td>Subtle header watermark</td></tr>
+      <tr><td><strong>Conference badge</strong></td><td class="id">F3 / E2</td><td>horizontal</td><td>Wordmark visible</td></tr>
+      <tr><td><strong>Favicon</strong></td><td class="id">G2</td><td>16/32/64 ICO</td><td>Multi-resolution; baseline thin</td></tr>
+      <tr><td><strong>App icon (iOS / Android)</strong></td><td class="id">D2 / G1</td><td>1024×1024 base</td><td>Square master</td></tr>
+      <tr><td><strong>Business cards</strong></td><td class="id">G4</td><td>Light mode print</td><td>Inverted noir baseline on bone</td></tr>
+      <tr><td><strong>Letterhead (formal)</strong></td><td class="id">G5</td><td>Top-center</td><td>Foundation seal</td></tr>
+      <tr><td><strong>Legal documents</strong></td><td class="id">G5</td><td>Bottom-center</td><td>Foundation seal mandatory</td></tr>
+      <tr><td><strong>Press release</strong></td><td class="id">F2 / F1</td><td>Top of release</td><td>Editorial composition</td></tr>
+      <tr><td><strong>Stickers / merch</strong></td><td class="id">D1</td><td>Vinyl-cut</td><td>Pure η, no baseline (small format)</td></tr>
+      <tr><td><strong>Hardware product label</strong></td><td class="id">E1</td><td>Industrial laser-etch</td><td>Mono bracket holds up to physical wear</td></tr>
+      <tr><td><strong>Terminal / CLI output</strong></td><td class="id">E3</td><td>ASCII-friendly</td><td>Use the prompt-style composition</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ─── 11 · VALIDATION PROTOCOL ─── -->
+<section id="protocol">
+  <h2>Validation Testing Protocol</h2>
+  <p>Before locking the primary mark choice, run a structured visual test with at least 5 reviewers. The goal: confirm D2 actually communicates what we think it does, before it's locked into surfaces that are hard to revise later.</p>
+
+  <div class="protocol">
+    <p><strong>Step 1 — solo recognition.</strong> Show D2 alone, no context, and ask: <em>"What does this make you think of?"</em> Capture verbatim responses. Don't lead.</p>
+    <p><strong>Step 2 — comparative match.</strong> Show D2 alongside 2–3 alternatives (D1, D3, D4). Ask: <em>"Which feels more like X?"</em> — where X cycles through: <code>seriousness</code>, <code>technology</code>, <code>energy</code>, <code>infrastructure</code>.</p>
+    <p><strong>Step 3 — record &amp; aggregate.</strong> Note feedback patterns. Look for clustering vs. disagreement.</p>
+    <p><strong>Step 4 — decide.</strong></p>
+    <ol>
+      <li>If N ≥ 5 results land consistently positive → <strong>lock D2.</strong></li>
+      <li>If split or negative → <strong>pivot</strong> to the next candidate (D1, D3, D4) and re-test.</li>
+      <li>If no candidate clears the bar → <strong>iterate the design</strong>, do not force a locked choice.</li>
+    </ol>
+  </div>
+
+  <p style="font-size: 13px; color: var(--bone-3); margin-top: 16px;">Until validation completes, treat the working primary as a default — not a commitment.</p>
+</section>
+
+<!-- ─── 12 · FILE MAP ─── -->
+<section id="filemap">
+  <h2>File Map</h2>
+  <p>All public SVG assets live in <code>assets/logos/{D,E,F,G}/</code> (repository-relative paths). E / F / G categories are mirrored as the repo grows; D category is fully populated.</p>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Path</th><th>Canvas</th><th>Primary use case</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="id">D1</td><td><code>assets/logos/D/D1_green_eta_pure.svg</code></td><td>400×400</td><td>Tight spaces, stickers, no-baseline contexts</td></tr>
+      <tr><td class="id"><strong>D2</strong></td><td><code>assets/logos/D/D2_green_eta_bone_line.svg</code></td><td>400×400</td><td><strong>Working primary</strong> — default brand mark</td></tr>
+      <tr><td class="id">D2-1k</td><td><code>assets/logos/D/D2_primary_1024.svg</code></td><td>1024×1024</td><td>High-res master for social avatars</td></tr>
+      <tr><td class="id">D2-400</td><td><code>assets/logos/D/D2_primary_400.svg</code></td><td>400×400</td><td>Standard avatar export</td></tr>
+      <tr><td class="id">D2-circle</td><td><code>assets/logos/D/D2_primary_CIRCLE_1024.svg</code></td><td>1024×1024</td><td>Pre-cropped for platforms that mask avatars (Twitter, Discord)</td></tr>
+      <tr><td class="id">D3</td><td><code>assets/logos/D/D3_full_green.svg</code></td><td>400×400</td><td>Bold statement, high-impact moments</td></tr>
+      <tr><td class="id">D3-1k</td><td><code>assets/logos/D/D3_full_green_1024.svg</code></td><td>1024×1024</td><td>D3 high-res master</td></tr>
+      <tr><td class="id">D4</td><td><code>assets/logos/D/D4_green_eta_pulse_dot.svg</code></td><td>400×400</td><td>"Live" / signal version with pulse dot</td></tr>
+      <tr><td class="id">E1</td><td><code>assets/logos/E/E1_mono_bracket.svg</code></td><td>400×400</td><td>GitHub, npm, technical contexts</td></tr>
+      <tr><td class="id">E2</td><td><code>assets/logos/E/E2_code_label.svg</code></td><td>800×200</td><td>README headers, terminal screenshots</td></tr>
+      <tr><td class="id">E3</td><td><code>assets/logos/E/E3_terminal_style.svg</code></td><td>800×200</td><td>Terminal demos, CLI marketing</td></tr>
+      <tr><td class="id">F1</td><td><code>assets/logos/F/F1_hero_display.svg</code></td><td>1200×600</td><td>Hero sections, presentations</td></tr>
+      <tr><td class="id">F2</td><td><code>assets/logos/F/F2_editorial_vertical.svg</code></td><td>600×800</td><td>Whitepaper covers, vertical posters</td></tr>
+      <tr><td class="id">F3</td><td><code>assets/logos/F/F3_wide_banner.svg</code></td><td>1500×500</td><td>Twitter header, GitHub OG image</td></tr>
+      <tr><td class="id">G1</td><td><code>assets/logos/G/G1_social_avatar.svg</code></td><td>400×400</td><td>Social profile avatars (small-size optimized)</td></tr>
+      <tr><td class="id">G2</td><td><code>assets/logos/G/G2_favicon_64.svg</code></td><td>64×64</td><td>Favicon, app icon base</td></tr>
+      <tr><td class="id">G3</td><td><code>assets/logos/G/G3_email_signature.svg</code></td><td>320×80</td><td>Email footer signature</td></tr>
+      <tr><td class="id">G4</td><td><code>assets/logos/G/G4_light_mode.svg</code></td><td>400×400</td><td>Print, light backgrounds</td></tr>
+      <tr><td class="id">G5</td><td><code>assets/logos/G/G5_foundation_seal.svg</code></td><td>500×500</td><td>Legal documents, certificates</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</div>
+
+<!-- ─── 13 · FOOTER ─── -->
+<footer>
+  <div class="formula">η = E_useful / E_total</div>
+  <div>Noethrion Brand Book · v0.3 · 2026-05-06</div>
+  <div style="margin-top: 8px;">Contact: <a href="mailto:team@noethrion.com">team@noethrion.com</a></div>
+  <div style="margin-top: 8px;">Working draft · subject to validation before public launch lock</div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "noethrion-verifier-example",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reference Node/TypeScript verifier for Noethrion attestations. Copy into your project; not published to npm.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.6.0",
+    "@noble/hashes": "^1.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^20.14.0"
+  }
+}

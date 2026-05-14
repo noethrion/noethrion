@@ -1,0 +1,8 @@
+# Pin to a recent stable to avoid surprise breakage in CI.
+# cryptography 43+ supports Python 3.10..3.14.
+cryptography>=43.0,<50.0
+
+# Used by examples/lifecycle/03_build_merkle_tree.py and the lifecycle runner.
+# We need keccak256 (the EVM variant), which Python stdlib's hashlib does NOT
+# provide — hashlib.sha3_256 is the NIST SHA-3 variant, a different padding.
+pycryptodome>=3.20

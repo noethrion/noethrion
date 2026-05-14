@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- G2: Favicon (Optimized for tiny size) -->
+<!-- 64x64 base — оптимизировано для favicon, app icon -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" fill="#0A0A0A"/>
+  <text x="32" y="48" font-family="Instrument Serif, Times New Roman, serif" font-size="56" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+  <line x1="14" y1="54" x2="50" y2="54" stroke="#F5F1E8" stroke-width="1"/>
+</svg>

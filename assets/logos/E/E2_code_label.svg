@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- E2: Code Label [η] noethrion -->
+<!-- Для GitHub README, terminal, dev контексты -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <rect width="800" height="200" fill="#0A0A0A"/>
+  <text x="80" y="125" font-family="JetBrains Mono, Courier, monospace" font-size="80" font-weight="400" text-anchor="middle" fill="#6B6862">[</text>
+  <text x="135" y="125" font-family="Instrument Serif, Times New Roman, serif" font-size="80" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+  <text x="190" y="125" font-family="JetBrains Mono, Courier, monospace" font-size="80" font-weight="400" text-anchor="middle" fill="#6B6862">]</text>
+  <text x="240" y="120" font-family="JetBrains Mono, Courier, monospace" font-size="44" font-weight="400" fill="#F5F1E8">noethrion</text>
+</svg>

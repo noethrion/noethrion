@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noethrion — Whitepaper v0.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================
+     ACADEMIC PAPER STYLE
+     — modeled on arxiv / scientific publications
+     — bone background, noir text (printable)
+     — body Crimson Pro (serif, like LaTeX)
+     ============================================ */
+
+  :root {
+    --bone: #F5F1E8;
+    --bone-2: #EAE5D6;
+    --noir: #0A0A0A;
+    --noir-2: #1A1A1A;
+    --noir-3: #3A3835;
+    --eta: #14F195;
+    --eta-deep: #0B7548;
+    --terra: #C8654A;
+    --rule: #C4BFB2;
+
+    --font-body: 'Crimson Pro', Georgia, serif;
+    --font-ui: 'Inter Tight', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+    --paper-width: 720px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bone-2);
+    color: var(--noir);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    padding: 2rem 1rem;
+  }
+
+  @media (max-width: 768px) {
+    body { padding: 1rem 0.5rem; font-size: 17px; }
+  }
+
+  /* "Paper" container — like a real PDF page */
+  .paper {
+    max-width: var(--paper-width);
+    margin: 0 auto;
+    background: var(--bone);
+    padding: 5rem 4rem;
+    box-shadow: 0 4px 60px rgba(0,0,0,0.25);
+    position: relative;
+  }
+
+  @media (max-width: 768px) {
+    .paper { padding: 2.5rem 1.5rem; }
+  }
+
+  /* NAV / floating language toggle */
+  .floating-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 100;
+    display: flex;
+    background: var(--noir);
+    border: 1px solid var(--noir-3);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+
+  .lang-btn {
+    background: transparent;
+    border: none;
+    color: var(--bone-2);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .lang-btn.active { background: var(--eta); color: var(--noir); }
+  .lang-btn:not(.active):hover { color: var(--bone); }
+
+  /* LANG SWITCHING */
+  [data-lang-en], [data-lang-ru] { display: none; }
+  html[lang="en"] [data-lang-en] { display: inline; }
+  html[lang="ru"] [data-lang-ru] { display: inline; }
+  html[lang="en"] .block[data-lang-en],
+  html[lang="en"] li[data-lang-en],
+  html[lang="en"] p[data-lang-en],
+  html[lang="en"] div[data-lang-en] { display: block; }
+  html[lang="ru"] .block[data-lang-ru],
+  html[lang="ru"] li[data-lang-ru],
+  html[lang="ru"] p[data-lang-ru],
+  html[lang="ru"] div[data-lang-ru] { display: block; }
+
+  /* ============================================
+     HEADER
+     ============================================ */
+  .paper-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .paper-eta {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 96px;
+    line-height: 1;
+    color: var(--noir);
+    margin-bottom: 1.5rem;
+  }
+
+  .paper-title {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: clamp(28px, 4vw, 36px);
+    line-height: 1.2;
+    color: var(--noir);
+    font-weight: 400;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+  }
+
+  .paper-subtitle {
+    font-family: var(--font-body);
+    font-size: 18px;
+    line-height: 1.4;
+    color: var(--noir-3);
+    font-weight: 400;
+    margin-bottom: 2rem;
+    max-width: 540px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .paper-author {
+    font-family: var(--font-body);
+    font-size: 16px;
+    color: var(--noir);
+    margin-bottom: 0.25rem;
+  }
+
+  .paper-affiliation {
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--noir-3);
+    font-style: italic;
+    margin-bottom: 1.5rem;
+  }
+
+  .paper-meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--noir-3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .paper-meta span { margin: 0 0.5rem; }
+
+  /* ============================================
+     ABSTRACT
+     ============================================ */
+  .abstract {
+    margin-bottom: 3rem;
+    padding: 1.5rem 2rem;
+    background: var(--bone-2);
+    border-left: 3px solid var(--eta-deep);
+  }
+
+  @media (max-width: 768px) {
+    .abstract { padding: 1.25rem; }
+  }
+
+  .abstract-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--eta-deep);
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+  }
+
+  .abstract p {
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--noir);
+    margin-bottom: 0.75rem;
+  }
+
+  .abstract p:last-child { margin-bottom: 0; }
+
+  /* ============================================
+     SECTIONS
+     ============================================ */
+  .section {
+    margin-bottom: 2.5rem;
+  }
+
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--noir-3);
+    letter-spacing: 0.15em;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+  }
+
+  .section-title {
+    font-family: var(--font-body);
+    font-size: 22px;
+    line-height: 1.3;
+    color: var(--noir);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+  }
+
+  .section p {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--noir);
+    margin-bottom: 1rem;
+    text-align: justify;
+    hyphens: auto;
+  }
+
+  @media (max-width: 768px) {
+    .section p { font-size: 17px; text-align: left; }
+  }
+
+  .section p em {
+    font-style: italic;
+  }
+
+  .section p strong {
+    font-weight: 600;
+  }
+
+  /* Numbered list styling for IEEE-style refs/items */
+  .section ol {
+    list-style: none;
+    counter-reset: item;
+    padding-left: 0;
+    margin: 1rem 0;
+  }
+
+  .section ol li {
+    counter-increment: item;
+    padding-left: 2rem;
+    position: relative;
+    margin-bottom: 0.5rem;
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .section ol li::before {
+    content: "[" counter(item) "]";
+    position: absolute;
+    left: 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--noir-3);
+  }
+
+  .section ul {
+    list-style: none;
+    padding-left: 1rem;
+    margin: 1rem 0;
+  }
+
+  .section ul li {
+    padding-left: 1.5rem;
+    position: relative;
+    margin-bottom: 0.5rem;
+    font-family: var(--font-body);
+    font-size: 16px;
+  }
+
+  .section ul li::before {
+    content: "·";
+    position: absolute;
+    left: 0;
+    color: var(--eta-deep);
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  /* Equations / formulas */
+  .equation {
+    text-align: center;
+    margin: 1.5rem 0;
+    font-family: var(--font-mono);
+    font-size: 15px;
+    color: var(--noir);
+    padding: 1rem;
+    background: var(--bone-2);
+    border-radius: 2px;
+  }
+
+  .equation .label {
+    float: right;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--noir-3);
+  }
+
+  /* Code blocks */
+  pre, .code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.5;
+    background: var(--noir);
+    color: var(--bone-2);
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    border-radius: 4px;
+    margin: 1rem 0;
+  }
+
+  pre .green { color: var(--eta); }
+  pre .comment { color: #888; }
+
+  /* Inline code */
+  code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--bone-2);
+    padding: 1px 5px;
+    border-radius: 2px;
+    color: var(--eta-deep);
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-family: var(--font-body);
+    font-size: 14px;
+  }
+
+  th {
+    background: var(--bone-2);
+    color: var(--noir);
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid var(--noir);
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+
+  td.mono {
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  /* Footnotes / references */
+  .references {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .references-title {
+    font-family: var(--font-body);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--noir);
+    margin-bottom: 1rem;
+  }
+
+  .references ol {
+    list-style: none;
+    counter-reset: ref;
+  }
+
+  .references li {
+    counter-increment: ref;
+    padding-left: 2.5rem;
+    position: relative;
+    margin-bottom: 0.5rem;
+    font-family: var(--font-body);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--noir-3);
+  }
+
+  .references li::before {
+    content: "[" counter(ref) "]";
+    position: absolute;
+    left: 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--noir);
+    font-weight: 600;
+  }
+
+  /* Footer */
+  .paper-footer {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--rule);
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--noir-3);
+    letter-spacing: 0.1em;
+  }
+
+  .paper-footer strong {
+    color: var(--noir);
+    font-weight: 600;
+  }
+
+  /* Diagram block */
+  .diagram {
+    margin: 1.5rem 0;
+    padding: 1.25rem;
+    background: var(--bone-2);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--noir);
+    overflow-x: auto;
+    white-space: pre;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+  }
+
+  /* Page break indicators (for print) */
+  .page-break {
+    margin: 3rem 0;
+    border-top: 1px dashed var(--rule);
+    text-align: center;
+    position: relative;
+  }
+
+  .page-break span {
+    background: var(--bone);
+    padding: 0 1rem;
+    position: relative;
+    top: -10px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--noir-3);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  /* Print styles */
+  @media print {
+    body { background: white; padding: 0; }
+    .floating-toggle { display: none; }
+    .paper { box-shadow: none; max-width: 100%; padding: 1in; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Floating language toggle -->
+<div class="floating-toggle">
+  <button class="lang-btn active" data-lang="en">EN</button>
+  <button class="lang-btn" data-lang="ru">RU</button>
+</div>
+
+<div class="paper">
+
+  <!-- ============================================ -->
+  <!-- HEADER                                         -->
+  <!-- ============================================ -->
+  <header class="paper-header">
+    <div class="paper-eta"><em>η</em></div>
+
+    <h1 class="paper-title">
+      <span data-lang-en>Hardware-attested energy production:<br>a protocol for verifiable kilowatt-hours</span>
+      <span data-lang-ru>Аппаратно-подтверждённая генерация энергии:<br>протокол для верифицируемых киловатт-часов</span>
+    </h1>
+
+    <p class="paper-subtitle">
+      <span data-lang-en>A standard for cryptographically signing one kilowatt-hour at the source, settling on Layer 2, and verifying with a public key.</span>
+      <span data-lang-ru>Стандарт криптографической подписи одного киловатт-часа у источника, расчёта на Layer 2 и верификации публичным ключом.</span>
+    </p>
+
+    <p class="paper-author">A. Chursin</p>
+    <p class="paper-affiliation">
+      <span data-lang-en>Independent · noethrion.com</span>
+      <span data-lang-ru>Независимый · noethrion.com</span>
+    </p>
+
+    <div class="paper-meta">
+      <span>v0.1</span>·<span>05 May 2026</span>·<span>9 pages</span>
+    </div>
+  </header>
+
+  <!-- ============================================ -->
+  <!-- ABSTRACT                                       -->
+  <!-- ============================================ -->
+  <div class="abstract">
+    <div class="abstract-label">
+      <span data-lang-en>Abstract</span>
+      <span data-lang-ru>Аннотация</span>
+    </div>
+    <p data-lang-en>
+      Existing systems for verifying renewable energy production — Renewable Energy Certificates (RECs), Guarantees of Origin (GOs), and ESG attestations — rely on paper-based registries, self-reported data, and trusted third parties operating across siloed jurisdictions. We propose a protocol in which one kilowatt-hour of electrical generation is signed at the source by a hardware secure element, posted to a public Layer 2 ledger, and verifiable by anyone with the device's public key. The protocol issues a token (NOET) at a fixed 1:1 ratio against attested kilowatt-hours via algorithmic Proof-of-Generation, with no discretionary minting authority. We show that commodity hardware (Microchip ATECC608B, Infineon OPTIGA Trust M, NXP EdgeLock SE050) is sufficient for tamper-resistant attestation at unit costs below $1 per device. The protocol is administered by a foundation that does not own it, and which is structurally designed to dissolve once the network meets defined decentralization criteria.
+    </p>
+    <p data-lang-ru>
+      Существующие системы верификации производства возобновляемой энергии — Renewable Energy Certificates (RECs), Guarantees of Origin (GOs) и ESG-аттестации — опираются на бумажные реестры, самоотчётные данные и доверенных третьих лиц, работающих в изолированных юрисдикциях. Мы предлагаем протокол, в котором один киловатт-час электрогенерации подписывается у источника аппаратным secure element, публикуется на публичный Layer 2 реестр и проверяется любым человеком с публичным ключом устройства. Протокол выпускает токен (NOET) в фиксированном соотношении 1:1 к подтверждённым киловатт-часам через алгоритмический Proof-of-Generation, без полномочий дискреционной эмиссии. Мы показываем, что коммерческое железо (Microchip ATECC608B, Infineon OPTIGA Trust M, NXP EdgeLock SE050) достаточно для защищённой от вскрытия аттестации со стоимостью единицы ниже $1. Протокол администрируется фондом, который им не владеет и который структурно спроектирован для саморасспуска, как только сеть достигнет определённых критериев децентрализации.
+    </p>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- 1. INTRODUCTION                                -->
+  <!-- ============================================ -->
+  <section class="section">
+    <div class="section-num">1.</div>
+    <h2 class="section-title">
+      <span data-lang-en>Introduction</span>
+      <span data-lang-ru>Введение</span>
+    </h2>
+
+    <p data-lang-en>
+      The verification of renewable energy production is foundational to climate accounting, ESG reporting, carbon markets, and increasingly, the procurement of carbon-free energy by hyperscale data center operators. In 2025, large-scale data center operators collectively contracted for more than 10 gigawatts of new nuclear capacity to power AI infrastructure with verifiable carbon-free energy [1]. The European Union Carbon Border Adjustment Mechanism (CBAM) entered full force on 1 January 2026, requiring importers to attest to embedded carbon emissions for steel, aluminum, cement, and electricity [2].
+    </p>
+    <p data-lang-ru>
+      Верификация производства возобновляемой энергии — основа для климатического учёта, ESG-отчётности, углеродных рынков и, всё чаще, закупок безуглеродной энергии операторами hyperscale дата-центров. В 2025 году операторы крупномасштабных дата-центров совокупно законтрактовали более 10 ГВт новой ядерной мощности для питания AI-инфраструктуры верифицируемой безуглеродной энергией [1]. Европейский механизм пограничной углеродной корректировки (CBAM) вступил в полную силу 1 января 2026 года, требуя от импортёров подтверждать встроенные углеродные выбросы для стали, алюминия, цемента и электричества [2].
+    </p>
+
+    <p data-lang-en>
+      Despite this rising demand, the underlying attestation infrastructure remains primitive. RECs are issued by registries (M-RETS, PJM-GATS, I-REC) based on self-reported generation data, with verification occurring weeks to months after the fact. Manual paper trails persist. Cross-jurisdictional fungibility is limited. Most critically, no widespread mechanism exists to cryptographically prove, at the moment of generation, that one kilowatt-hour was produced by a specific physical asset.
+    </p>
+    <p data-lang-ru>
+      Несмотря на растущий спрос, базовая инфраструктура аттестации остаётся примитивной. RECs выпускаются реестрами (M-RETS, PJM-GATS, I-REC) на основе самоотчётных данных о генерации, с верификацией через недели или месяцы после факта. Сохраняются ручные бумажные трейлы. Межюрисдикционная взаимозаменяемость ограничена. Самое критичное — не существует широко распространённого механизма криптографически доказать в момент генерации, что один киловатт-час был произведён конкретным физическим активом.
+    </p>
+
+    <p data-lang-en>
+      We propose Noethrion: a protocol that addresses these gaps with three design choices.
+    </p>
+    <p data-lang-ru>
+      Мы предлагаем Noethrion: протокол, который закрывает эти разрывы тремя проектными решениями.
+    </p>
+
+    <p data-lang-en>
+      <strong>First</strong>, attestation is rooted in commodity secure-element hardware. Devices such as the Microchip ATECC608B (unit cost $0.87 [3]) generate ECDSA P-256 signatures inside a tamper-resistant package; the private key is provisioned during manufacturing and never exposed.
+    </p>
+    <p data-lang-ru>
+      <strong>Во-первых</strong>, аттестация коренится в коммерческом железе secure-element. Устройства типа Microchip ATECC608B (стоимость $0.87 [3]) генерируют подписи ECDSA P-256 внутри tamper-resistant корпуса; приватный ключ инициализируется при производстве и никогда не раскрывается.
+    </p>
+
+    <p data-lang-en>
+      <strong>Second</strong>, settlement occurs on an existing public EVM-compatible Layer 2 settlement network, avoiding the multi-year overhead of bootstrapping a sovereign chain. Merkle batching reduces per-attestation gas to fractions of a cent.
+    </p>
+    <p data-lang-ru>
+      <strong>Во-вторых</strong>, расчёт происходит на существующем публичном EVM-совместимом Layer 2 settlement-network, избегая многолетних накладных расходов на bootstrap собственной сети. Merkle-батчинг снижает gas на одну аттестацию до долей цента.
+    </p>
+
+    <p data-lang-en>
+      <strong>Third</strong>, governance is constitutionally limited. The Noethrion Foundation administers the standard but holds no authority to mint, freeze, or redirect tokens outside the algorithmic Proof-of-Generation mechanism. The Foundation is structurally designed to self-dissolve once defined decentralization conditions are met.
+    </p>
+    <p data-lang-ru>
+      <strong>В-третьих</strong>, управление конституционно ограничено. Фонд Noethrion администрирует стандарт, но не имеет полномочий выпускать, замораживать или перенаправлять токены вне алгоритмического механизма Proof-of-Generation. Фонд структурно спроектирован для саморасспуска, как только выполнены определённые условия децентрализации.
+    </p>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 2. PRIOR WORK                                  -->
+  <!-- ============================================ -->
+  <section class="section">
+    <div class="section-num">2.</div>
+    <h2 class="section-title">
+      <span data-lang-en>Prior work</span>
+      <span data-lang-ru>Предшествующие работы</span>
+    </h2>
+
+    <p data-lang-en>
+      Several blockchain-based energy projects have preceded Noethrion. Earlier attempts at peer-to-peer energy marketplaces and permissioned proof-of-authority chains have repeatedly failed to achieve sustained adoption at scale. Common failure modes include (a) lack of device-level cryptographic attestation, (b) governance capture by participating utility consortia, (c) insufficient hardware specification for cost-effective volume deployment, and (d) positioning as currency or trading instruments rather than verification infrastructure.
+    </p>
+    <p data-lang-ru>
+      Несколько blockchain-проектов в энергетике предшествовали Noethrion. Предыдущие попытки построить P2P-маркетплейсы энергии и permissioned proof-of-authority цепи неоднократно проваливались на масштабе. Общие режимы отказа: (a) отсутствие device-level криптографической аттестации, (b) governance capture участвующими консорциумами утилит, (c) недостаточная спецификация железа для экономически эффективного volume deployment, (d) позиционирование как валюта или торговый инструмент вместо инфраструктуры верификации.
+    </p>
+
+    <p data-lang-en>
+      The recurring failure modes in this prior art include: (a) attempting to bootstrap proprietary Layer 1 chains rather than building on existing public infrastructure; (b) launching tokens via ICO mechanisms that prioritize fundraising over working products; (c) targeting peer-to-peer retail energy trading, which has consistently failed to find product-market fit; and (d) governance models that concentrate authority in consortium-style boards of incumbent utilities, which structurally prevents broad adoption.
+    </p>
+    <p data-lang-ru>
+      Повторяющиеся режимы отказа в этих работах включают: (a) попытки bootstrap проприетарных Layer 1 цепей вместо построения на существующей публичной инфраструктуре; (b) запуск токенов через ICO-механизмы, которые приоритизируют сбор средств над работающим продуктом; (c) таргетирование P2P-розничной торговли энергией, которая последовательно не находила product-market fit; (d) модели управления, концентрирующие полномочия в консорциумных советах действующих утилит, что структурно препятствует широкому принятию.
+    </p>
+
+    <p data-lang-en>
+      In contrast, prior decentralized physical infrastructure networks (DePIN) in adjacent domains have demonstrated successful deployment of hardware-attested decentralized infrastructure — most notably wireless coverage attestation networks shipping pre-provisioned Microchip ATECC608-class secure elements [4] enabling Proof-of-Coverage style attestation, and storage networks demonstrating economically meaningful Proof-of-Spacetime consensus [5]. More recent multi-prover frameworks have extended these models with ZK, TEE, and MPC support for general DePIN data computation [6]. Noethrion adapts these architectural patterns to electrical energy production.
+    </p>
+    <p data-lang-ru>
+      Напротив, предыдущие decentralized physical infrastructure networks (DePIN) в смежных доменах продемонстрировали успешное развёртывание аппаратно-подтверждённой децентрализованной инфраструктуры — в частности, сети wireless coverage attestation, поставляющие предварительно инициализированные Microchip ATECC608-class secure elements [4] для Proof-of-Coverage style аттестации, и storage networks с экономически значимым Proof-of-Spacetime консенсусом [5]. Более поздние multi-prover frameworks расширили эти модели поддержкой ZK, TEE и MPC для общих DePIN вычислений данных [6]. Noethrion адаптирует эти архитектурные паттерны к производству электрической энергии.
+    </p>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 3. PROTOCOL OVERVIEW                           -->
+  <!-- ============================================ -->
+  <section class="section">
+    <div class="section-num">3.</div>
+    <h2 class="section-title">
+      <span data-lang-en>Protocol overview</span>
+      <span data-lang-ru>Обзор протокола</span>
+    </h2>
+
+    <p data-lang-en>
+      The Noethrion protocol consists of four layers: (1) hardware attestation devices at the point of generation, (2) an off-chain aggregator that batches signed attestations into a Merkle tree, (3) an on-chain verification contract on Layer 2 that accepts Merkle roots and mints NOET tokens, and (4) a public verification interface available to any party with the device's public key.
+    </p>
+    <p data-lang-ru>
+      Протокол Noethrion состоит из четырёх слоёв: (1) устройства аппаратной аттестации в точке генерации, (2) off-chain агрегатор, который батчит подписанные аттестации в дерево Меркла, (3) on-chain контракт верификации на Layer 2, который принимает Merkle roots и минтит токены NOET, (4) публичный интерфейс верификации, доступный любой стороне с публичным ключом устройства.
+    </p>
+
+    <div class="diagram">
+   ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+   │  GENERATION  │ →  │   SIGNING    │ →  │  AGGREGATOR  │
+   │              │    │              │    │              │
+   │ solar / wind │    │ ATECC608 /   │    │  builds      │
+   │ kWh meter    │    │ SE050 / TPM  │    │  Merkle tree │
+   └──────────────┘    └──────────────┘    └──────────────┘
+                              │                    │
+                       ECDSA P-256                 │
+                       signature                   │
+                                                   ↓
+                                         ┌──────────────────┐
+                                         │   LAYER 2 (EVM)  │
+                                         │                  │
+                                         │  Merkle root +   │
+                                         │  proof on-chain  │
+                                         │                  │
+                                         │  1 NOET minted   │
+                                         │  per kWh proven  │
+                                         └──────────────────┘
+                                                   │
+                                                   ↓
+                                         ┌──────────────────┐
+                                         │   VERIFICATION   │
+                                         │                  │
+                                         │ anyone, any time │
+                                         │ pubkey + 30 sec  │
+                                         └──────────────────┘
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 4. HARDWARE ATTESTATION                        -->
+  <!-- ============================================ -->
+  <section class="section">
+    <div class="section-num">4.</div>
+    <h2 class="section-title">
+      <span data-lang-en>Hardware attestation</span>
+      <span data-lang-ru>Аппаратная аттестация</span>
+    </h2>
+
+    <p data-lang-en>
+      Each registered generation asset (solar inverter, wind turbine controller, smart meter, battery management system) is equipped with a tamper-resistant secure element that performs the following operation at fixed intervals (typically every 60 seconds):
+    </p>
+    <p data-lang-ru>
+      Каждый зарегистрированный актив генерации (солнечный инвертор, контроллер ветряной турбины, умный счётчик, система управления батареей) оснащён tamper-resistant secure element, который выполняет следующую операцию с фиксированными интервалами (обычно каждые 60 секунд):
+    </p>
+
+    <div class="equation">
+      σ = Sign<sub>P-256</sub>( SHA-256( meterID ‖ timestamp ‖ kWh<sub>delta</sub> ‖ kWh<sub>cumulative</sub> ) )
+      <span class="label">(1)</span>
+    </div>
+
+    <p data-lang-en>
+      where <code>meterID</code> is the device's unique identifier, <code>timestamp</code> is a Unix epoch in milliseconds, <code>kWh<sub>delta</sub></code> is the energy generated since the last attestation, <code>kWh<sub>cumulative</sub></code> is the lifetime energy generation, and <code>σ</code> is the resulting ECDSA P-256 signature. The signature is encoded using CBOR following IETF RFC 8949 [7] and emitted as an Entity Attestation Token per RFC 9711 [8], compatible with the Remote ATtestation procedureS (RATS) architecture defined in RFC 9334 [9].
+    </p>
+    <p data-lang-ru>
+      где <code>meterID</code> — уникальный идентификатор устройства, <code>timestamp</code> — Unix epoch в миллисекундах, <code>kWh<sub>delta</sub></code> — энергия, сгенерированная с момента последней аттестации, <code>kWh<sub>cumulative</sub></code> — пожизненная генерация энергии, и <code>σ</code> — результирующая подпись ECDSA P-256. Подпись кодируется с использованием CBOR согласно IETF RFC 8949 [7] и эмитируется как Entity Attestation Token согласно RFC 9711 [8], совместимый с архитектурой Remote ATtestation procedureS (RATS), определённой в RFC 9334 [9].
+    </p>
+
+    <p data-lang-en>
+      Approved hardware for the v0.1 specification:
+    </p>
+    <p data-lang-ru>
+      Утверждённое железо для спецификации v0.1:
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th data-lang-en>Device</th>
+          <th data-lang-ru>Устройство</th>
+          <th data-lang-en>Certification</th>
+          <th data-lang-ru>Сертификация</th>
+          <th data-lang-en>Unit cost</th>
+          <th data-lang-ru>Цена</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">Microchip ATECC608B</td>
+          <td>self-cert / field-proven in DePIN deployments</td>
+          <td>$0.87</td>
+        </tr>
+        <tr>
+          <td class="mono">Infineon OPTIGA Trust M</td>
+          <td>CC EAL 6+ high · PSA L2</td>
+          <td>$1.50–2.50</td>
+        </tr>
+        <tr>
+          <td class="mono">NXP EdgeLock SE050</td>
+          <td>CC EAL 6+ AVA_VAN.5</td>
+          <td>$4.50</td>
+        </tr>
+        <tr>
+          <td class="mono">Infineon TPM 2.0 SLB9670</td>
+          <td>TCG · FIPS 140-2 L1 · CC EAL4+</td>
+          <td>$3.63</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p data-lang-en>
+      Cost data sourced from DigiKey single-unit pricing as of Q1 2026 [3]. Bulk pricing typically reduces per-unit cost by 30–50%. Intel SGX is explicitly excluded from approved hardware due to the Plundervolt [10], ÆPIC [11], and Downfall [12] vulnerabilities that compromise its remote attestation guarantees.
+    </p>
+    <p data-lang-ru>
+      Данные о ценах получены из DigiKey single-unit pricing на Q1 2026 [3]. Bulk pricing обычно снижает стоимость единицы на 30–50%. Intel SGX явно исключён из утверждённого железа из-за уязвимостей Plundervolt [10], ÆPIC [11] и Downfall [12], которые компрометируют его гарантии remote attestation.
+    </p>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 5. SETTLEMENT LAYER                            -->
+  <!-- ============================================ -->
+  <section class="section">
+    <div class="section-num">5.</div>
+    <h2 class="section-title">
+      <span data-lang-en>Settlement layer</span>
+      <span data-lang-ru>Расчётный слой</span>
+    </h2>
+
+    <p data-lang-en>
+      Signed attestations are aggregated off-chain into Merkle trees containing up to 2<sup>16</sup> leaves per batch (approximately 65,536 attestations per root). Each Merkle root is published to a public EVM-compatible Layer 2 rollup, along with the raw attestation set on IPFS for persistent availability.
+    </p>
+    <p data-lang-ru>
+      Подписанные аттестации агрегируются off-chain в деревья Меркла, содержащие до 2<sup>16</sup> листьев на батч (приблизительно 65,536 аттестаций на root). Каждый Merkle root публикуется в публичный EVM-совместимый Layer 2 rollup, вместе с сырым набором аттестаций на IPFS для постоянной доступности.
+    </p>
+
+    <p data-lang-en>
+      The on-chain verification contract performs the following operations upon receiving a Merkle root submission:
+    </p>
+    <p data-lang-ru>
+      On-chain контракт верификации выполняет следующие операции при получении Merkle root submission:
+    </p>
+
+    <ol>
+      <li data-lang-en>Verify the proposer holds <code>VALIDATOR_ROLE</code> under the contract's m-of-n quorum and that the threshold number of distinct validators have voted to confirm the batch. <em>Stake-weighted gating beyond role-based access is a v0.3+ design extension; the v0.2 reference contract uses role-based access only.</em></li>
+      <li data-lang-ru>Проверить, что proposer имеет <code>VALIDATOR_ROLE</code> в m-of-n кворуме контракта и что пороговое число различных валидаторов проголосовало за подтверждение батча. <em>Stake-взвешенный gating сверх role-based access — это v0.3+ design extension; v0.2 reference contract использует только role-based access.</em></li>
+
+      <li data-lang-en>Validate that no leaf signatures have been previously claimed (replay protection).</li>
+      <li data-lang-ru>Валидировать, что подписи листьев не были заявлены ранее (защита от replay).</li>
+
+      <li data-lang-en>Check that all device public keys reference accredited hardware in the on-chain registry.</li>
+      <li data-lang-ru>Проверить, что все публичные ключи устройств ссылаются на аккредитованное железо в on-chain реестре.</li>
+
+      <li data-lang-en>Verify the aggregate kWh sum does not exceed plausible production limits for the registered device class.</li>
+      <li data-lang-ru>Верифицировать, что агрегатная сумма кВт·ч не превышает правдоподобных лимитов производства для зарегистрированного класса устройств.</li>
+
+      <li data-lang-en>Mint NOET tokens to producer wallets at the rate of 1 NOET per attested kWh.</li>
+      <li data-lang-ru>Минтить токены NOET в кошельки производителей по курсу 1 NOET на подтверждённый кВт·ч.</li>
+    </ol>
+
+    <p data-lang-en>
+      A configurable fraud-proof window allows challengers to submit Merkle proofs of conflicting or fraudulent attestations. In the design vision, successful challenges automatically slash the responsible validator's stake and burn the disputed NOET. The v0.2 reference contract implements the role-revocation half of this — a validator proven to have voted for a fraudulent batch loses <code>VALIDATOR_ROLE</code> and has the off-chain evidence hash recorded on-chain — but slashing is admin-triggered, not automatically driven by an on-chain fraud-proof verifier, and there is no NOET-burn-on-slash mechanism yet. On-chain fraud-proof verification feeding slashing automatically is v0.3+ work; stake-weighted accountability and NOET burn are forward-looking design elements not yet shipped.
+    </p>
+    <p data-lang-ru>
+      Настраиваемое окно fraud-proof позволяет претендентам подавать Merkle proofs конфликтующих или мошеннических аттестаций. В design vision успешные оспаривания автоматически slash-ат stake ответственного валидатора и сжигают спорный NOET. v0.2 reference contract реализует половину этого — валидатор, доказанно голосовавший за мошеннический batch, теряет <code>VALIDATOR_ROLE</code> и off-chain evidence hash записывается on-chain — но slashing admin-triggered, не управляется автоматически on-chain fraud-proof verifier'ом, и пока нет NOET-burn-on-slash механизма. On-chain fraud-proof verification feeding slashing automatically — v0.3+ work; stake-weighted accountability и NOET burn — forward-looking design elements не shipped пока.
+    </p>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 6. ECONOMIC MODEL                              -->
+  <!-- ============================================ -->
+  <section class="section">
+    <div class="section-num">6.</div>
+    <h2 class="section-title">
+      <span data-lang-en>Economic model</span>
+      <span data-lang-ru>Экономическая модель</span>
+    </h2>
+
+    <p data-lang-en>
+      The protocol issues NOET tokens via algorithmic Proof-of-Generation:
+    </p>
+    <p data-lang-ru>
+      Протокол выпускает токены NOET через алгоритмический Proof-of-Generation:
+    </p>
+
+    <div class="equation">
+      Mint(t) = Σ <sub>i</sub> Verify( σ<sub>i</sub>, kWh<sub>i</sub>, pk<sub>i</sub> ) · kWh<sub>i</sub>
+      <span class="label">(2)</span>
+    </div>
+
+    <p data-lang-en>
+      summed over all valid attestations <code>i</code> in time interval <code>t</code>. There is no other minting mechanism — no inflation, no foundation reserve unlocks beyond the initial genesis allocation, no "emergency" mints. The Constitution (see [13]) explicitly forbids any party, including the Foundation, from issuing NOET tokens outside this mechanism.
+    </p>
+    <p data-lang-ru>
+      суммируется по всем валидным аттестациям <code>i</code> в интервале времени <code>t</code>. Других механизмов эмиссии нет — никакой инфляции, никаких разблокировок резерва фонда сверх начального genesis-распределения, никаких «экстренных» эмиссий. Конституция (см. [13]) явно запрещает любой стороне, включая Фонд, выпускать токены NOET вне этого механизма.
+    </p>
+
+    <p data-lang-en>
+      Genesis allocation comprises 25% of an initial supply: 5% Foundation treasury (4-year vest), 5% initial team and founder (4-year vest, 1-year cliff), 5% early backers via fair-launch mechanisms (4-year vest), and 10% Ecosystem Acceleration Program (10-year vest). The remaining 75% is issued exclusively via Proof-of-Generation as energy is verifiably produced.
+    </p>
+    <p data-lang-ru>
+      Genesis-распределение охватывает 25% начального предложения: 5% казначейство Фонда (4-летний vest), 5% начальная команда и основатель (4-летний vest, 1-летний cliff), 5% ранние сторонники через fair-launch механизмы (4-летний vest), и 10% Ecosystem Acceleration Program (10-летний vest). Оставшиеся 75% выпускаются исключительно через Proof-of-Generation по мере верифицируемого производства энергии.
+    </p>
+
+    <p data-lang-en>
+      Tokens are consumed (burned) when used to settle accounting against energy-attestation claims — for example, a corporation submitting NOET as proof of hardware-attested 24/7 carbon-free energy in regulatory reporting. This consumption-burn creates a deflationary mechanism tied to actual utility rather than speculation.
+    </p>
+    <p data-lang-ru>
+      Токены потребляются (сжигаются), когда используются для расчётов по энерго-аттестационным заявкам — например, корпорация подаёт NOET как доказательство аппаратно-подтверждённой 24/7 безуглеродной энергии в регуляторной отчётности. Это потребление-burn создаёт дефляционный механизм, привязанный к реальной утилитарности, а не спекуляции.
+    </p>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 7. GOVERNANCE                                  -->
+  <!-- ============================================ -->
+  <section class="section">
+    <div class="section-num">7.</div>
+    <h2 class="section-title">
+      <span data-lang-en>Governance and the role of the Foundation</span>
+      <span data-lang-ru>Управление и роль Фонда</span>
+    </h2>
+
+    <p data-lang-en>
+      The Noethrion Foundation administers the standard but does not own it. Three governance bodies share authority: a Council of seven members (Founder, industry, energy producer, government, academic, civil society, and independent technical seats), a Token House composed of NOET holders with 1% per-voter caps to resist whale capture, and a Builders House composed of contributors with reputation-weighted voting. Constitutional amendments require ⅔ Council majority + ¾ Token House majority + ⅔ Builders House majority, with a 90-day public comment period. Article I of the Constitution — defining the 1 NOET = 1 kWh invariant, the prohibition on central control, and the open-source requirement — is structurally immutable.
+    </p>
+    <p data-lang-ru>
+      Фонд Noethrion администрирует стандарт, но не владеет им. Три органа управления делят полномочия: Совет из семи членов (места основателя, индустрии, производителей энергии, правительства, академии, гражданского общества и независимое техническое), Палата токена из держателей NOET с лимитом 1% на голосующего для сопротивления whale-захвату, и Палата строителей из контрибьюторов с репутационно-взвешенным голосованием. Конституционные поправки требуют большинства ⅔ Совета + большинства ¾ Палаты токена + большинства ⅔ Палаты строителей, с 90-дневным периодом публичных комментариев. Статья I Конституции — определяющая инвариант 1 NOET = 1 кВт·ч, запрет на центральный контроль и требование open-source — структурно неизменна.
+    </p>
+
+    <p data-lang-en>
+      The Foundation is structurally designed to dissolve. When, for three consecutive years, the protocol operates with at least three independent client implementations, at least 100,000 active attestation devices, and no single jurisdiction or corporation controls more than 20% of accredited attestations, the Foundation may self-dissolve and distribute remaining assets to ecosystem participants. The protocol survives the Foundation by design.
+    </p>
+    <p data-lang-ru>
+      Фонд структурно спроектирован для саморасспуска. Когда в течение трёх лет подряд протокол работает минимум с тремя независимыми реализациями клиента, минимум 100,000 активных устройств аттестации, и ни одна юрисдикция или корпорация не контролирует более 20% аккредитованных аттестаций — Фонд может саморасспуститься и распределить оставшиеся активы участникам экосистемы. Протокол переживает Фонд по дизайну.
+    </p>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 8. POST-QUANTUM TRANSITION                     -->
+  <!-- ============================================ -->
+  <section class="section">
+    <div class="section-num">8.</div>
+    <h2 class="section-title">
+      <span data-lang-en>Post-quantum migration</span>
+      <span data-lang-ru>Post-quantum миграция</span>
+    </h2>
+
+    <p data-lang-en>
+      ECDSA P-256, while currently secure, is vulnerable to Shor's algorithm running on a sufficiently large quantum computer. NIST finalized FIPS 204 (ML-DSA, formerly Dilithium), FIPS 205 (SLH-DSA, formerly SPHINCS+), and is finalizing FIPS 206 (FN-DSA, Falcon) [14]. Median estimates place a cryptographically relevant quantum computer at approximately 2040, with non-trivial probability of earlier breakthrough [15].
+    </p>
+    <p data-lang-ru>
+      ECDSA P-256, хотя в настоящее время и безопасен, уязвим к алгоритму Шора, работающему на достаточно большом квантовом компьютере. NIST финализировал FIPS 204 (ML-DSA, ранее Dilithium), FIPS 205 (SLH-DSA, ранее SPHINCS+) и финализирует FIPS 206 (FN-DSA, Falcon) [14]. Медианные оценки помещают криптографически релевантный квантовый компьютер примерно на 2040 год, с нетривиальной вероятностью более раннего прорыва [15].
+    </p>
+
+    <p data-lang-en>
+      Noethrion will migrate to dual-signature schemes (ECDSA P-256 + ML-DSA) by Year 5 of the protocol's operation, providing forward security while maintaining backward compatibility during transition. Existing hardware (ATECC608B) lacks ML-DSA support and will be progressively replaced by ML-DSA-capable secure elements as they reach commercial availability.
+    </p>
+    <p data-lang-ru>
+      Noethrion мигрирует на dual-signature схемы (ECDSA P-256 + ML-DSA) к 5-му году работы протокола, обеспечивая forward security при сохранении обратной совместимости во время перехода. Существующее железо (ATECC608B) не поддерживает ML-DSA и будет постепенно заменено ML-DSA-совместимыми secure elements по мере их коммерческой доступности.
+    </p>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 9. CONCLUSION                                  -->
+  <!-- ============================================ -->
+  <section class="section">
+    <div class="section-num">9.</div>
+    <h2 class="section-title">
+      <span data-lang-en>Conclusion</span>
+      <span data-lang-ru>Заключение</span>
+    </h2>
+
+    <p data-lang-en>
+      We have proposed a protocol for hardware-attested energy production that uses commodity secure elements, settles on existing public Layer 2 infrastructure, and is governed by a constitutionally constrained foundation designed to dissolve. The protocol does not require novel cryptography, novel consensus, or novel governance — only the careful composition of well-understood components that prior energy-blockchain projects neglected.
+    </p>
+    <p data-lang-ru>
+      Мы предложили протокол для аппаратно-подтверждённой генерации энергии, использующий коммерческое железо secure-element, рассчитывающийся на существующей публичной инфраструктуре Layer 2 и управляемый конституционно ограниченным фондом, спроектированным для саморасспуска. Протокол не требует новой криптографии, нового консенсуса или нового управления — только аккуратной композиции хорошо понятых компонентов, которыми пренебрегли предыдущие energy-blockchain проекты.
+    </p>
+
+    <p data-lang-en>
+      The success of this protocol depends not on its technical novelty but on the discipline of its administration. We adopt the principle that the Foundation should do less than it could, refrain from competing with the ecosystem it enables, and prepare for its own dissolution from the outset. <em>Energy speaks for itself; we just give it a signature</em>.
+    </p>
+    <p data-lang-ru>
+      Успех этого протокола зависит не от его технической новизны, а от дисциплины его администрирования. Мы принимаем принцип, что Фонд должен делать меньше, чем мог бы, воздерживаться от конкуренции с экосистемой, которую он обеспечивает, и с самого начала готовиться к собственному роспуску. <em>Энергия говорит сама за себя; мы просто даём ей подпись</em>.
+    </p>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- REFERENCES                                     -->
+  <!-- ============================================ -->
+  <div class="references">
+    <h3 class="references-title">
+      <span data-lang-en>References</span>
+      <span data-lang-ru>Источники</span>
+    </h3>
+    <ol>
+      <li>Introl. "Nuclear power for AI: inside the data center energy deals." 2025. <a href="https://introl.com/blog/nuclear-power-ai-data-centers-microsoft-google-amazon-2025" style="color: var(--eta-deep);">introl.com/blog/nuclear-power-ai-data-centers</a></li>
+      <li>European Commission. "CBAM successfully entered into force on 1 January 2026." Taxation and Customs Union. 14 January 2026.</li>
+      <li>DigiKey Electronics. "ATECC608B-MAHDA-T pricing." Q1 2026. Microchip Technology product page.</li>
+      <li>Microchip Technology. "ATECC608-TNG (Trust&amp;Go) provisioning datasheet." DS40002389.</li>
+      <li>Fisch, B., Bonneau, J., Greco, N., Benet, J. "Scaling Proof-of-Replication for Filecoin Mining." 2018.</li>
+      <li>IoTeX. "W3bstream: An offchain computing layer for DePIN verifiable data computation." github.com/iotexproject/w3bstream</li>
+      <li>Bormann, C., Hoffman, P. "Concise Binary Object Representation (CBOR)." IETF RFC 8949. December 2020.</li>
+      <li>Lundblade, L., Mandyam, G., O'Donoghue, J., Wallace, C. "The Entity Attestation Token (EAT)." IETF RFC 9711. December 2024.</li>
+      <li>Birkholz, H., Thaler, D., Richardson, M., Smith, N., Pan, W. "Remote ATtestation procedureS (RATS) Architecture." IETF RFC 9334. January 2023.</li>
+      <li>Murdock, K., et al. "Plundervolt: Software-based Fault Injection Attacks against Intel SGX." IEEE S&P 2020.</li>
+      <li>Borrello, P., et al. "ÆPIC Leak: Architecturally Leaking Uninitialized Data from the Microarchitecture." USENIX Security 2022.</li>
+      <li>Moghimi, D. "Downfall: Exploiting Speculative Data Gathering." USENIX Security 2023.</li>
+      <li>Chursin, A. "The Constitution of Noethrion." Working Draft v0.1. 5 May 2026.</li>
+      <li>NIST. "Post-Quantum Cryptography Standardization." FIPS 204, FIPS 205, FIPS 206. August 2024.</li>
+      <li>Buterin, V. "Post-quantum cryptography on Ethereum." ethereum.org. August 2025.</li>
+    </ol>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- FOOTER                                         -->
+  <!-- ============================================ -->
+  <div class="paper-footer">
+    <p>
+      <strong>η = E<sub>useful</sub> / E<sub>total</sub></strong>
+    </p>
+    <p style="margin-top: 0.5rem;">
+      <span data-lang-en>Working Draft v0.1 · noethrion.com · May 2026</span>
+      <span data-lang-ru>Рабочий черновик v0.1 · noethrion.com · Май 2026</span>
+    </p>
+  </div>
+
+</div>
+
+<script>
+  const langButtons = document.querySelectorAll('.lang-btn');
+  const html = document.documentElement;
+
+  try {
+    const savedLang = localStorage.getItem('noethrion-lang');
+    if (savedLang === 'ru' || savedLang === 'en') setLang(savedLang);
+  } catch (e) {}
+
+  langButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      setLang(lang);
+      try { localStorage.setItem('noethrion-lang', lang); } catch (e) {}
+    });
+  });
+
+  function setLang(lang) {
+    html.setAttribute('lang', lang);
+    langButtons.forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === lang);
+    });
+  }
+</script>
+
+</body>
+</html>

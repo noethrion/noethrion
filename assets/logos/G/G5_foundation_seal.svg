@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- G5: Foundation Seal -->
+<!-- Для legal documents, certificates, official Foundation use -->
+<!-- η в круглой "печати" с латинской надписью -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <rect width="500" height="500" fill="#0A0A0A"/>
+
+  <!-- Outer circle -->
+  <circle cx="250" cy="250" r="220" fill="none" stroke="#F5F1E8" stroke-width="1.5"/>
+  <!-- Inner circle -->
+  <circle cx="250" cy="250" r="195" fill="none" stroke="#F5F1E8" stroke-width="0.5"/>
+
+  <!-- Eta in center -->
+  <text x="250" y="320" font-family="Instrument Serif, Times New Roman, serif" font-size="240" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+  <line x1="170" y1="345" x2="330" y2="345" stroke="#F5F1E8" stroke-width="1.5"/>
+
+  <!-- Top arc text — using path -->
+  <defs>
+    <path id="topArc" d="M 75,250 A 175,175 0 0 1 425,250" fill="none"/>
+    <path id="bottomArc" d="M 75,250 A 175,175 0 0 0 425,250" fill="none"/>
+  </defs>
+
+  <text font-family="JetBrains Mono, Courier, monospace" font-size="18" font-weight="400" letter-spacing="6" fill="#F5F1E8">
+    <textPath href="#topArc" startOffset="50%" text-anchor="middle">NOETHRION FOUNDATION</textPath>
+  </text>
+
+  <text font-family="JetBrains Mono, Courier, monospace" font-size="13" font-weight="400" letter-spacing="4" fill="#6B6862">
+    <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">EST · 2026</textPath>
+  </text>
+</svg>

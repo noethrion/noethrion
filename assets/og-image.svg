@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Noethrion · Open Graph card · 1200×630
+     Brand-compliant: Noir #0A0A0A · Eta-green #14F195 · Cream #F5F1E8
+     Used as og:image / twitter:image. PNG sibling rendered by tools/render_social_assets.py. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0A0A0A"/>
+
+  <!-- Pulse dot accent (top-left) -->
+  <circle cx="80" cy="80" r="6" fill="#14F195"/>
+
+  <!-- Mono caption top -->
+  <text x="100" y="86" font-family="Courier New, Courier, monospace" font-size="14" font-weight="400" letter-spacing="3" fill="#6B6862">// PROTOCOL · v0.1 · MAY 2026</text>
+
+  <!-- Large eta — left third -->
+  <text x="240" y="450" font-family="Georgia, 'Times New Roman', serif" font-size="380" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+
+  <!-- Baseline rule under η (55% width centered, brand book rule) -->
+  <line x1="135" y1="480" x2="345" y2="480" stroke="#F5F1E8" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Wordmark — right of η -->
+  <text x="470" y="290" font-family="Helvetica, Arial, sans-serif" font-size="78" font-weight="300" letter-spacing="6" fill="#F5F1E8">noethrion</text>
+
+  <!-- Tagline -->
+  <text x="470" y="350" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="300" letter-spacing="0.5" fill="#C4BFB2">Open standard for verifiable energy.</text>
+
+  <!-- Equation — mono, bottom-right of right block -->
+  <text x="470" y="420" font-family="Courier New, Courier, monospace" font-size="18" font-weight="400" letter-spacing="2" fill="#14F195">1 NOET = 1 kWh · cryptographically signed</text>
+
+  <!-- Formula bottom-left -->
+  <text x="100" y="595" font-family="Courier New, Courier, monospace" font-size="14" font-weight="400" letter-spacing="2" fill="#6B6862">η = E_useful / E_total</text>
+
+  <!-- URL bottom-right -->
+  <text x="1100" y="595" font-family="Courier New, Courier, monospace" font-size="14" font-weight="400" letter-spacing="2" text-anchor="end" fill="#6B6862">noethrion.com</text>
+</svg>

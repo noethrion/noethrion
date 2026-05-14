@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- G3: Email Signature Format -->
+<!-- 200x40 — для email signatures, footer signatures -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80">
+  <rect width="320" height="80" fill="#0A0A0A"/>
+  <text x="40" y="58" font-family="Instrument Serif, Times New Roman, serif" font-size="56" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>
+  <line x1="20" y1="64" x2="60" y2="64" stroke="#F5F1E8" stroke-width="1"/>
+  <text x="80" y="48" font-family="Inter Tight, sans-serif" font-size="20" font-weight="400" letter-spacing="2" fill="#F5F1E8">NOETHRION</text>
+  <text x="80" y="65" font-family="JetBrains Mono, Courier, monospace" font-size="10" font-weight="400" fill="#6B6862">team@noethrion.com</text>
+</svg>
