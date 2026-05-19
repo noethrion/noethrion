@@ -149,6 +149,12 @@ docs/.docusaurus/
 # Local Claude Code config (skills, agents, settings)
 .claude/
 
+# Local MCP runtime artifacts (serena symbolic index, ruvector memory db)
+.serena/
+ruvector.db
+agentdb.rvf
+agentdb.rvf.lock
+
 # --- Lifecycle example runtime artifacts (created by tools/run_lifecycle.sh) ---
 examples/lifecycle/attester.key.pub
 examples/lifecycle/attestation.json
