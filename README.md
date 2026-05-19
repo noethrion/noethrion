@@ -27,7 +27,7 @@
 
 Noethrion is an open standard for hardware-attested verification of electricity generation. The protocol allows producers, consumers, and regulators to cryptographically verify the source and timing of any kilowatt-hour through digital signatures originating at hardware secure elements installed adjacent to electricity meters.
 
-NOET is the unit of accounting in the protocol, representing one verified kilowatt-hour. It is not designed as a payment instrument, store-of-value asset, or monetary alternative — it is a verifiable attestation token used internally by the protocol for accounting, audit, and traceability.
+NOET is the verification artifact issued for one attested kilowatt-hour. It serves as a unit of account inside the protocol for audit, traceability, and settlement of energy-attestation claims. It is not a payment instrument, a store-of-value asset, or a monetary alternative — sovereign currencies (USD, EUR, CNY, others) continue to handle commerce.
 
 A verification layer for energy attestation — analogous to how DNS verifies domain ownership and how X.509 certificates verify identity.
 
@@ -133,7 +133,7 @@ noethrion/
 ├── CONTRIBUTING.md / SECURITY.md / CODE_OF_CONDUCT.md / LICENSE
 ├── docs/             Whitepaper, Constitution, Brand Book, ADRs, hardware vendor matrix
 │   ├── whitepaper.html / constitution.html / brand-book-v0.3.html / index.html (landing)
-│   ├── adr/          five Architecture Decision Records (P-256, hardware, L2, Stiftung, no-sale)
+│   ├── adr/          seven Architecture Decision Records (P-256, hardware, L2, Stiftung, no-sale, threshold-submitter, prod-multisig)
 │   └── hardware-vendor-matrix.md
 ├── spec/             IETF-style protocol specification
 │   └── noethrion-attestation-v0.1.md
@@ -269,7 +269,7 @@ noethrion/
 ├── CONTRIBUTING.md / SECURITY.md / CODE_OF_CONDUCT.md / LICENSE
 ├── docs/             Whitepaper, Constitution, Brand Book, ADRs, hardware vendor matrix
 │   ├── whitepaper.html / constitution.html / brand-book-v0.3.html / index.html (landing)
-│   ├── adr/          five Architecture Decision Records (P-256, hardware, L2, Stiftung, no-sale)
+│   ├── adr/          seven Architecture Decision Records (P-256, hardware, L2, Stiftung, no-sale, threshold-submitter, prod-multisig)
 │   └── hardware-vendor-matrix.md
 ├── spec/             IETF-style protocol specification
 │   └── noethrion-attestation-v0.1.md

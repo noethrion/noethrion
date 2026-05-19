@@ -6,8 +6,8 @@ Open standard for hardware-attested verification of clean energy generation.
 
 ## Tech stack
 - Smart contracts: Solidity, Foundry, EVM Layer 2 settlement
-- Hardware: ESP32 + ATECC608B (planned Phase 5)
-- Spec: IETF I-D in RATS WG (planned Phase 4)
+- Hardware: ESP32 + ATECC608B (Phase 5 shipped, probe-only stub — see firmware/README.md)
+- Spec: IETF I-D draft v0.1 ready for RATS WG submission (Phase 4 shipped — see spec/)
 
 ## Repository structure
 - contracts/    Foundry-based smart contracts
