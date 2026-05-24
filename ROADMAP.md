@@ -11,7 +11,7 @@ This document is a **direction**, not a contract. Specific dates shift; the orde
 | Pillar | State |
 |--------|-------|
 | Protocol specification | **v0.1 draft published** — IETF Internet-Draft format, RATS WG submission pending one further public-review pass |
-| Smart contracts | **Beta** — `NoethrionAttester` + `NoethrionToken`, 27 tests passing, `claim()` implemented with MerkleProof + ReentrancyGuard. Third-party audit funded via grant, pending engagement |
+| Smart contracts | **Beta** — `NoethrionAttester` + `NoethrionToken`, 127/127 forge tests + 25/25 Halmos symbolic proofs passing, `claim()` implemented with MerkleProof + ReentrancyGuard. Third-party audit funded via grant, pending engagement |
 | Reference firmware | **Skeleton** — ESP32 + ATECC608B probe-only stub. Hardware bring-up bench pending |
 | Reference tooling | **Published** — Python CLI (provision, verify, render assets) + integrator templates (Python library, Node TypeScript, Solidity consumer) |
 | Foundation | **Initial Development Co. (Delaware C-Corp interim)** — transition to Swiss Stiftung targeted for 2028+ after treasury maturity threshold |

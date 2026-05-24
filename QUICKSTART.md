@@ -170,7 +170,7 @@ forge install
 forge test
 ```
 
-Ожидаемый вывод: **все тесты pass** (на данный момент 27/27 across двух suites — `NoethrionAttester` и `NoethrionToken`).
+Ожидаемый вывод: **все тесты pass** (на данный момент 127/127 forge tests + 25/25 Halmos symbolic proofs across двух suites — `NoethrionAttester` и `NoethrionToken`).
 
 Полезные follow-ups:
 
