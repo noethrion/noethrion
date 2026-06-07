@@ -1,6 +1,6 @@
 # Noethrion Firmware — ESP32 + ATECC608B
 
-Reference firmware for hardware-attested kWh measurement. Reads a kWh meter, signs the (timestamp, energy_wh) tuple inside a tamper-resistant secure element, and publishes the signed attestation upstream.
+Reference firmware for hardware-attested kWh measurement. The target design is to read a kWh meter, sign the (timestamp, energy_wh) tuple inside a tamper-resistant secure element, and publish the signed attestation upstream. The current skeleton implements only part of this — see Status below.
 
 **Status:** Phase 5 skeleton — compiles and exercises the I²C bus + secure element handshake. Meter reading and upstream publication are stubs awaiting hardware bring-up.
 

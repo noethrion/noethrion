@@ -20,7 +20,7 @@
 |---------|-------:|
 | Source files audited | 2 |
 | `NoethrionAttester.sol` unit tests | 63 |
-| `NoethrionToken.sol` unit tests | 13 |
+| `NoethrionToken.sol` unit tests | 14 |
 | Security (reentrancy mock) tests | 1 |
 | Invariant tests | 8 (across 3 phased handler suites) |
 | Symbolic (Halmos) checks — Attester | 19 |

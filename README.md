@@ -141,6 +141,7 @@ noethrion/
 ├── firmware/         ESP32 + ATECC608B reference (PlatformIO, probe-only skeleton)
 ├── examples/         end-to-end lifecycle + integrator templates (Python / TS / Solidity)
 ├── tools/            Python CLI — provision, verify, render social assets
+├── node/             independent verifier — re-verifies finalized batches + signatures off-chain, alarms on mismatch (Python reference; Go + browser to follow)
 ├── assets/           SVG logos (D / E / F / G categories), social card sources
 └── .github/          CI (lint + Foundry tests), Cloudflare Pages deploy workflow
 ```
@@ -277,6 +278,7 @@ noethrion/
 ├── firmware/         ESP32 + ATECC608B reference (PlatformIO, probe-only skeleton)
 ├── examples/         end-to-end lifecycle + integrator templates (Python / TS / Solidity)
 ├── tools/            Python CLI — provision, verify, render social assets
+├── node/             independent verifier — re-verifies finalized batches + signatures off-chain, alarms on mismatch (Python reference; Go + browser to follow)
 ├── assets/           SVG logos (D / E / F / G categories), social card sources
 └── .github/          CI (lint + Foundry tests), Cloudflare Pages deploy workflow
 ```
