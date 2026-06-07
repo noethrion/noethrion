@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Noethrion — Genesis Attestation · Proof of Life</title>
+<meta name="description" content="The Noethrion protocol's first full attestation cycle, executed live on a public network. Verify it yourself on-chain.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Noethrion — Genesis Attestation · Proof of Life">
+<meta property="og:description" content="First full attestation cycle (propose→finalize→claim) confirmed live on a public testnet. 100 NOET minted on-chain. Verify it yourself.">
+<meta property="og:url" content="https://noethrion.com/proof">
+<meta property="og:image" content="https://noethrion.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Noethrion — Genesis Attestation · Proof of Life">
+<meta name="twitter:description" content="First full attestation cycle confirmed live on a public testnet. 100 NOET minted on-chain. Verify it yourself.">
+<meta name="twitter:image" content="https://noethrion.com/og-image.png">
+<style>
+  :root { --noir:#0A0A0A; --eta:#14F195; --cream:#F5F1E8; --dim:#8a8f8a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--noir); color:var(--cream);
+         font-family:-apple-system,Inter,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif; line-height:1.6; }
+  .wrap { max-width:860px; margin:0 auto; padding:40px 24px 80px; }
+  .eta { color:var(--eta); }
+  h1 { font-size:30px; margin:0 0 4px; }
+  h2 { font-size:19px; margin:36px 0 12px; border-bottom:1px solid #1d211d; padding-bottom:8px; }
+  .sub { color:var(--dim); font-size:15px; margin:0 0 8px; }
+  .badge { display:inline-block; background:rgba(20,241,149,.12); border:1px solid var(--eta);
+           color:var(--eta); padding:4px 12px; border-radius:999px; font-size:13px; font-weight:600; margin:0 0 18px; }
+  .tabs { display:flex; gap:6px; flex-wrap:wrap; margin:0 0 28px; }
+  .tab { background:#0e120e; border:1px solid #1d211d; color:var(--cream); padding:7px 16px;
+         border-radius:999px; font-size:14px; cursor:pointer; font-family:inherit; }
+  .tab.active { background:var(--eta); color:var(--noir); border-color:var(--eta); font-weight:600; }
+  .lang { display:none; }
+  #lang-en { display:block; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  td { padding:10px 8px; border-bottom:1px solid #181c18; vertical-align:top; }
+  td.k { color:var(--dim); width:40%; }
+  .mono { font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; word-break:break-all; }
+  a { color:var(--eta); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .card { background:#0e120e; border:1px solid #1d211d; border-radius:10px; padding:18px 20px; margin:14px 0; }
+  .label { color:var(--dim); font-size:12px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
+  .big { font-size:24px; font-weight:700; }
+  pre { background:#0e120e; border:1px solid #1d211d; border-radius:8px; padding:14px;
+        overflow-x:auto; font-size:12.5px; color:#cdd3cd; }
+  .note { background:rgba(245,241,232,.05); border-left:3px solid var(--dim); padding:12px 16px;
+          border-radius:4px; font-size:14px; color:#cfd3cf; }
+  footer { color:var(--dim); font-size:13px; margin-top:44px; border-top:1px solid #181c18; padding-top:16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="badge">η · NOETHRION PROTOCOL</div>
+
+  <div class="tabs">
+    <button class="tab active" data-lang="en">EN</button>
+    <button class="tab" data-lang="ru">Русский</button>
+    <button class="tab" data-lang="zh">中文</button>
+    <button class="tab" data-lang="es">Español</button>
+  </div>
+
+  <!-- ============ ENGLISH ============ -->
+  <section class="lang" id="lang-en">
+    <h1>Genesis Attestation — <span class="eta">Proof of Life</span></h1>
+    <p class="sub">The Noethrion protocol's first full attestation cycle, executed live on a public network.</p>
+    <div class="card">
+      <div class="label">Result</div>
+      <div class="big eta">100 NOET minted on-chain ✓</div>
+      <div class="sub">Cycle: deploy → propose → finalize → claim. 100 NOET minted. P-256 signature verified.</div>
+    </div>
+
+    <h2>What happened</h2>
+    <p>An attester contract was deployed, a batch of signed energy attestations was proposed, the challenge
+    window elapsed, the batch was finalized, and a claim minted NOET — the full protocol lifecycle, end to
+    end, on the public Sepolia test network.</p>
+
+    <h2>Why it matters</h2>
+    <p><strong class="eta">Verification replaces trust with proof — at near-zero marginal cost.</strong></p>
+    <table>
+      <tr><td class="k">The problem</td><td>Today "green energy" claims rest on self-reporting and periodic audits — hard to verify, easy to overstate.</td></tr>
+      <tr><td class="k">What changes</td><td>A ~$0.87 secure chip signs each kWh at the source; anyone re-verifies any record in under a second, with no trust in the operator.</td></tr>
+      <tr><td class="k">Where the value is</td><td>Verifiable green provenance unlocks regulatory compliance (energy reporting, carbon-border rules), investor-grade sustainability claims, and access to premium "proven-green" markets — for energy producers and large-scale compute operators alike.</td></tr>
+      <tr><td class="k">The unit</td><td><span class="mono">1 NOET = 1 verified kWh</span> — a portable, checkable unit of clean-energy truth.</td></tr>
+    </table>
+
+    <h2>On-chain facts <span class="sub">(read live, anyone can re-read)</span></h2>
+    <table>
+      <tr><td class="k">Network</td><td>Sepolia testnet · chainId <span class="mono">11155111</span></td></tr>
+      <tr><td class="k">Date</td><td>2026-06-06</td></tr>
+      <tr><td class="k">Batch epoch</td><td class="mono">1</td></tr>
+      <tr><td class="k">Batch finalized</td><td class="eta mono">true ✓</td></tr>
+      <tr><td class="k">Committed Merkle root</td><td class="mono">0xc61984cfd694aaa2a58a439f7eb42e096bcbfce2e6504f7db4a52e157c1fa87e</td></tr>
+      <tr><td class="k">NOET total supply</td><td class="mono">100.0 NOET</td></tr>
+      <tr><td class="k">Signature</td><td>ECDSA P-256 — verified ✓</td></tr>
+    </table>
+
+    <h2>Verify it yourself <span class="sub">(click any link)</span></h2>
+    <table>
+      <tr><td class="k">Attester contract</td><td><a class="mono" href="https://sepolia.etherscan.io/address/0x02De07a2CF1E757D8D53de217B5dA372E84114cC" target="_blank" rel="noopener">0x02De…14cC ↗</a></td></tr>
+      <tr><td class="k">NOET token</td><td><a class="mono" href="https://sepolia.etherscan.io/address/0x50a2A457201d329878749fd0B3D1c0Df04DE50a1" target="_blank" rel="noopener">0x50a2…50a1 ↗</a></td></tr>
+      <tr><td class="k">1 · proposeBatch</td><td><a class="mono" href="https://sepolia.etherscan.io/tx/0x5216353ad15b789b59a5a7ca752d5327249d135838ff50b9fefbb1b2b6186fb5" target="_blank" rel="noopener">0x5216353a…186fb5 ↗</a></td></tr>
+      <tr><td class="k">2 · finalizeBatch</td><td><a class="mono" href="https://sepolia.etherscan.io/tx/0x7b94804a3fbb0a2daee220d40e5e6201e2c644ede76ec3631675a57d7e39ba02" target="_blank" rel="noopener">0x7b94804a…39ba02 ↗</a></td></tr>
+      <tr><td class="k">3 · claim (mints NOET)</td><td><a class="mono" href="https://sepolia.etherscan.io/tx/0xee6387ba85732167fdb8049c96b9f3952bbfe542de21d762e8669ef9d8e3e4a9" target="_blank" rel="noopener">0xee6387ba…e3e4a9 ↗</a></td></tr>
+    </table>
+    <p style="margin-top:16px">Don't trust this page — verify the chain directly:</p>
+<pre>cast call 0x02De07a2CF1E757D8D53de217B5dA372E84114cC \
+  "batches(uint64)(bytes32,uint64,uint128,uint64,address,bool,uint64,uint64)" 1 \
+  --rpc-url https://ethereum-sepolia-rpc.publicnode.com   # → finalized = true</pre>
+
+    <h2>Honest scope</h2>
+    <div class="note">This is the protocol's <strong>first on-chain attestation cycle</strong> on a public network —
+    proof the mechanism works end to end. It runs on a <strong>testnet</strong>, and the kWh figure is
+    <strong>reference data</strong> (the hardware-meter integration is still a stub). It is therefore <em>not</em>
+    a claim of "first verified real green kWh" — that comes with hardware bring-up.</div>
+  </section>
+
+  <!-- ============ РУССКИЙ ============ -->
+  <section class="lang" id="lang-ru">
+    <h1>Génesis-аттестация — <span class="eta">доказательство работы</span></h1>
+    <p class="sub">Первый полный цикл аттестации протокола Noethrion, выполненный вживую в публичной сети.</p>
+    <div class="card">
+      <div class="label">Результат</div>
+      <div class="big eta">100 NOET заминчено в сети ✓</div>
+      <div class="sub">Цикл: деплой → propose → finalize → claim. 100 NOET заминчено. Подпись P-256 проверена.</div>
+    </div>
+
+    <h2>Что произошло</h2>
+    <p>Развёрнут контракт-аттестатор, предложен батч подписанных аттестаций энергии, прошло окно оспаривания,
+    батч финализирован, claim заминтил NOET — полный жизненный цикл протокола, от начала до конца, в публичной
+    тестовой сети Sepolia.</p>
+
+    <h2>Зачем это экономически</h2>
+    <p><strong class="eta">Проверка заменяет доверие доказательством — при почти нулевой предельной стоимости.</strong></p>
+    <table>
+      <tr><td class="k">Проблема</td><td>Сегодня заявления о «зелёной энергии» держатся на самоотчётах и редких аудитах — трудно проверить, легко преувеличить.</td></tr>
+      <tr><td class="k">Что меняется</td><td>Защищённый чип за ~$0.87 подписывает каждый kWh у источника; любой перепроверяет любую запись меньше чем за секунду, не доверяя оператору.</td></tr>
+      <tr><td class="k">В чём ценность</td><td>Проверяемое происхождение энергии открывает: соответствие регуляциям (энергоотчётность, углеродные границы), sustainability-заявления инвест-уровня и доступ к премиальным «доказано зелёным» рынкам — и для производителей энергии, и для крупных compute-операторов.</td></tr>
+      <tr><td class="k">Единица</td><td><span class="mono">1 NOET = 1 verified kWh</span> — переносимая, проверяемая единица правды о чистой энергии.</td></tr>
+    </table>
+
+    <h2>Факты в сети <span class="sub">(читаются вживую, любой перечитает)</span></h2>
+    <table>
+      <tr><td class="k">Сеть</td><td>Sepolia testnet · chainId <span class="mono">11155111</span></td></tr>
+      <tr><td class="k">Дата</td><td>2026-06-06</td></tr>
+      <tr><td class="k">Эпоха батча</td><td class="mono">1</td></tr>
+      <tr><td class="k">Батч финализирован</td><td class="eta mono">true ✓</td></tr>
+      <tr><td class="k">Зафиксированный Merkle-корень</td><td class="mono">0xc61984cfd694aaa2a58a439f7eb42e096bcbfce2e6504f7db4a52e157c1fa87e</td></tr>
+      <tr><td class="k">Эмиссия NOET</td><td class="mono">100.0 NOET</td></tr>
+      <tr><td class="k">Подпись</td><td>ECDSA P-256 — проверена ✓</td></tr>
+    </table>
+
+    <h2>Проверь сам <span class="sub">(кликни любую ссылку)</span></h2>
+    <table>
+      <tr><td class="k">Контракт-аттестатор</td><td><a class="mono" href="https://sepolia.etherscan.io/address/0x02De07a2CF1E757D8D53de217B5dA372E84114cC" target="_blank" rel="noopener">0x02De…14cC ↗</a></td></tr>
+      <tr><td class="k">Токен NOET</td><td><a class="mono" href="https://sepolia.etherscan.io/address/0x50a2A457201d329878749fd0B3D1c0Df04DE50a1" target="_blank" rel="noopener">0x50a2…50a1 ↗</a></td></tr>
+      <tr><td class="k">1 · proposeBatch</td><td><a class="mono" href="https://sepolia.etherscan.io/tx/0x5216353ad15b789b59a5a7ca752d5327249d135838ff50b9fefbb1b2b6186fb5" target="_blank" rel="noopener">0x5216353a…186fb5 ↗</a></td></tr>
+      <tr><td class="k">2 · finalizeBatch</td><td><a class="mono" href="https://sepolia.etherscan.io/tx/0x7b94804a3fbb0a2daee220d40e5e6201e2c644ede76ec3631675a57d7e39ba02" target="_blank" rel="noopener">0x7b94804a…39ba02 ↗</a></td></tr>
+      <tr><td class="k">3 · claim (минт NOET)</td><td><a class="mono" href="https://sepolia.etherscan.io/tx/0xee6387ba85732167fdb8049c96b9f3952bbfe542de21d762e8669ef9d8e3e4a9" target="_blank" rel="noopener">0xee6387ba…e3e4a9 ↗</a></td></tr>
+    </table>
+    <p style="margin-top:16px">Не верь этой странице — проверь цепочку напрямую:</p>
+<pre>cast call 0x02De07a2CF1E757D8D53de217B5dA372E84114cC \
+  "batches(uint64)(bytes32,uint64,uint128,uint64,address,bool,uint64,uint64)" 1 \
+  --rpc-url https://ethereum-sepolia-rpc.publicnode.com   # → finalized = true</pre>
+
+    <h2>Честно о рамках</h2>
+    <div class="note">Это <strong>первый on-chain цикл аттестации</strong> в публичной сети — доказательство, что
+    механизм работает целиком. Это <strong>тестнет</strong>, а цифра kWh — <strong>референсные данные</strong>
+    (интеграция с железом-счётчиком ещё заглушка). Поэтому это <em>не</em> заявление «первый реальный зелёный
+    kWh» — оно придёт с запуском железа.</div>
+  </section>
+
+  <!-- ============ 中文 ============ -->
+  <section class="lang" id="lang-zh">
+    <h1>创世认证 — <span class="eta">运行证明</span></h1>
+    <p class="sub">Noethrion 协议在公共网络上实时执行的首个完整认证周期。</p>
+    <div class="card">
+      <div class="label">结果</div>
+      <div class="big eta">链上铸造 100 NOET ✓</div>
+      <div class="sub">周期：部署 → 提议 → 最终确定 → 领取。已铸造 100 NOET。P-256 签名已验证。</div>
+    </div>
+
+    <h2>发生了什么</h2>
+    <p>部署了认证合约，提交了一批已签名的能源认证，挑战窗口结束后批次被最终确定，领取操作铸造了 NOET —
+    完整的协议生命周期，端到端，在公共的 Sepolia 测试网络上。</p>
+
+    <h2>为何重要（经济意义）</h2>
+    <p><strong class="eta">用证明取代信任 — 边际成本几乎为零。</strong></p>
+    <table>
+      <tr><td class="k">问题</td><td>如今"绿色能源"的声明依赖自我报告和定期审计 — 难以验证，易于夸大。</td></tr>
+      <tr><td class="k">改变了什么</td><td>一枚约 $0.87 的安全芯片在源头为每千瓦时签名；任何人都能在一秒内重新验证任何记录，无需信任运营方。</td></tr>
+      <tr><td class="k">价值所在</td><td>可验证的绿色来源解锁了：合规（能源报告、碳边境规则）、投资级可持续性声明，以及进入高端"已证明为绿色"市场的通道 — 无论是能源生产者还是大规模算力运营方。</td></tr>
+      <tr><td class="k">单位</td><td><span class="mono">1 NOET = 1 个已验证千瓦时</span> — 一个可携带、可核查的清洁能源真相单位。</td></tr>
+    </table>
+
+    <h2>链上事实 <span class="sub">（实时读取，任何人可复核）</span></h2>
+    <table>
+      <tr><td class="k">网络</td><td>Sepolia 测试网 · chainId <span class="mono">11155111</span></td></tr>
+      <tr><td class="k">日期</td><td>2026-06-06</td></tr>
+      <tr><td class="k">批次纪元</td><td class="mono">1</td></tr>
+      <tr><td class="k">批次已最终确定</td><td class="eta mono">true ✓</td></tr>
+      <tr><td class="k">已提交的 Merkle 根</td><td class="mono">0xc61984cfd694aaa2a58a439f7eb42e096bcbfce2e6504f7db4a52e157c1fa87e</td></tr>
+      <tr><td class="k">NOET 总供应量</td><td class="mono">100.0 NOET</td></tr>
+      <tr><td class="k">签名</td><td>ECDSA P-256 — 已验证 ✓</td></tr>
+    </table>
+
+    <h2>自行验证 <span class="sub">（点击任意链接）</span></h2>
+    <table>
+      <tr><td class="k">认证合约</td><td><a class="mono" href="https://sepolia.etherscan.io/address/0x02De07a2CF1E757D8D53de217B5dA372E84114cC" target="_blank" rel="noopener">0x02De…14cC ↗</a></td></tr>
+      <tr><td class="k">NOET 代币</td><td><a class="mono" href="https://sepolia.etherscan.io/address/0x50a2A457201d329878749fd0B3D1c0Df04DE50a1" target="_blank" rel="noopener">0x50a2…50a1 ↗</a></td></tr>
+      <tr><td class="k">1 · proposeBatch</td><td><a class="mono" href="https://sepolia.etherscan.io/tx/0x5216353ad15b789b59a5a7ca752d5327249d135838ff50b9fefbb1b2b6186fb5" target="_blank" rel="noopener">0x5216353a…186fb5 ↗</a></td></tr>
+      <tr><td class="k">2 · finalizeBatch</td><td><a class="mono" href="https://sepolia.etherscan.io/tx/0x7b94804a3fbb0a2daee220d40e5e6201e2c644ede76ec3631675a57d7e39ba02" target="_blank" rel="noopener">0x7b94804a…39ba02 ↗</a></td></tr>
+      <tr><td class="k">3 · claim（铸造 NOET）</td><td><a class="mono" href="https://sepolia.etherscan.io/tx/0xee6387ba85732167fdb8049c96b9f3952bbfe542de21d762e8669ef9d8e3e4a9" target="_blank" rel="noopener">0xee6387ba…e3e4a9 ↗</a></td></tr>
+    </table>
+    <p style="margin-top:16px">不要信任此页面 — 直接验证链上数据：</p>
+<pre>cast call 0x02De07a2CF1E757D8D53de217B5dA372E84114cC \
+  "batches(uint64)(bytes32,uint64,uint128,uint64,address,bool,uint64,uint64)" 1 \
+  --rpc-url https://ethereum-sepolia-rpc.publicnode.com   # → finalized = true</pre>
+
+    <h2>诚实的范围说明</h2>
+    <div class="note">这是协议在公共网络上的<strong>首个链上认证周期</strong> — 证明机制端到端可用。它运行在<strong>测试网</strong>上，
+    千瓦时数字为<strong>参考数据</strong>（硬件电表集成仍是占位实现）。因此这并非"首个已验证的真实绿色千瓦时"的声明 —
+    那将随硬件落地而来。</div>
+  </section>
+
+  <!-- ============ ESPAÑOL ============ -->
+  <section class="lang" id="lang-es">
+    <h1>Atestación Génesis — <span class="eta">Prueba de Funcionamiento</span></h1>
+    <p class="sub">El primer ciclo completo de atestación del protocolo Noethrion, ejecutado en vivo en una red pública.</p>
+    <div class="card">
+      <div class="label">Resultado</div>
+      <div class="big eta">100 NOET acuñados en cadena ✓</div>
+      <div class="sub">Ciclo: desplegar → proponer → finalizar → reclamar. 100 NOET acuñados. Firma P-256 verificada.</div>
+    </div>
+
+    <h2>Qué ocurrió</h2>
+    <p>Se desplegó un contrato atestador, se propuso un lote de atestaciones de energía firmadas, transcurrió la
+    ventana de impugnación, el lote se finalizó y una reclamación acuñó NOET — el ciclo de vida completo del
+    protocolo, de principio a fin, en la red pública de prueba Sepolia.</p>
+
+    <h2>Por qué importa</h2>
+    <p><strong class="eta">La verificación reemplaza la confianza por pruebas — a coste marginal casi nulo.</strong></p>
+    <table>
+      <tr><td class="k">El problema</td><td>Hoy las afirmaciones de "energía verde" se basan en autoinformes y auditorías periódicas — difíciles de verificar, fáciles de exagerar.</td></tr>
+      <tr><td class="k">Qué cambia</td><td>Un chip seguro de ~$0.87 firma cada kWh en el origen; cualquiera reverifica cualquier registro en menos de un segundo, sin confiar en el operador.</td></tr>
+      <tr><td class="k">Dónde está el valor</td><td>La procedencia verde verificable habilita el cumplimiento normativo (informes de energía, reglas de frontera de carbono), afirmaciones de sostenibilidad de grado inversor y acceso a mercados premium "verde comprobado" — tanto para productores de energía como para operadores de cómputo a gran escala.</td></tr>
+      <tr><td class="k">La unidad</td><td><span class="mono">1 NOET = 1 kWh verificado</span> — una unidad portátil y comprobable de verdad sobre energía limpia.</td></tr>
+    </table>
+
+    <h2>Datos en cadena <span class="sub">(lectura en vivo, cualquiera puede releerlos)</span></h2>
+    <table>
+      <tr><td class="k">Red</td><td>Sepolia testnet · chainId <span class="mono">11155111</span></td></tr>
+      <tr><td class="k">Fecha</td><td>2026-06-06</td></tr>
+      <tr><td class="k">Época del lote</td><td class="mono">1</td></tr>
+      <tr><td class="k">Lote finalizado</td><td class="eta mono">true ✓</td></tr>
+      <tr><td class="k">Raíz de Merkle comprometida</td><td class="mono">0xc61984cfd694aaa2a58a439f7eb42e096bcbfce2e6504f7db4a52e157c1fa87e</td></tr>
+      <tr><td class="k">Suministro total de NOET</td><td class="mono">100.0 NOET</td></tr>
+      <tr><td class="k">Firma</td><td>ECDSA P-256 — verificada ✓</td></tr>
+    </table>
+
+    <h2>Verifícalo tú mismo <span class="sub">(haz clic en cualquier enlace)</span></h2>
+    <table>
+      <tr><td class="k">Contrato atestador</td><td><a class="mono" href="https://sepolia.etherscan.io/address/0x02De07a2CF1E757D8D53de217B5dA372E84114cC" target="_blank" rel="noopener">0x02De…14cC ↗</a></td></tr>
+      <tr><td class="k">Token NOET</td><td><a class="mono" href="https://sepolia.etherscan.io/address/0x50a2A457201d329878749fd0B3D1c0Df04DE50a1" target="_blank" rel="noopener">0x50a2…50a1 ↗</a></td></tr>
+      <tr><td class="k">1 · proposeBatch</td><td><a class="mono" href="https://sepolia.etherscan.io/tx/0x5216353ad15b789b59a5a7ca752d5327249d135838ff50b9fefbb1b2b6186fb5" target="_blank" rel="noopener">0x5216353a…186fb5 ↗</a></td></tr>
+      <tr><td class="k">2 · finalizeBatch</td><td><a class="mono" href="https://sepolia.etherscan.io/tx/0x7b94804a3fbb0a2daee220d40e5e6201e2c644ede76ec3631675a57d7e39ba02" target="_blank" rel="noopener">0x7b94804a…39ba02 ↗</a></td></tr>
+      <tr><td class="k">3 · claim (acuña NOET)</td><td><a class="mono" href="https://sepolia.etherscan.io/tx/0xee6387ba85732167fdb8049c96b9f3952bbfe542de21d762e8669ef9d8e3e4a9" target="_blank" rel="noopener">0xee6387ba…e3e4a9 ↗</a></td></tr>
+    </table>
+    <p style="margin-top:16px">No confíes en esta página — verifica la cadena directamente:</p>
+<pre>cast call 0x02De07a2CF1E757D8D53de217B5dA372E84114cC \
+  "batches(uint64)(bytes32,uint64,uint128,uint64,address,bool,uint64,uint64)" 1 \
+  --rpc-url https://ethereum-sepolia-rpc.publicnode.com   # → finalized = true</pre>
+
+    <h2>Alcance honesto</h2>
+    <div class="note">Este es el <strong>primer ciclo de atestación en cadena</strong> del protocolo en una red pública —
+    prueba de que el mecanismo funciona de extremo a extremo. Se ejecuta en una <strong>testnet</strong>, y la cifra
+    de kWh son <strong>datos de referencia</strong> (la integración con el medidor de hardware aún es un stub). Por
+    tanto, no es una afirmación de "primer kWh verde real verificado" — eso llega con la puesta en marcha del hardware.</div>
+  </section>
+
+  <footer>
+    Noethrion — open protocol for verifiable green energy. 1 NOET = 1 verified kWh.<br>
+    <a href="https://github.com/noethrion/noethrion" target="_blank" rel="noopener">github.com/noethrion/noethrion</a> ·
+    <a href="https://noethrion.com" target="_blank" rel="noopener">noethrion.com</a>
+  </footer>
+
+</div>
+
+<script>
+  document.querySelectorAll('.tab').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
+      document.querySelectorAll('.lang').forEach(function(s){ s.style.display = 'none'; });
+      document.getElementById('lang-' + b.getAttribute('data-lang')).style.display = 'block';
+      document.documentElement.lang = b.getAttribute('data-lang');
+    });
+  });
+</script>
+</body>
+</html>
