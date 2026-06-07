@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, develop]
 
+# Least-privilege: CI only reads the repo (lint + tests); no write scopes needed.
+permissions:
+  contents: read
+
 jobs:
   lint-markdown:
     name: Lint Markdown
