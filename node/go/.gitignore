@@ -1,0 +1,6 @@
+# Build outputs — source is committed, binaries are not.
+noethrion-verify
+noethrion-verify-*
+*.exe
+*.wasm
+build.err
