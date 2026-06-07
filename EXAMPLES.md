@@ -34,7 +34,7 @@ See [`examples/integrators/README.md`](examples/integrators/README.md) for the r
 | Step | What | Where |
 |------|------|-------|
 | 1 | Validate the ECDSA P-256 signature on the canonical payload | All three integrator templates |
-| 2 | Re-derive the leaf hash from `keccak256(abi.encode(beneficiary, amount, epoch))` | All three integrator templates |
+| 2 | Re-derive the leaf hash from `keccak256(abi.encode(block.chainid, attesterAddress, beneficiary, amount, epoch))` — the `chainId` + Attester address are the domain separator that binds the leaf to this exact deployment (omit them and the proof fails) | All three integrator templates |
 | 3 | Replay the Merkle proof against the on-chain committed root | All three integrator templates |
 | 4 | Confirm `batches(epoch).finalized == true` on the Attester | Lifecycle steps 5 & 6; Solidity consumer |
 
@@ -85,7 +85,7 @@ Drop-in starting points для трёх likeliest downstream consumers. Копи
 | Шаг | Что | Где |
 |------|------|-------|
 | 1 | Валидация ECDSA P-256 подписи на каноническом payload | Все три integrator шаблона |
-| 2 | Re-derive leaf hash из `keccak256(abi.encode(beneficiary, amount, epoch))` | Все три integrator шаблона |
+| 2 | Re-derive leaf hash из `keccak256(abi.encode(block.chainid, attesterAddress, beneficiary, amount, epoch))` — `chainId` + адрес Attester это domain separator, привязывающий leaf к конкретному деплою (без них proof не сойдётся) | Все три integrator шаблона |
 | 3 | Replay Merkle proof против on-chain committed root | Все три integrator шаблона |
 | 4 | Подтверждение `batches(epoch).finalized == true` на Attester | Lifecycle шаги 5 и 6; Solidity consumer |
 
