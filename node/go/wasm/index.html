@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Noethrion — verify it yourself</title>
+<style>
+  /* Locked Noethrion brand: Noir bg, Signal Green accent, Cream text. */
+  :root {
+    --noir: #0A0A0A;
+    --signal: #14F195;
+    --cream: #F5F1E8;
+    --alarm: #FF4D4D;
+    --muted: #6b6f6a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--noir);
+    color: var(--cream);
+    font: 15px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    padding: 2rem 1rem 4rem;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  h1 {
+    font-size: 1.45rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.25rem;
+  }
+  h1 .eta { color: var(--signal); font-style: italic; }
+  .tag { color: var(--muted); margin: 0 0 1.75rem; font-size: 0.85rem; }
+  label { display: block; margin: 0.9rem 0 0.3rem; color: var(--signal); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  input, textarea {
+    width: 100%;
+    background: #131313;
+    border: 1px solid #262626;
+    color: var(--cream);
+    padding: 0.6rem 0.7rem;
+    border-radius: 6px;
+    font: inherit;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--signal); }
+  textarea { min-height: 150px; resize: vertical; }
+  .row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .row > div { flex: 1 1 140px; }
+  button {
+    margin-top: 1.4rem;
+    background: var(--signal);
+    color: var(--noir);
+    border: none;
+    padding: 0.7rem 1.6rem;
+    font: inherit;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.4; cursor: progress; }
+  #result {
+    margin-top: 1.75rem;
+    padding: 1rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid #262626;
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: none;
+  }
+  #result.ok    { border-color: var(--signal); background: rgba(20,241,149,0.08); }
+  #result.alarm { border-color: var(--alarm);  background: rgba(255,77,77,0.08); }
+  #result.skip  { border-color: var(--muted); }
+  #result .head { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.5rem; }
+  #result.ok    .head { color: var(--signal); }
+  #result.alarm .head { color: var(--alarm); }
+  #result.skip  .head { color: var(--muted); }
+  #result li { margin: 0.15rem 0; }
+  .foot { color: var(--muted); font-size: 0.78rem; margin-top: 2rem; line-height: 1.6; }
+  a { color: var(--signal); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Noethrion <span class="eta">&eta;</span> — verify it yourself</h1>
+  <p class="tag">Don't trust us. Re-derive every leaf, replay the Merkle proof, and check it against the on-chain root — entirely in your browser. No install, no server.</p>
+
+  <label for="rpc">EVM RPC URL</label>
+  <input id="rpc" value="https://ethereum-sepolia-rpc.publicnode.com" />
+
+  <label for="attester">Attester contract address</label>
+  <input id="attester" placeholder="0x..." />
+
+  <div class="row">
+    <div>
+      <label for="chainId">Chain ID</label>
+      <input id="chainId" value="11155111" />
+    </div>
+    <div>
+      <label for="epoch">Epoch</label>
+      <input id="epoch" value="1" />
+    </div>
+  </div>
+
+  <label for="batch">Published batch JSON</label>
+  <textarea id="batch" placeholder='{"epoch":1,"root":"0x...","leaves":[{"beneficiary":"0x...","amount_wei":"...","leaf":"0x...","proof":["0x..."]}]}'></textarea>
+
+  <button id="go" disabled>Loading verifier…</button>
+
+  <div id="result"></div>
+
+  <p class="foot">
+    The verifier is a self-contained WebAssembly build of the same Go code that powers the
+    command-line <code>noethrion-verify</code> node — keccak256 leaf re-derivation, sorted-pair
+    Merkle replay (OpenZeppelin semantics), and the on-chain <code>batches(uint64)</code> read.
+    Nothing is sent anywhere except your chosen RPC endpoint.<br /><br />
+    Source: <code>node/go/wasm/</code> in the public repo.
+  </p>
+</div>
+
+<script src="wasm_exec.js"></script>
+<script>
+  const btn = document.getElementById("go");
+  const result = document.getElementById("result");
+
+  function show(status, details) {
+    const cls = status === "OK" ? "ok" : status === "ALARM" ? "alarm" : "skip";
+    const head = status === "OK"
+      ? "OK — verified"
+      : status === "ALARM"
+        ? "ALARM — mismatch detected"
+        : "SKIP — nothing to verify yet";
+    result.className = cls;
+    result.style.display = "block";
+    const items = (details || []).map(d => "<li>" + escapeHtml(d) + "</li>").join("");
+    result.innerHTML = '<div class="head">' + head + '</div><ul>' + items + '</ul>';
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+
+  const go = new Go();
+  WebAssembly.instantiateStreaming(fetch("verifier.wasm"), go.importObject)
+    .then(res => {
+      go.run(res.instance);
+      btn.disabled = false;
+      btn.textContent = "Verify";
+    })
+    .catch(err => {
+      btn.textContent = "Load failed";
+      show("ALARM", ["Could not load verifier.wasm: " + err]);
+    });
+
+  btn.addEventListener("click", async () => {
+    const rpc = document.getElementById("rpc").value.trim();
+    const attester = document.getElementById("attester").value.trim();
+    const chainId = document.getElementById("chainId").value.trim();
+    const epoch = parseInt(document.getElementById("epoch").value.trim(), 10);
+    const batch = document.getElementById("batch").value;
+
+    if (!rpc || !attester || !chainId || Number.isNaN(epoch)) {
+      show("SKIP", ["Fill in RPC URL, attester address, chain ID, and epoch first."]);
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = "Verifying…";
+    try {
+      const v = await globalThis.noethrionVerify(rpc, attester, chainId, epoch, batch);
+      show(v.status, v.details);
+    } catch (e) {
+      show("ALARM", ["Verifier error: " + e]);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Verify";
+    }
+  });
+</script>
+</body>
+</html>

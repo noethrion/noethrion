@@ -1,0 +1,5 @@
+# Build artifacts — source (main_wasm.go, index.html, go.mod, go.sum, README.md)
+# is committed; the compiled wasm and the toolchain-copied JS shim are not.
+verifier.wasm
+*.wasm
+wasm_exec.js
