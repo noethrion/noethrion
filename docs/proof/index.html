@@ -117,7 +117,7 @@
 
   <!-- ============ РУССКИЙ ============ -->
   <section class="lang" id="lang-ru">
-    <h1>Génesis-аттестация — <span class="eta">доказательство работы</span></h1>
+    <h1>Genesis-аттестация — <span class="eta">доказательство работы</span></h1>
     <p class="sub">Первый полный цикл аттестации протокола Noethrion, выполненный вживую в публичной сети.</p>
     <div class="card">
       <div class="label">Результат</div>
@@ -287,15 +287,21 @@
 </div>
 
 <script>
+  function showLang(lang){
+    document.querySelectorAll('.tab').forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-lang') === lang); });
+    document.querySelectorAll('.lang').forEach(function(s){ s.style.display = 'none'; });
+    var el = document.getElementById('lang-' + lang);
+    if (el){ el.style.display = 'block'; document.documentElement.lang = lang; }
+  }
   document.querySelectorAll('.tab').forEach(function(b){
     b.addEventListener('click', function(){
-      document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
-      b.classList.add('active');
-      document.querySelectorAll('.lang').forEach(function(s){ s.style.display = 'none'; });
-      document.getElementById('lang-' + b.getAttribute('data-lang')).style.display = 'block';
-      document.documentElement.lang = b.getAttribute('data-lang');
+      var l = b.getAttribute('data-lang');
+      if (history.replaceState) history.replaceState(null, '', '#' + l);
+      showLang(l);
     });
   });
+  var initial = (location.hash || '').replace('#', '');
+  showLang(['en','ru','zh','es'].indexOf(initial) >= 0 ? initial : 'en');
 </script>
 </body>
 </html>
