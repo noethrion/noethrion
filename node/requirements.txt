@@ -1,0 +1,11 @@
+# Noethrion verifier node (v0.1) dependencies.
+# The crypto engine itself lives in ../tools (cryptography + pycryptodome,
+# see tools/requirements.txt) and is imported, not duplicated. These are the
+# extra deps the node needs for on-chain reads + ABI leaf encoding.
+
+web3>=6.15,<8        # RPC client + Web3.keccak + checksum addresses
+eth-abi>=5.0,<6      # abi.encode for the leaf domain separator (ships with web3)
+
+# Also requires the engine deps from tools/requirements.txt:
+#   cryptography>=43.0,<50.0
+#   pycryptodome>=3.20
