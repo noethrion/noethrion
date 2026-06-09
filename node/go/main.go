@@ -63,6 +63,25 @@ func hexToBytes(s string) ([]byte, error) {
 	return hex.DecodeString(s)
 }
 
+// strictAddress validates that s is a well-formed 20-byte hex address
+// (optional 0x + exactly 40 hex chars) BEFORE handing it to
+// common.HexToAddress, which otherwise silently left-pads / truncates
+// malformed input into a valid-looking address. A short, long, or
+// non-hex beneficiary must surface as an ALARM, not be coerced into a
+// different-but-well-formed address that then fails leaf recomputation
+// with a confusing message (or, worse, accidentally matches).
+func strictAddress(s string) (common.Address, error) {
+	raw := strings.TrimPrefix(strings.TrimSpace(s), "0x")
+	raw = strings.TrimPrefix(raw, "0X")
+	if len(raw) != 40 {
+		return common.Address{}, fmt.Errorf("address %q must be 20 bytes / 40 hex chars (got %d)", s, len(raw))
+	}
+	if _, err := hex.DecodeString(raw); err != nil {
+		return common.Address{}, fmt.Errorf("address %q is not valid hex: %w", s, err)
+	}
+	return common.HexToAddress(raw), nil
+}
+
 // computeLeaf mirrors keccak256(abi.encode(uint256 chainId, address attester,
 // address beneficiary, uint128 amount, uint64 epoch)) — each field 32-byte padded.
 func computeLeaf(chainID *big.Int, attester, beneficiary common.Address, amount *big.Int, epoch uint64) []byte {
@@ -83,6 +102,13 @@ func verifyMerkle(leaf []byte, proofHex []string, root []byte) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("proof[%d]: %w", i, err)
 		}
+		// Each proof sibling MUST be exactly 32 bytes. A wrong-length sibling
+		// would otherwise be fed straight into keccak256, silently producing a
+		// miscomputed (but valid-looking) intermediate hash — fail closed
+		// instead so it ALARMs rather than mis-deriving the root.
+		if len(p) != 32 {
+			return false, fmt.Errorf("proof[%d] must be 32 bytes (got %d)", i, len(p))
+		}
 		var lo, hi []byte
 		if string(h) < string(p) {
 			lo, hi = h, p
@@ -98,8 +124,23 @@ func verifyMerkle(leaf []byte, proofHex []string, root []byte) (bool, error) {
 func verifySig(dir string) (ok bool, present bool, msg string) {
 	attBytes, err1 := os.ReadFile(filepath.Join(dir, "attestation.json"))
 	pubBytes, err2 := os.ReadFile(filepath.Join(dir, "attester.key.pub"))
-	if err1 != nil || err2 != nil {
+	attMissing := err1 != nil
+	pubMissing := err2 != nil
+	if attMissing && pubMissing {
+		// Genuinely absent on BOTH sides: the operator published no signature
+		// material at all. This is the only legitimate skip — clearly logged,
+		// and the caller does NOT count it as a validated signature.
 		return true, false, "no attestation/pubkey published — signature check skipped"
+	}
+	if attMissing || pubMissing {
+		// Exactly one side present: fail closed. An operator must not be able
+		// to publish an attestation while withholding the pubkey (or vice
+		// versa) to dodge the signature check on a present attestation.
+		which := "attestation.json"
+		if attMissing {
+			which = "attester.key.pub"
+		}
+		return false, true, fmt.Sprintf("signature material is half-published (%s missing) — refusing to skip", which)
 	}
 	var att struct {
 		Payload string `json:"payload_b64_canonical"`
@@ -108,6 +149,15 @@ func verifySig(dir string) (ok bool, present bool, msg string) {
 	}
 	if err := json.Unmarshal(attBytes, &att); err != nil {
 		return false, true, "attestation.json malformed"
+	}
+	// Mirror the Python engine: only ES256 is implemented; any other (or
+	// missing) algorithm on a PRESENT attestation is a hard failure, never a
+	// silent pass.
+	if att.Alg != "ES256" {
+		return false, true, fmt.Sprintf("unsupported/missing algorithm %q; only ES256 is implemented", att.Alg)
+	}
+	if att.Payload == "" || att.SigHex == "" {
+		return false, true, "attestation.json missing payload_b64_canonical or signature_rs_hex"
 	}
 	block, _ := pem.Decode(pubBytes)
 	if block == nil {
@@ -187,10 +237,14 @@ func verifyEpoch(ctx context.Context, client *ethclient.Client, parsed abi.ABI, 
 			amtStr = string(lf.Amount)
 		}
 		amount, okAmt := new(big.Int).SetString(amtStr, 10)
-		if !okAmt {
+		if !okAmt || amount.Sign() < 0 {
 			return "ALARM", []string{fmt.Sprintf("epoch %d leaf[%d]: bad amount %q", epoch, i, amtStr)}
 		}
-		recomputed := computeLeaf(chainID, attester, common.HexToAddress(lf.Beneficiary), amount, epoch)
+		beneficiary, addrErr := strictAddress(lf.Beneficiary)
+		if addrErr != nil {
+			return "ALARM", []string{fmt.Sprintf("epoch %d leaf[%d]: malformed beneficiary: %v", epoch, i, addrErr)}
+		}
+		recomputed := computeLeaf(chainID, attester, beneficiary, amount, epoch)
 		if lf.Leaf != "" {
 			claimed, _ := hexToBytes(lf.Leaf)
 			if string(claimed) != string(recomputed) {

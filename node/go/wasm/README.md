@@ -20,9 +20,12 @@ primitives the native node borrowed from go-ethereum:
   `0x8232e389` (first 4 bytes of `keccak256("batches(uint64)")`), arguments and
   return values are all fixed 32-byte words, decoded by offset.
 
-Everything else (`math/big`, `encoding/json`, `syscall/js`, `crypto/*`) is the
-standard library, all of which compiles cleanly to wasm. Result: a ~3.3 MB
-`verifier.wasm`, not the tens-of-MB a go-ethereum wasm build would produce.
+Everything else (`math/big`, `encoding/json`, `syscall/js`, `crypto/ecdsa`,
+`crypto/elliptic`, `crypto/x509`, `crypto/sha256`, `encoding/pem`) is the
+standard library, all of which compiles cleanly to wasm — including the full
+ECDSA P-256 (ES256) signature check, which now runs in-browser identically to
+the native node. Result: a ~5.4 MB `verifier.wasm`, not the tens-of-MB a
+go-ethereum wasm build would produce.
 
 The leaf hash this produces is byte-identical to both `../main.go` (go-ethereum
 path) and `../../../tools/verify_attestation.py compute-leaf` — verified.
@@ -76,29 +79,52 @@ python3 -m http.server 8080
 Verdicts:
 
 - **OK** (green) — finalized on-chain, published root matches, every leaf
-  re-derived and Merkle-verified against the on-chain root.
+  re-derived and Merkle-verified against the on-chain root. If the attestation +
+  device pubkey were supplied, the ES256 signature is verified too and the result
+  reads "fully verified"; if not, it reads "leaf+merkle verified, signature not
+  checked" so the verdict never overclaims.
 - **ALARM** (red) — a mismatch: published root ≠ on-chain root, a leaf doesn't
-  re-derive, or a Merkle proof fails.
-- **SKIP** — epoch not proposed / not finalized yet, RPC error, or malformed
-  input. Nothing to verify.
+  re-derive, a Merkle proof fails, the attestation signature fails, **or** the
+  epoch is FINALIZED on-chain but the published batch JSON is missing / malformed
+  / for the wrong epoch. The verifier **fails closed** on any of these — a
+  finalized epoch with garbage published data ALARMs, it does not SKIP.
+- **SKIP** — epoch not proposed / not finalized yet, RPC error, or an
+  undecodable on-chain return. There is genuinely nothing to verify yet.
 
 ## JS API (exported by the wasm to `globalThis`)
 
 ```js
 // Returns a Promise<{ status: "OK"|"ALARM"|"SKIP", details: string[] }>.
-await noethrionVerify(rpcUrl, attester, chainId, epoch, batchJSON);
+// The last two args are OPTIONAL and mirror the native node's attestation.json +
+// attester.key.pub: pass them to run the ECDSA P-256 signature check in-browser.
+// Omit (or pass "") to verify chain + Merkle only — the result is then labeled
+// "signature not checked" rather than "fully verified".
+await noethrionVerify(
+  rpcUrl, attester, chainId, epoch, batchJSON,
+  attestationJSON /* optional */, pubKeyPEM /* optional */
+);
 
 // Helper: returns the eth_call data ("0x8232e389" + uint256(epoch)) if you want
 // to make the batches(uint64) call yourself.
 noethrionBatchesCall(epoch);
 ```
 
+## Headless test runner
+
+`wasm_gate_runner.mjs` loads this exact `verifier.wasm` in headless Node (no
+browser), shims `globalThis.fetch` to proxy the `batches(uint64)` eth_call to a
+given RPC (or a stubbed root), runs `noethrionVerify(...)`, and exits by verdict
+(`0`=OK, `1`=ALARM, `3`=SKIP, `2`=runner crash). It is the third leg of the
+3-way parity gate `../../_parity_test.sh`, which proves Python == Go == WASM on
+honest, tampered, and malformed batches.
+
 ## Scope / caveats
 
-- **v0.1 covers chain + Merkle.** The optional ECDSA P-256 attestation signature
-  check from the native node is **not yet wired** in-browser (stdlib
-  `crypto/ecdsa` compiles to wasm fine — it's a nice-to-have follow-up). The
-  load-bearing leaf + Merkle + on-chain-root check is fully present.
+- **v0.1 covers chain + Merkle + signature.** The ECDSA P-256 (ES256) attestation
+  signature check from the native node is now **wired in-browser** (stdlib
+  `crypto/ecdsa` + `crypto/x509`), so the WASM verdict matches the Go/Python nodes
+  byte-for-byte. When the attestation + pubkey aren't supplied, the verifier says
+  so plainly instead of claiming "fully verified".
 - **CORS:** the in-browser `eth_call` is a cross-origin `fetch` to the RPC
   endpoint. The prefilled `https://ethereum-sepolia-rpc.publicnode.com` returns
   permissive CORS headers and works from a browser today — but public RPC CORS
@@ -108,6 +134,8 @@ noethrionBatchesCall(epoch);
 
 ## Roadmap
 
-- [ ] Wire the P-256 signature check (stdlib `crypto/ecdsa` + `crypto/x509`).
+- [x] Wire the P-256 signature check (stdlib `crypto/ecdsa` + `crypto/x509`).
+- [ ] Surface optional attestation.json + pubkey inputs in `index.html` so the
+      in-page UI can run the signature check too (the JS API already accepts them).
 - [ ] Prefill a known-good Sepolia genesis batch as a one-click demo.
 - [ ] Host at `verify.noethrion.com` (static, CDN-served).

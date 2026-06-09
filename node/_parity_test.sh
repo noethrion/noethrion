@@ -1,18 +1,25 @@
 #!/usr/bin/env bash
 #
-# Parity gate test — proves the Go and Python verifier nodes return IDENTICAL
-# verdicts on the same published batch data. Hermetic: spins up its own Anvil,
-# deploys, runs the full lifecycle to finalize a batch, publishes batch.json,
-# then runs BOTH nodes against the same data:
+# Parity gate test — proves the Go, Python, AND in-browser WASM verifiers return
+# IDENTICAL verdicts on the same published batch data. Hermetic: spins up its own
+# Anvil, deploys, runs the full lifecycle to finalize a batch, publishes
+# batch.json (+ attestation.json + attester.key.pub for the signature check),
+# then runs ALL THREE implementations against the same on-chain root:
 #
-#   honest batch   -> both must exit 0 (OK)   and agree
-#   tampered batch -> both must exit 1 (ALARM) and agree
+#   honest batch    -> all three must exit 0 (OK)    and agree
+#   tampered batch  -> all three must exit 1 (ALARM) and agree
+#   malformed batch -> all three must ALARM (exit 1), never crash, never OK
 #
-# If the two implementations ever diverge on either case, this fails. This is
-# the last open item for the verifier-node track (E) of the launch plan.
+# The WASM leg loads verifier.wasm in headless Node (wasm_gate_runner.mjs),
+# proxies its eth_call fetch to the same live Anvil RPC, and reaches its verdict
+# from the SAME on-chain commitment — true 3-way parity, not a re-run of Go.
+#
+# If the implementations ever diverge on any case, this fails. This is the last
+# open item for the verifier-node track (E) of the launch plan.
 #
 # Usage:  node/_parity_test.sh        (run from repo root; uses the node venv if present)
-# Deps:   foundry (anvil, cast, forge); go; python3 with cryptography + pycryptodome;
+# Deps:   foundry (anvil, cast, forge); go (for the Go node + the WASM build);
+#         node (>=18, for the WASM runner); python3 with cryptography + pycryptodome;
 #         the node venv (web3 + eth-abi) at /tmp/noethrion_node_venv or web3 on PATH.
 
 set -euo pipefail
@@ -28,13 +35,16 @@ LC_PY="python3"
 ANVIL_MNEMONIC="test test test test test test test test test test test junk"
 DEPLOYER_PK="$(cast wallet private-key --mnemonic "$ANVIL_MNEMONIC" --mnemonic-index 0)"
 
+WASM_DIR="$REPO/node/go/wasm"
+WASM_RUNNER="$WASM_DIR/wasm_gate_runner.mjs"
+
 pick_port() { for _ in {1..10}; do local p=$((34000 + RANDOM % 4000)); lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | grep -q LISTEN || { echo "$p"; return; }; done; echo 34999; }
 PORT="$(pick_port)"; RPC="http://localhost:$PORT"
-DATA="$(mktemp -d)"; TAMPER="$(mktemp -d)"
+DATA="$(mktemp -d)"; TAMPER="$(mktemp -d)"; GARBAGE="$(mktemp -d)"
 ANVIL_PID=""
 cleanup() {
   [ -n "$ANVIL_PID" ] && kill "$ANVIL_PID" 2>/dev/null || true
-  rm -rf "$DATA" "$TAMPER" examples/lifecycle/attester.key examples/lifecycle/attester.key.pub \
+  rm -rf "$DATA" "$TAMPER" "$GARBAGE" examples/lifecycle/attester.key examples/lifecycle/attester.key.pub \
          examples/lifecycle/attestation.json examples/lifecycle/batch.json \
          contracts/broadcast/Deploy.s.sol/31337 2>/dev/null || true
 }
@@ -45,6 +55,14 @@ echo "[*] Build Go node"
 ( cd node/go && go build -o noethrion-verify . )
 GO_BIN="$REPO/node/go/noethrion-verify"
 [ -x "$GO_BIN" ] || { echo "[FAIL] go build did not produce $GO_BIN"; exit 1; }
+
+# Build the WASM verifier up front too (the third parity leg).
+echo "[*] Build WASM verifier (GOOS=js GOARCH=wasm)"
+( cd "$WASM_DIR" && GOOS=js GOARCH=wasm go build -o verifier.wasm . )
+[ -f "$WASM_DIR/verifier.wasm" ] || { echo "[FAIL] wasm build did not produce verifier.wasm"; exit 1; }
+[ -f "$WASM_DIR/wasm_exec.js" ] || { echo "[FAIL] missing $WASM_DIR/wasm_exec.js"; exit 1; }
+command -v node >/dev/null 2>&1 || { echo "[FAIL] node not on PATH (needed for WASM leg)"; exit 1; }
+echo "    node $(node --version) · verifier.wasm $(du -h "$WASM_DIR/verifier.wasm" | cut -f1)"
 
 echo "[*] Anvil on $PORT"
 anvil --silent --port "$PORT" & ANVIL_PID=$!
@@ -71,67 +89,115 @@ cp examples/lifecycle/batch.json examples/lifecycle/attestation.json examples/li
 
 # --- helpers -------------------------------------------------------------
 # Extract the per-epoch verdict from a node's stdout: the last OK/ALARM line.
-# Both nodes log "[OK] epoch N fully verified" on success and
-# "[ALARM] *** VERIFICATION FAILED ..." on failure — same shape, so we can
-# normalize to a single token (OK / ALARM / NONE) and compare across impls.
+# All three impls log "[OK] epoch N ..." on success and "[ALARM] ..." on failure
+# (the WASM runner is shaped to match), so we normalize to a single token
+# (OK / ALARM / NONE) and compare across implementations.
 verdict() {  # $1 = captured stdout
   if echo "$1" | grep -q "^\[ALARM\]"; then echo "ALARM";
   elif echo "$1" | grep -q "^\[OK\]"; then echo "OK";
   else echo "NONE"; fi
 }
 
-run_py() {   # $1 = data dir ; prints stdout, sets global PY_EXIT
+run_py() {   # $1 = data dir ; sets PY_OUT, PY_EXIT
   set +e
   PY_OUT=$($NODE_PY node/verifier_node.py --rpc "$RPC" --attester "$ATTESTER" --chain-id 31337 --data-dir "$1" --once 2>&1)
   PY_EXIT=$?
   set -e
 }
-run_go() {   # $1 = data dir ; prints stdout, sets global GO_EXIT
+run_go() {   # $1 = data dir ; sets GO_OUT, GO_EXIT
   set +e
   GO_OUT=$("$GO_BIN" --rpc "$RPC" --attester "$ATTESTER" --chain-id 31337 --data-dir "$1" --once 2>&1)
   GO_EXIT=$?
   set -e
 }
+run_wasm() { # $1 = data dir ; sets WASM_OUT, WASM_EXIT
+  # The WASM verifier takes the published artifacts as explicit args and does its
+  # own eth_call against the live Anvil (proxied through the runner's fetch shim).
+  # A missing batch file -> pass "-" so the WASM hits its "no published JSON"
+  # fail-closed path, exactly as the file-based nodes hit "no batch data".
+  local dir="$1" batch_arg
+  if [ -f "$dir/batch.json" ]; then batch_arg="$dir/batch.json"; else batch_arg="-"; fi
+  set +e
+  WASM_OUT=$(node "$WASM_RUNNER" \
+    --rpc "$RPC" --attester "$ATTESTER" --chain-id 31337 --epoch "$EPOCH" \
+    --batch "$batch_arg" \
+    --attestation "$dir/attestation.json" \
+    --pubkey "$dir/attester.key.pub" 2>&1)
+  WASM_EXIT=$?
+  set -e
+  # The runner uses exit 3 for SKIP; the file nodes use exit 0 with no [OK] for
+  # SKIP. For parity comparison we only care OK(0) vs ALARM(1); a crash is exit 2.
+  if [ "$WASM_EXIT" -eq 3 ]; then WASM_EXIT=0; fi   # normalize SKIP -> 0 like the others
+}
 
 FAILED=0
-check_parity() {  # $1 = label, $2 = expected exit, $3 = expected verdict
+# 3-way parity check: all three impls must agree with each other AND be correct.
+check_parity3() {  # $1 = label, $2 = expected exit, $3 = expected verdict
   local label="$1" want_exit="$2" want_verdict="$3"
-  local pv gv
-  pv=$(verdict "$PY_OUT"); gv=$(verdict "$GO_OUT")
-  echo "    python: exit=$PY_EXIT verdict=$pv"
-  echo "    go:     exit=$GO_EXIT verdict=$gv"
-  if [ "$PY_EXIT" -ne "$GO_EXIT" ]; then
-    echo "    [FAIL] $label: exit codes differ (py=$PY_EXIT go=$GO_EXIT)"; FAILED=1; return
+  local pv gv wv
+  pv=$(verdict "$PY_OUT"); gv=$(verdict "$GO_OUT"); wv=$(verdict "$WASM_OUT")
+  echo "    python: exit=$PY_EXIT   verdict=$pv"
+  echo "    go:     exit=$GO_EXIT   verdict=$gv"
+  echo "    wasm:   exit=$WASM_EXIT   verdict=$wv"
+  if [ "$WASM_EXIT" -eq 2 ]; then
+    echo "    [FAIL] $label: WASM verifier CRASHED (exit 2) — must never crash"; FAILED=1; return
   fi
-  if [ "$pv" != "$gv" ]; then
-    echo "    [FAIL] $label: verdicts differ (py=$pv go=$gv)"; FAILED=1; return
+  if [ "$PY_EXIT" -ne "$GO_EXIT" ] || [ "$PY_EXIT" -ne "$WASM_EXIT" ]; then
+    echo "    [FAIL] $label: exit codes differ (py=$PY_EXIT go=$GO_EXIT wasm=$WASM_EXIT)"; FAILED=1; return
+  fi
+  if [ "$pv" != "$gv" ] || [ "$pv" != "$wv" ]; then
+    echo "    [FAIL] $label: verdicts differ (py=$pv go=$gv wasm=$wv)"; FAILED=1; return
   fi
   if [ "$PY_EXIT" -ne "$want_exit" ] || [ "$pv" != "$want_verdict" ]; then
     echo "    [FAIL] $label: agreed but on wrong answer (got exit=$PY_EXIT verdict=$pv, want exit=$want_exit verdict=$want_verdict)"; FAILED=1; return
   fi
-  echo "    [PASS] $label: both -> exit=$PY_EXIT verdict=$pv (agree, correct)"
+  echo "    [PASS] $label: all three -> exit=$PY_EXIT verdict=$pv (agree, correct)"
 }
 
-# --- CASE 1: honest batch — both must say OK / exit 0 ---------------------
+# --- CASE 1: honest batch — all three must say OK / exit 0 ----------------
 echo ""
-echo "[*] CASE 1 (honest): both nodes must agree on OK / exit 0"
-run_py "$DATA"; run_go "$DATA"
-check_parity "honest" 0 "OK"
+echo "[*] CASE 1 (honest): Python + Go + WASM must agree on OK / exit 0"
+run_py "$DATA"; run_go "$DATA"; run_wasm "$DATA"
+check_parity3 "honest" 0 "OK"
 
-# --- CASE 2: tampered batch — both must say ALARM / exit 1 ----------------
+# --- CASE 2: tampered batch — all three must say ALARM / exit 1 -----------
 echo ""
-echo "[*] CASE 2 (tampered leaf amount): both nodes must agree on ALARM / exit 1"
+echo "[*] CASE 2 (tampered leaf amount): all three must agree on ALARM / exit 1"
 cp "$DATA"/* "$TAMPER/"
 $LC_PY -c "import json;p='$TAMPER/batch.json';d=json.load(open(p));d['leaves'][0]['amount_wei']=str(int(d['leaves'][0]['amount_wei'])+1);json.dump(d,open(p,'w'))"
-run_py "$TAMPER"; run_go "$TAMPER"
-check_parity "tampered" 1 "ALARM"
+run_py "$TAMPER"; run_go "$TAMPER"; run_wasm "$TAMPER"
+check_parity3 "tampered" 1 "ALARM"
+
+# --- CASE 3: malformed published batch.json — fail closed ----------------
+# A FINALIZED epoch whose published batch.json is garbage / truncated / wrong
+# is a transparency failure: every impl must ALARM (exit 1), never crash, never
+# OK. (The Python+Go fail-closed hardening is being made by a parallel agent; if
+# those two aren't hardened yet when this runs, the case still executes and the
+# divergence is reported — WASM is hardened here regardless.)
+run_malformed_case() {  # $1 = label, $2 = how to corrupt batch.json (python snippet writing to $p)
+  local label="$1" corrupt="$2"
+  rm -rf "$GARBAGE"; mkdir -p "$GARBAGE"
+  cp "$DATA"/* "$GARBAGE/"
+  $LC_PY -c "p='$GARBAGE/batch.json'; $corrupt"
+  echo ""
+  echo "[*] CASE 3.$label (malformed published batch): all three must ALARM, never crash, never OK"
+  run_py "$GARBAGE"; run_go "$GARBAGE"; run_wasm "$GARBAGE"
+  check_parity3 "malformed:$label" 1 "ALARM"
+}
+
+# 3a — not valid JSON at all
+run_malformed_case "raw-garbage" "open(p,'w').write('}{ not json at all {{{')"
+# 3b — valid JSON but truncated structure (missing leaves / root)
+run_malformed_case "missing-fields" "import json;json.dump({'epoch': $EPOCH}, open(p,'w'))"
+# 3c — wrong-field types (leaves is a string, amount non-numeric)
+run_malformed_case "wrong-types" "import json;json.dump({'epoch': $EPOCH, 'root': '0x00', 'leaves': 'not-a-list'}, open(p,'w'))"
 
 # --- summary -------------------------------------------------------------
 echo ""
 if [ "$FAILED" -eq 0 ]; then
-  echo "==== PARITY PASS: Go and Python nodes return identical verdicts on honest + tampered data ===="
+  echo "==== PARITY PASS (3-way): Python + Go + WASM return identical, correct verdicts on honest, tampered, and malformed data ===="
   exit 0
 else
-  echo "==== PARITY FAIL: the two implementations diverged (see [FAIL] above) ===="
+  echo "==== PARITY FAIL: the implementations diverged or one crashed (see [FAIL] above) ===="
   exit 1
 fi

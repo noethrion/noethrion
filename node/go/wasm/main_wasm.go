@@ -8,17 +8,30 @@
 // legacy variant) and the trivial fixed-width ABI encode/decode for batches() —
 // so the whole thing compiles to a few-MB .wasm with stdlib + x/crypto only.
 //
-// JS calls globalThis.noethrionVerify(rpcUrl, attester, chainId, epoch, batchJSON)
-// and gets back a Promise that resolves to {status, details}. The eth_call RPC
-// goes through the browser's fetch (passed in from JS) so CORS is the browser's
-// problem, not Go's.
+// JS calls globalThis.noethrionVerify(rpcUrl, attester, chainId, epoch,
+// batchJSON, attestationJSON, pubKeyPEM) and gets back a Promise that resolves
+// to {status, details}. The eth_call RPC goes through the browser's fetch
+// (passed in from JS) so CORS is the browser's problem, not Go's.
+//
+// The last two args (attestationJSON, pubKeyPEM) are OPTIONAL and mirror the
+// native node's attestation.json + attester.key.pub files: when present, the
+// in-browser verifier runs the SAME ECDSA P-256 (ES256) signature check the Go
+// and Python nodes run (crypto/ecdsa + crypto/x509 all compile to js/wasm), so
+// the WASM verdict matches the other two implementations byte-for-byte. When
+// absent it reports "signature not checked" honestly and never claims "fully
+// verified".
 //
 // Build: GOOS=js GOARCH=wasm go build -o verifier.wasm .
 package main
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"math/big"
 	"strings"
@@ -177,12 +190,63 @@ func skip(format string, a ...any) verdict {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ECDSA P-256 (ES256) signature check — byte-for-byte mirror of native
+// main.go's verifySig. Verifies SHA-256(payload_b64_canonical) against the
+// PKIX P-256 public key using the r||s (64-byte) signature.
+//
+// Returns (ok, present, msg):
+//   - present=false  → no attestation/pubkey supplied; caller treats as SKIP of
+//     the signature check only (chain checks still gate the verdict). The result
+//     is then labeled honestly as "leaf+merkle verified, signature not checked".
+//   - present=true, ok=false → signature failed / data malformed → ALARM.
+//   - present=true, ok=true  → signature verified → eligible for "fully verified".
+// ─────────────────────────────────────────────────────────────────────────────
+func verifySig(attestationJSON, pubKeyPEM string) (ok bool, present bool, msg string) {
+	attestationJSON = strings.TrimSpace(attestationJSON)
+	pubKeyPEM = strings.TrimSpace(pubKeyPEM)
+	if attestationJSON == "" || pubKeyPEM == "" {
+		return true, false, "no attestation/pubkey supplied — signature check skipped"
+	}
+	var att struct {
+		Payload string `json:"payload_b64_canonical"`
+		SigHex  string `json:"signature_rs_hex"`
+		Alg     string `json:"algorithm"`
+	}
+	if err := json.Unmarshal([]byte(attestationJSON), &att); err != nil {
+		return false, true, "attestation.json malformed"
+	}
+	block, _ := pem.Decode([]byte(pubKeyPEM))
+	if block == nil {
+		return false, true, "pubkey PEM malformed"
+	}
+	pubAny, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return false, true, "pubkey parse failed"
+	}
+	pub, ok2 := pubAny.(*ecdsa.PublicKey)
+	if !ok2 || pub.Curve != elliptic.P256() {
+		return false, true, "pubkey is not P-256"
+	}
+	sig, err := hexToBytes(att.SigHex)
+	if err != nil || len(sig) != 64 {
+		return false, true, "signature_rs_hex must be 64 bytes"
+	}
+	r := new(big.Int).SetBytes(sig[:32])
+	s := new(big.Int).SetBytes(sig[32:])
+	digest := sha256.Sum256([]byte(att.Payload))
+	if ecdsa.Verify(pub, digest[:], r, s) {
+		return true, true, "attestation P-256 signature OK"
+	}
+	return false, true, "attestation P-256 signature did NOT validate"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // verifyEpoch — same control flow as native main.go verifyEpoch, but the
 // on-chain word blob is supplied by JS (it already fetched it) instead of
 // go-ethereum's CallContract.
 // ─────────────────────────────────────────────────────────────────────────────
 
-func verifyEpoch(rawResult []byte, attesterStr string, chainID *big.Int, epoch uint64, batchJSON string) verdict {
+func verifyEpoch(rawResult []byte, attesterStr string, chainID *big.Int, epoch uint64, batchJSON, attestationJSON, pubKeyPEM string) verdict {
 	attester20, err := addrTo20(attesterStr)
 	if err != nil {
 		return skip("bad attester address: %v", err)
@@ -200,15 +264,19 @@ func verifyEpoch(rawResult []byte, attesterStr string, chainID *big.Int, epoch u
 	}
 	rootOnChain := bv.merkleRoot
 
+	// From here on the epoch is FINALIZED on-chain. Any failure to reconcile the
+	// published data is a transparency failure and must ALARM (fail closed), NOT
+	// SKIP — matching the native Go/Python nodes. A finalized epoch with missing
+	// or garbage published data is exactly the case the watchdog exists to catch.
 	var bf batchFile
 	if strings.TrimSpace(batchJSON) == "" {
 		return alarm("epoch %d: FINALIZED on-chain but no published batch JSON supplied", epoch)
 	}
 	if err := json.Unmarshal([]byte(batchJSON), &bf); err != nil {
-		return skip("published batch JSON is malformed: %v", err)
+		return alarm("epoch %d: FINALIZED on-chain but published batch JSON is malformed: %v", epoch, err)
 	}
 	if bf.Epoch != epoch {
-		return skip("published batch JSON is for epoch %d, not %d", bf.Epoch, epoch)
+		return alarm("epoch %d: FINALIZED on-chain but published batch JSON is for epoch %d, not %d", epoch, bf.Epoch, epoch)
 	}
 
 	details := []string{}
@@ -244,7 +312,24 @@ func verifyEpoch(rawResult []byte, attesterStr string, chainID *big.Int, epoch u
 		}
 	}
 	details = append(details, fmt.Sprintf("epoch %d: all %d leaf(s) re-derived + Merkle-verified against on-chain root", epoch, len(bf.Leaves)))
-	details = append(details, fmt.Sprintf("epoch %d fully verified", epoch))
+
+	// Signature check — the SAME ECDSA P-256 (ES256) verification the native
+	// Go/Python nodes perform. If the attestation + pubkey were supplied and the
+	// signature does NOT validate, ALARM (fail closed).
+	sigOK, sigPresent, sigMsg := verifySig(attestationJSON, pubKeyPEM)
+	if !sigOK {
+		return alarm("epoch %d: %s", epoch, sigMsg)
+	}
+	details = append(details, fmt.Sprintf("epoch %d: %s", epoch, sigMsg))
+
+	// Honest labeling: only claim "fully verified" when the signature was
+	// actually checked. Otherwise say plainly that the signature was not checked
+	// so the in-browser result never overclaims (M3).
+	if sigPresent {
+		details = append(details, fmt.Sprintf("epoch %d fully verified", epoch))
+	} else {
+		details = append(details, fmt.Sprintf("epoch %d: leaf+merkle verified, signature not checked", epoch))
+	}
 	return verdict{Status: "OK", Details: details}
 }
 
@@ -281,16 +366,29 @@ func jsBatchesCall(this js.Value, args []js.Value) any {
 	return js.ValueOf("0x" + hex.EncodeToString(encodeBatchesCall(epoch)))
 }
 
-// jsVerify(rpcUrl, attester, chainId, epoch, batchJSON) -> Promise<{status,details}>.
+// jsVerify(rpcUrl, attester, chainId, epoch, batchJSON[, attestationJSON, pubKeyPEM])
+// -> Promise<{status,details}>. The last two args are optional and enable the
+// ECDSA P-256 signature check (mirroring the native node's attestation.json +
+// attester.key.pub). Omitted/empty → signature is honestly reported unchecked.
 func jsVerify(this js.Value, args []js.Value) any {
 	if len(args) < 5 {
-		return rejectedPromise("noethrionVerify(rpcUrl, attester, chainId, epoch, batchJSON) — 5 args required")
+		return rejectedPromise("noethrionVerify(rpcUrl, attester, chainId, epoch, batchJSON[, attestationJSON, pubKeyPEM]) — at least 5 args required")
 	}
 	rpcURL := args[0].String()
 	attester := args[1].String()
 	chainIDStr := args[2].String()
 	epoch := uint64(args[3].Int())
 	batchJSON := args[4].String()
+
+	// Optional signature-check inputs.
+	optStr := func(i int) string {
+		if len(args) > i && !args[i].IsUndefined() && !args[i].IsNull() {
+			return args[i].String()
+		}
+		return ""
+	}
+	attestationJSON := optStr(5)
+	pubKeyPEM := optStr(6)
 
 	chainID, ok := new(big.Int).SetString(strings.TrimSpace(chainIDStr), 10)
 	if !ok {
@@ -315,7 +413,7 @@ func jsVerify(this js.Value, args []js.Value) any {
 					reject.Invoke(js.ValueOf(fmt.Sprintf("internal error: %v", r)))
 				}
 			}()
-			v := verifyEpoch(rawResult, attester, chainID, epoch, batchJSON)
+			v := verifyEpoch(rawResult, attester, chainID, epoch, batchJSON, attestationJSON, pubKeyPEM)
 			resolve.Invoke(verdictToJS(v))
 		}()
 		return nil
