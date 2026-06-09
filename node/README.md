@@ -52,8 +52,10 @@ python3 node/verifier_node.py \
 
 Exit codes (`--once`): `0` all verified · `1` ALARM (mismatch) · `2` usage error.
 
-## Deploy as a daemon (Snowball CT100 / any Linux)
+## Deploy as a daemon (any Linux host)
 
-Drop a `systemd` unit (omit `--once`, add `Restart=always`) pointing at the
-deployed Attester + a `--data-dir` the operator keeps current. The node logs
-`OK epoch N` per verified batch and `ALARM` on any reconciliation failure.
+Run one or more independent verifier nodes — ideally operated by distinct parties
+across different regions — so no single operator's word has to be trusted. Drop a
+`systemd` unit (omit `--once`, add `Restart=always`) pointing at the deployed
+Attester + a `--data-dir` the operator keeps current. The node logs `OK epoch N`
+per verified batch and `ALARM` on any reconciliation failure.

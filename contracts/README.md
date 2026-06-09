@@ -1,11 +1,13 @@
 # Noethrion Smart Contracts
 
-Foundry-based skeleton for the Noethrion protocol on-chain components.
+Foundry-based reference implementation of the Noethrion protocol on-chain components.
 
 ## Status
 
-🟡 **SKELETON** — interfaces and storage layouts are placeholders.
-Production deployment requires full audit and protocol spec finalization.
+🟡 **v0.2 — production-leaning, pre-audit.** Core protocol surface is
+implemented and tested (validator quorum, slashing, Merkle-proof claim,
+reentrancy-guarded mint). Mainnet deployment remains gated on independent
+third-party audit and protocol spec finalization.
 
 ## Contracts
 

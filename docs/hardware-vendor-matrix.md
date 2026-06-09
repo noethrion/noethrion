@@ -70,7 +70,7 @@ The reference firmware in `firmware/` targets this family.
 
 ### NXP EdgeLock SE050
 - **`Plug & Trust Middleware` stack is significant** (~150 KB code on a microcontroller). Constrained environments need careful selection of the feature subset.
-- **HVQFN-32 footprint** is denser than the others; QFN soldering at hobbyist scale is harder.
+- **HVQFN-32 footprint** is denser than the others; QFN soldering at low-volume / prototype assembly scale requires more capable reflow tooling.
 - **EdgeLock 2GO IoT provisioning** is cloud-tied — air-gapped factory provisioning needs careful setup.
 
 ### NXP A71CH

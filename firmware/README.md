@@ -97,7 +97,7 @@ Detailed threat model: see `spec/` (Phase 4-5 deliverable).
 
 ## Verification status
 
-⚠️ **This skeleton has NOT yet been verified to compile.** PlatformIO is not installed on the author's local environment. First-run checklist:
+⚠️ **This skeleton has NOT yet been verified to compile** in a PlatformIO environment. First-run checklist:
 
 1. Install PlatformIO Core: `pip install platformio`
 2. `cd firmware && pio run` — first build will take ~3-5 min (downloads framework + libs)

@@ -1,0 +1,34 @@
+{
+  "epoch": 1,
+  "totalKwh": 450000000000000000000,
+  "root": "0xc61984cfd694aaa2a58a439f7eb42e096bcbfce2e6504f7db4a52e157c1fa87e",
+  "leaves": [
+    {
+      "beneficiary": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "amount_wei": 100000000000000000000,
+      "leaf": "0xcbd5f6ea235e2b18d2e7169c04a3804187485c90111d5fed7a8425cac5914071",
+      "proof": [
+        "0xb3808ee63db8a9c6d05099c72b946e4fd6d4d3487c1eaa75d7b1f5a5419418ee",
+        "0x732d1203455d2080fb2d7559c52f33607be89edad7bb81ae276426693ed95834"
+      ]
+    },
+    {
+      "beneficiary": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "amount_wei": 200000000000000000000,
+      "leaf": "0xb3808ee63db8a9c6d05099c72b946e4fd6d4d3487c1eaa75d7b1f5a5419418ee",
+      "proof": [
+        "0xcbd5f6ea235e2b18d2e7169c04a3804187485c90111d5fed7a8425cac5914071",
+        "0x732d1203455d2080fb2d7559c52f33607be89edad7bb81ae276426693ed95834"
+      ]
+    },
+    {
+      "beneficiary": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      "amount_wei": 150000000000000000000,
+      "leaf": "0x831409469a0e28d18fd9c80d2867db44a59efe1303994962194e4aaef1603945",
+      "proof": [
+        "0x831409469a0e28d18fd9c80d2867db44a59efe1303994962194e4aaef1603945",
+        "0x161fceb6b5d610f8591ce65c64fab273616a1a07962de6a86c748f2d12d942f8"
+      ]
+    }
+  ]
+}
