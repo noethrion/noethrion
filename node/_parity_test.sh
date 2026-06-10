@@ -63,7 +63,14 @@ GO_BIN="$REPO/node/go/noethrion-verify"
 echo "[*] Build WASM verifier (GOOS=js GOARCH=wasm)"
 ( cd "$WASM_DIR" && GOOS=js GOARCH=wasm go build -trimpath -o verifier.wasm . )
 [ -f "$WASM_DIR/verifier.wasm" ] || { echo "[FAIL] wasm build did not produce verifier.wasm"; exit 1; }
-[ -f "$WASM_DIR/wasm_exec.js" ] || { echo "[FAIL] missing $WASM_DIR/wasm_exec.js"; exit 1; }
+# wasm_exec.js ships with the Go toolchain (lib/wasm since Go 1.24, misc/wasm before).
+if [ ! -f "$WASM_DIR/wasm_exec.js" ]; then
+  GOROOT_DIR="$(go env GOROOT)"
+  for CAND in "$GOROOT_DIR/lib/wasm/wasm_exec.js" "$GOROOT_DIR/misc/wasm/wasm_exec.js"; do
+    [ -f "$CAND" ] && cp "$CAND" "$WASM_DIR/wasm_exec.js" && break
+  done
+fi
+[ -f "$WASM_DIR/wasm_exec.js" ] || { echo "[FAIL] missing $WASM_DIR/wasm_exec.js (not found in Go toolchain either)"; exit 1; }
 command -v node >/dev/null 2>&1 || { echo "[FAIL] node not on PATH (needed for WASM leg)"; exit 1; }
 echo "    node $(node --version) · verifier.wasm $(du -h "$WASM_DIR/verifier.wasm" | cut -f1)"
 
