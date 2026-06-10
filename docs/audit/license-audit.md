@@ -1,7 +1,7 @@
 # License compatibility audit
 
 **Conducted:** 2026-05-13
-**Author:** Mel (Claude Code)
+**Author:** Noethrion core team (internal review — not an external audit)
 **Status:** Initial · pre-launch
 **Project license posture:** MIT for code, Apache 2.0 for spec text, MIT for documentation. All artifacts intended to remain license-permissive in perpetuity.
 

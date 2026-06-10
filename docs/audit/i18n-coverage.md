@@ -1,7 +1,7 @@
 # i18n coverage audit
 
 **Conducted:** 2026-05-13
-**Author:** Mel (Claude Code)
+**Author:** Noethrion core team (internal review — not an external audit)
 **Method:** Per-file scan for Cyrillic content; cross-reference with the `bilingual-output` skill rule that distinguishes public-facing user docs (should be bilingual EN+RU) from technical specs (EN-only OK).
 **Scope:** All Markdown and HTML files in the public repository.
 

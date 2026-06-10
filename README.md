@@ -37,7 +37,7 @@ It is infrastructure that serves the existing world — like ICANN serves DNS, l
 
 The convergence of two trends makes this urgent:
 
-- **Compute infrastructure scale-up:** large-scale data center operators have committed to over 10 GW of nuclear power purchase agreements in the past year. Operators in this sector require cryptographically verifiable provenance of energy used to substantiate their sustainability claims.
+- **Compute infrastructure scale-up:** large-scale data center operators have committed nearly 10 GW of nuclear capacity across more than a dozen agreements. Operators in this sector require cryptographically verifiable provenance of energy used to substantiate their sustainability claims.
 - **Carbon regulation:** EU CBAM entered force on January 1, 2026. Goods imported into the EU now require carbon attestation at the source. The era of carbon estimation is ending.
 
 The existing system — RECs, Guarantees of Origin, I-RECs — operates on annual matching, spreadsheet trading, and absent device-level attestation. It is structurally insufficient for what is coming.
@@ -141,7 +141,7 @@ noethrion/
 ├── firmware/         ESP32 + ATECC608B reference (PlatformIO, probe-only skeleton)
 ├── examples/         end-to-end lifecycle + integrator templates (Python / TS / Solidity)
 ├── tools/            Python CLI — provision, verify, render social assets
-├── node/             independent verifier — re-verifies finalized batches + signatures off-chain, alarms on mismatch (Python reference; Go + browser to follow)
+├── node/             independent verifier — re-verifies finalized batches + signatures off-chain, alarms on mismatch (Python / Go / browser-WASM — live at https://noethrion.com/network/)
 ├── assets/           SVG logos (D / E / F / G categories), social card sources
 └── .github/          CI (lint + Foundry tests), Cloudflare Pages deploy workflow
 ```
@@ -174,7 +174,7 @@ NOET — единица учёта в протоколе, представляю
 
 Конвергенция двух трендов делает это срочным:
 
-- **Масштабирование compute infrastructure:** операторы дата-центров крупного масштаба подписали более 10 ГВт ядерных PPA за последний год. Операторам этого сектора нужно криптографически верифицируемое подтверждение происхождения энергии для substantiate их sustainability claims.
+- **Масштабирование compute infrastructure:** у операторов дата-центров крупного масштаба почти 10 ГВт ядерных мощностей законтрактовано более чем в дюжине соглашений. Операторам этого сектора нужно криптографически верифицируемое подтверждение происхождения энергии для substantiate их sustainability claims.
 - **Углеродное регулирование:** EU CBAM вступил в силу 1 января 2026 года. Товары, импортируемые в ЕС, теперь требуют атестации углеродного следа у источника. Эра оценки углерода заканчивается.
 
 Существующая система — RECs, Guarantees of Origin, I-RECs — работает на годовом сопоставлении, торговле через таблицы, без device-level аттестации. Структурно недостаточна для того что грядёт.
@@ -278,7 +278,7 @@ noethrion/
 ├── firmware/         ESP32 + ATECC608B reference (PlatformIO, probe-only skeleton)
 ├── examples/         end-to-end lifecycle + integrator templates (Python / TS / Solidity)
 ├── tools/            Python CLI — provision, verify, render social assets
-├── node/             independent verifier — re-verifies finalized batches + signatures off-chain, alarms on mismatch (Python reference; Go + browser to follow)
+├── node/             independent verifier — re-verifies finalized batches + signatures off-chain, alarms on mismatch (Python / Go / browser-WASM — live at https://noethrion.com/network/)
 ├── assets/           SVG logos (D / E / F / G categories), social card sources
 └── .github/          CI (lint + Foundry tests), Cloudflare Pages deploy workflow
 ```

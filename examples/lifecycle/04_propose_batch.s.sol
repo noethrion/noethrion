@@ -16,14 +16,18 @@ pragma solidity 0.8.24;
 //   $PRIVATE_KEY — caller key with VALIDATOR_ROLE on the Attester
 //
 // Run (against a local Anvil with Deploy.s.sol output addresses + the caller
-// granted VALIDATOR_ROLE):
-//   export ATTESTER=0x...
+// granted VALIDATOR_ROLE). This file is the readable reference for the call;
+// execute it with `cast send` — the same path tools/run_lifecycle.sh takes.
+// (`forge script` cannot compile this file directly: examples/ sits outside
+// the Foundry root in contracts/, so its imports do not resolve.)
+//   export ATTESTER=0x...                    # printed by Deploy.s.sol
 //   export EPOCH=1
-//   export ROOT=0x... (copy from batch.json)
-//   export TOTAL_WH=450000000000000000000   # sum of amount_wei in batch.json
+//   export ROOT=0x...                        # copy from batch.json
+//   export TOTAL_WH=450000000000000000000    # sum of amount_wei in batch.json
 //   export PRIVATE_KEY=<one of anvil's printed test keys>
-//   forge script examples/lifecycle/04_propose_batch.s.sol \
-//       --rpc-url http://localhost:8545 --broadcast
+//   cast send "$ATTESTER" "proposeBatch(uint64,bytes32,uint128)" \
+//       "$EPOCH" "$ROOT" "$TOTAL_WH" \
+//       --private-key "$PRIVATE_KEY" --rpc-url http://localhost:8545
 
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";

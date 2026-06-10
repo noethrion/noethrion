@@ -47,6 +47,8 @@ export type VerificationResult =
   | { ok: false; reason: string };
 
 export interface Attestation {
+  // Contains raw canonical JSON, not base64 — naming kept for v0.1
+  // wire-format compatibility.
   payload_b64_canonical: string;
   signature_rs_hex: string;
   algorithm: string;
@@ -103,8 +105,9 @@ export function verifySignature(
   const payload = new TextEncoder().encode(attestation.payload_b64_canonical);
   const msgHash = sha256(payload);
 
-  const sig = p256.Signature.fromBytes(sigBytes);
-  const ok = p256.verify(sig, msgHash, pubKeyXy);
+  // fromCompact validates the (r, s) ranges; verify takes the compact bytes.
+  const sig = p256.Signature.fromCompact(sigBytes);
+  const ok = p256.verify(sig.toCompactRawBytes(), msgHash, pubKeyXy);
   if (!ok) return { ok: false, reason: "ECDSA P-256 signature did not validate" };
   return { ok: true };
 }
@@ -238,7 +241,7 @@ function parseP256PublicKeyPem(pem: string): Uint8Array {
   // Find the last "00 04" before exactly 64 more bytes follow.
   for (let i = der.length - 65; i >= 0; i--) {
     if (der[i] === 0x00 && der[i + 1] === 0x04 && der.length - (i + 1) === 65) {
-      return der.subarray(i + 2); // drop the 0x04 marker
+      return der.subarray(i + 1); // full 65-byte uncompressed point (0x04 || x || y)
     }
   }
   throw new Error("could not locate uncompressed P-256 point in SPKI");

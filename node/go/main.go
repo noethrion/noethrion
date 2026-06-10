@@ -184,32 +184,52 @@ func verifySig(dir string) (ok bool, present bool, msg string) {
 	return false, true, "attestation P-256 signature did NOT validate"
 }
 
-func loadBatch(dir string, epoch uint64) (*batchFile, bool) {
+// loadBatch returns the published batch for an epoch, plus a non-empty
+// `problem` when a candidate file exists but is malformed / mislabeled.
+// The caller treats absent and malformed identically on a FINALIZED epoch
+// (both ALARM), but the message must say which it was.
+func loadBatch(dir string, epoch uint64) (bf *batchFile, found bool, problem string) {
 	for _, name := range []string{fmt.Sprintf("batch-%d.json", epoch), "batch.json"} {
 		b, err := os.ReadFile(filepath.Join(dir, name))
 		if err != nil {
 			continue
 		}
-		var bf batchFile
-		if json.Unmarshal(b, &bf) == nil && bf.Epoch == epoch {
-			return &bf, true
+		var parsed batchFile
+		// Strict epoch parsing: `epoch` must be a JSON number. A string epoch
+		// (or any other type) fails Unmarshal and is reported as malformed —
+		// same semantics as the Python and WASM verifiers.
+		if err := json.Unmarshal(b, &parsed); err != nil {
+			problem = fmt.Sprintf("%s is present but malformed: %v", name, err)
+			continue
+		}
+		if parsed.Epoch == epoch {
+			return &parsed, true, ""
+		}
+		if name == fmt.Sprintf("batch-%d.json", epoch) {
+			problem = fmt.Sprintf("%s is named for epoch %d but its `epoch` field is %d", name, epoch, parsed.Epoch)
 		}
 	}
-	return nil, false
+	return nil, false, problem
 }
 
-// verifyEpoch returns status: "OK", "ALARM", or "SKIP".
+// verifyEpoch returns status: "OK", "ALARM", "SKIP", or "ERROR".
+//
+//   - SKIP  — the epoch is not proposed / not finalized yet: nothing to verify.
+//   - ERROR — the RPC call failed or returned undecodable data. This is a
+//     connectivity/infrastructure problem, NOT a verification verdict: it must
+//     never be conflated with SKIP (a dead RPC is not "all clear").
 func verifyEpoch(ctx context.Context, client *ethclient.Client, parsed abi.ABI, attester common.Address, chainID *big.Int, epoch uint64, dir string) (string, []string) {
 	calldata, _ := parsed.Pack("batches", epoch)
 	res, err := client.CallContract(ctx, ethereum.CallMsg{To: &attester, Data: calldata}, nil)
 	if err != nil {
-		return "SKIP", []string{fmt.Sprintf("epoch %d: rpc error: %v", epoch, err)}
+		return "ERROR", []string{fmt.Sprintf("epoch %d: rpc error: %v", epoch, err)}
 	}
 	out, err := parsed.Unpack("batches", res)
 	if err != nil || len(out) < 6 {
-		return "SKIP", []string{fmt.Sprintf("epoch %d: decode error", epoch)}
+		return "ERROR", []string{fmt.Sprintf("epoch %d: decode error", epoch)}
 	}
 	merkleRoot := out[0].([32]byte)
+	totalKwh := out[2].(*big.Int)
 	timestamp := out[3].(uint64)
 	finalized := out[5].(bool)
 	if timestamp == 0 {
@@ -220,8 +240,11 @@ func verifyEpoch(ctx context.Context, client *ethclient.Client, parsed abi.ABI, 
 	}
 	rootOnChain := merkleRoot[:]
 
-	bf, found := loadBatch(dir, epoch)
+	bf, found, problem := loadBatch(dir, epoch)
 	if !found {
+		if problem != "" {
+			return "ALARM", []string{fmt.Sprintf("epoch %d: FINALIZED on-chain but published batch data is malformed — %s", epoch, problem)}
+		}
 		return "ALARM", []string{fmt.Sprintf("epoch %d: FINALIZED on-chain but no published batch data in %s", epoch, dir)}
 	}
 	details := []string{}
@@ -231,6 +254,13 @@ func verifyEpoch(ctx context.Context, client *ethclient.Client, parsed abi.ABI, 
 	}
 	details = append(details, fmt.Sprintf("epoch %d: published root matches on-chain root 0x%x", epoch, rootOnChain))
 
+	// A FINALIZED batch with zero leaves cannot be reconciled with anything:
+	// the operator committed a root on-chain but published no claims under it.
+	if len(bf.Leaves) == 0 {
+		return "ALARM", []string{fmt.Sprintf("epoch %d: FINALIZED on-chain but published batch has no leaves", epoch)}
+	}
+
+	sumAmounts := new(big.Int)
 	for i, lf := range bf.Leaves {
 		amtStr := string(lf.AmountWei)
 		if amtStr == "" {
@@ -245,24 +275,43 @@ func verifyEpoch(ctx context.Context, client *ethclient.Client, parsed abi.ABI, 
 			return "ALARM", []string{fmt.Sprintf("epoch %d leaf[%d]: malformed beneficiary: %v", epoch, i, addrErr)}
 		}
 		recomputed := computeLeaf(chainID, attester, beneficiary, amount, epoch)
-		if lf.Leaf != "" {
-			claimed, _ := hexToBytes(lf.Leaf)
-			if string(claimed) != string(recomputed) {
-				return "ALARM", []string{fmt.Sprintf("epoch %d leaf[%d] (%s): recomputed 0x%x != published %s", epoch, i, lf.Beneficiary, recomputed, lf.Leaf)}
-			}
+		// The `leaf` field is REQUIRED (same as the Python verifier): a leaf
+		// without its published hash cannot be cross-checked, fail closed.
+		if lf.Leaf == "" {
+			return "ALARM", []string{fmt.Sprintf("epoch %d leaf[%d] (%s): missing required `leaf` field", epoch, i, lf.Beneficiary)}
+		}
+		claimed, leafErr := hexToBytes(lf.Leaf)
+		if leafErr != nil || string(claimed) != string(recomputed) {
+			return "ALARM", []string{fmt.Sprintf("epoch %d leaf[%d] (%s): recomputed 0x%x != published %s", epoch, i, lf.Beneficiary, recomputed, lf.Leaf)}
 		}
 		ok, err := verifyMerkle(recomputed, lf.Proof, rootOnChain)
 		if err != nil || !ok {
 			return "ALARM", []string{fmt.Sprintf("epoch %d leaf[%d] (%s): Merkle proof FAILED", epoch, i, lf.Beneficiary)}
 		}
+		sumAmounts.Add(sumAmounts, amount)
 	}
 	details = append(details, fmt.Sprintf("epoch %d: all %d leaf(s) re-derived + Merkle-verified against on-chain root", epoch, len(bf.Leaves)))
 
-	sigOK, _, sigMsg := verifySig(dir)
+	// Cross-check the published amounts against the on-chain totalKwh
+	// commitment: the contract stores the proposer-supplied total, so the
+	// verifier (not the contract) is what makes a padded/short total visible.
+	if sumAmounts.Cmp(totalKwh) != 0 {
+		return "ALARM", []string{fmt.Sprintf("epoch %d: sum of published leaf amounts %s != on-chain totalKwh %s", epoch, sumAmounts, totalKwh)}
+	}
+	details = append(details, fmt.Sprintf("epoch %d: leaf amounts sum to on-chain totalKwh (%s)", epoch, totalKwh))
+
+	sigOK, sigPresent, sigMsg := verifySig(dir)
 	if !sigOK {
 		return "ALARM", []string{fmt.Sprintf("epoch %d: %s", epoch, sigMsg)}
 	}
 	details = append(details, fmt.Sprintf("epoch %d: %s", epoch, sigMsg))
+	// Honest labeling (mirrors the WASM verifier): only claim "fully verified"
+	// when the signature was actually checked.
+	if sigPresent {
+		details = append(details, fmt.Sprintf("epoch %d fully verified", epoch))
+	} else {
+		details = append(details, fmt.Sprintf("epoch %d verified: chain checks OK, signature not checked", epoch))
+	}
 	return "OK", details
 }
 
@@ -300,15 +349,18 @@ func main() {
 	for {
 		status, details := verifyEpoch(ctx, client, parsed, attester, chainID, epoch, *dataDir)
 		lvl := "INFO"
-		if status == "ALARM" {
+		switch status {
+		case "ALARM":
 			lvl = "ALARM"
+		case "ERROR":
+			lvl = "ERROR"
 		}
 		for _, d := range details {
 			logf(lvl, "%s", d)
 		}
 		switch status {
 		case "OK":
-			logf("OK", "epoch %d fully verified", epoch)
+			logf("OK", "epoch %d verified", epoch)
 			epoch++
 			continue
 		case "ALARM":
@@ -317,8 +369,20 @@ func main() {
 			if *once {
 				os.Exit(1)
 			}
+		case "ERROR":
+			// RPC down / undecodable response: a connectivity failure, not a
+			// verification verdict. In --once mode this is a hard error (exit 2,
+			// matching the Python node) — never a silent success. In daemon mode
+			// it is logged at ERROR level and retried next tick.
+			if *once {
+				logf("ERROR", "--once: could not complete verification at epoch %d", epoch)
+				if alarms > 0 {
+					os.Exit(1)
+				}
+				os.Exit(2)
+			}
 		}
-		// SKIP or post-ALARM: nothing new this tick.
+		// SKIP, ERROR, or post-ALARM: nothing new this tick.
 		if *once {
 			if alarms > 0 {
 				os.Exit(1)

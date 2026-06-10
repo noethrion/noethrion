@@ -1,7 +1,7 @@
 # Accessibility audit — landing page
 
 **Conducted:** 2026-05-13
-**Author:** Mel (Claude Code)
+**Author:** Noethrion core team (internal review — not an external audit)
 **Target:** `docs/index.html`
 **Method:** Manual WCAG 2.1 AA-style checklist. Automated tools (axe-core, pa11y) not installed locally; founder should run automated audit post-deploy.
 

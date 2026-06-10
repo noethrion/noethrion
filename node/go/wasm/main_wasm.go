@@ -137,12 +137,13 @@ func encodeBatchesCall(epoch uint64) []byte {
 
 type batchView struct {
 	merkleRoot []byte // 32 bytes
+	totalKwh   *big.Int
 	timestamp  uint64
 	finalized  bool
 }
 
-// decodeBatches reads the first six output words we care about (root, _, _,
-// timestamp, _, finalized). The trailing words are ignored.
+// decodeBatches reads the first six output words we care about (root, _,
+// totalKwh, timestamp, _, finalized). The trailing words are ignored.
 func decodeBatches(res []byte) (batchView, error) {
 	var bv batchView
 	// batches() returns an 8-word struct; we read up to word[5]. Require the
@@ -153,6 +154,8 @@ func decodeBatches(res []byte) (batchView, error) {
 	}
 	word := func(i int) []byte { return res[i*32 : (i+1)*32] }
 	bv.merkleRoot = append([]byte{}, word(0)...)
+	// totalKwh is word[2], a uint128 right-aligned in its 32-byte slot.
+	bv.totalKwh = new(big.Int).SetBytes(word(2))
 	// timestamp is word[3], a uint64 right-aligned in its 32-byte slot.
 	bv.timestamp = new(big.Int).SetBytes(word(3)).Uint64()
 	// finalized is word[5]: zero = false, non-zero = true.
@@ -197,9 +200,10 @@ func skip(format string, a ...any) verdict {
 // Returns (ok, present, msg):
 //   - present=false  → no attestation/pubkey supplied; caller treats as SKIP of
 //     the signature check only (chain checks still gate the verdict). The result
-//     is then labeled honestly as "leaf+merkle verified, signature not checked".
+//     is then labeled honestly as "chain checks OK, signature not checked".
 //   - present=true, ok=false → signature failed / data malformed → ALARM.
 //   - present=true, ok=true  → signature verified → eligible for "fully verified".
+//
 // ─────────────────────────────────────────────────────────────────────────────
 func verifySig(attestationJSON, pubKeyPEM string) (ok bool, present bool, msg string) {
 	attestationJSON = strings.TrimSpace(attestationJSON)
@@ -286,13 +290,20 @@ func verifyEpoch(rawResult []byte, attesterStr string, chainID *big.Int, epoch u
 	}
 	details = append(details, fmt.Sprintf("epoch %d: published root matches on-chain root 0x%x", epoch, rootOnChain))
 
+	// A FINALIZED batch with zero leaves cannot be reconciled with anything:
+	// the operator committed a root on-chain but published no claims under it.
+	if len(bf.Leaves) == 0 {
+		return alarm("epoch %d: FINALIZED on-chain but published batch has no leaves", epoch)
+	}
+
+	sumAmounts := new(big.Int)
 	for i, lf := range bf.Leaves {
 		amtStr := string(lf.AmountWei)
 		if amtStr == "" {
 			amtStr = string(lf.Amount)
 		}
 		amount, okAmt := new(big.Int).SetString(amtStr, 10)
-		if !okAmt {
+		if !okAmt || amount.Sign() < 0 {
 			return alarm("epoch %d leaf[%d]: bad amount %q", epoch, i, amtStr)
 		}
 		beneficiary20, err := addrTo20(lf.Beneficiary)
@@ -300,18 +311,30 @@ func verifyEpoch(rawResult []byte, attesterStr string, chainID *big.Int, epoch u
 			return alarm("epoch %d leaf[%d]: bad beneficiary %q: %v", epoch, i, lf.Beneficiary, err)
 		}
 		recomputed := computeLeaf(chainID, attester20, beneficiary20, amount, epoch)
-		if lf.Leaf != "" {
-			claimed, _ := hexToBytes(lf.Leaf)
-			if string(claimed) != string(recomputed) {
-				return alarm("epoch %d leaf[%d] (%s): recomputed 0x%x != published %s", epoch, i, lf.Beneficiary, recomputed, lf.Leaf)
-			}
+		// The `leaf` field is REQUIRED (same as the native Go/Python verifiers):
+		// a leaf without its published hash cannot be cross-checked, fail closed.
+		if lf.Leaf == "" {
+			return alarm("epoch %d leaf[%d] (%s): missing required `leaf` field", epoch, i, lf.Beneficiary)
+		}
+		claimed, leafErr := hexToBytes(lf.Leaf)
+		if leafErr != nil || string(claimed) != string(recomputed) {
+			return alarm("epoch %d leaf[%d] (%s): recomputed 0x%x != published %s", epoch, i, lf.Beneficiary, recomputed, lf.Leaf)
 		}
 		ok, err := verifyMerkle(recomputed, lf.Proof, rootOnChain)
 		if err != nil || !ok {
 			return alarm("epoch %d leaf[%d] (%s): Merkle proof FAILED", epoch, i, lf.Beneficiary)
 		}
+		sumAmounts.Add(sumAmounts, amount)
 	}
 	details = append(details, fmt.Sprintf("epoch %d: all %d leaf(s) re-derived + Merkle-verified against on-chain root", epoch, len(bf.Leaves)))
+
+	// Cross-check the published amounts against the on-chain totalKwh
+	// commitment (the contract stores the proposer-supplied total verbatim,
+	// so this reconciliation lives in the verifier).
+	if sumAmounts.Cmp(bv.totalKwh) != 0 {
+		return alarm("epoch %d: sum of published leaf amounts %s != on-chain totalKwh %s", epoch, sumAmounts, bv.totalKwh)
+	}
+	details = append(details, fmt.Sprintf("epoch %d: leaf amounts sum to on-chain totalKwh (%s)", epoch, bv.totalKwh))
 
 	// Signature check — the SAME ECDSA P-256 (ES256) verification the native
 	// Go/Python nodes perform. If the attestation + pubkey were supplied and the
@@ -328,7 +351,7 @@ func verifyEpoch(rawResult []byte, attesterStr string, chainID *big.Int, epoch u
 	if sigPresent {
 		details = append(details, fmt.Sprintf("epoch %d fully verified", epoch))
 	} else {
-		details = append(details, fmt.Sprintf("epoch %d: leaf+merkle verified, signature not checked", epoch))
+		details = append(details, fmt.Sprintf("epoch %d verified: chain checks OK, signature not checked", epoch))
 	}
 	return verdict{Status: "OK", Details: details}
 }

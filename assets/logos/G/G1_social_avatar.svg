@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- G1: Social Media Avatar (Square) -->
-<!-- Оптимизировано для маленьких размеров: профили соцсетей, favicon -->
-<!-- Тестировал на 32x32 — читается -->
+<!-- Optimized for small sizes: social profiles, favicon -->
+<!-- Optimized for 32x32 favicon use -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
   <rect width="400" height="400" fill="#0A0A0A"/>
   <text x="200" y="285" font-family="Instrument Serif, Times New Roman, serif" font-size="320" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>

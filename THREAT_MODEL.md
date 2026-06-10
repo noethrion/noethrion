@@ -72,10 +72,10 @@ We enumerate ten adversary classes. Some compose (a corrupt manufacturer is also
 - **m-of-n threshold quorum** — `proposeBatch` + `voteBatch` + `finalizeBatch` requires `threshold` distinct validator votes before a batch becomes finalizable. See ADR-006 for the design rationale.
 - **Per-epoch double-vote prevention** — `voted[epoch][validator]` mapping prevents a single validator from inflating the vote count.
 - **Admin-triggered slashing** — `slash(validator, evidenceHash)` revokes the validator's role and records the off-chain evidence hash on-chain. A future revision will add automatic slashing fed by on-chain fraud proofs (v0.3+ work).
-- **Challenge window** — independent of the threshold mechanism. Anyone can publish a fraud proof during the window; if successful, the batch is rejected before finalization.
+- **Challenge window** — independent of the threshold mechanism. No batch can be finalized before the window elapses, giving any independent observer time to detect a fraudulent root. In v0.2 the response path is operational: detected fraud escalates to `pause()` plus `slash()` before finalization. An on-chain challenge entry point is v0.3+ work.
 - All attestation leaves are also published off-chain on IPFS / equivalent so any independent observer can reconstruct the Merkle tree from the leaves and verify the submitted root.
 
-**Residual risk (v0.2).** A coalition of `threshold` validators colluding can still finalize a fraudulent batch within the challenge window. The risk surface shrinks from "any single malicious validator" to "a Byzantine coalition", but does not disappear. Production-grade relying parties should require a threshold high enough that coalition cost exceeds expected fraud value (typical analogues use `threshold = ceil(2n/3)`), and should rely on the challenge-window fraud-proof path as the second line of defence.
+**Residual risk (v0.2).** A coalition of `threshold` validators colluding can still finalize a fraudulent batch within the challenge window. The risk surface shrinks from "any single malicious validator" to "a Byzantine coalition", but does not disappear. Production-grade relying parties should require a threshold high enough that coalition cost exceeds expected fraud value (typical analogues use `threshold = ceil(2n/3)`), and should rely on independent re-verification during the challenge window — escalating to `pause()` + `slash()` — as the second line of defence.
 
 ### A5. Endorser issuing bad endorsements
 

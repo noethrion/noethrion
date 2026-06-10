@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- E3: Terminal Prompt Style -->
-<!-- $ noethrion --version → η · Для terminal screenshots, dev docs -->
+<!-- $ noethrion -v → η · For terminal screenshots and dev docs -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
   <rect width="800" height="200" fill="#0A0A0A"/>
   <text x="40" y="120" font-family="JetBrains Mono, Courier, monospace" font-size="36" font-weight="400" fill="#14F195">$</text>

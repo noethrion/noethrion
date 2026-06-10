@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- G3: Email Signature Format -->
-<!-- 200x40 — для email signatures, footer signatures -->
+<!-- 200x40 — for email and footer signatures -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80">
   <rect width="320" height="80" fill="#0A0A0A"/>
   <text x="40" y="58" font-family="Instrument Serif, Times New Roman, serif" font-size="56" font-style="italic" font-weight="400" text-anchor="middle" fill="#14F195">η</text>

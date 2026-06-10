@@ -83,6 +83,8 @@ contract NoethrionAttester is AccessControl, Pausable, ReentrancyGuard {
     address public tokenContract;
 
     /// @notice Challenge window in seconds before a batch can be finalized
+    /// @dev An on-chain challenge entry point is v0.3+ work. In v0.2 the
+    ///      response to fraud detected during the window is pause() + slash().
     uint256 public challengeWindow;
 
     /// @notice m in m-of-n — number of distinct validator votes required for finalization
@@ -122,7 +124,6 @@ contract NoethrionAttester is AccessControl, Pausable, ReentrancyGuard {
     );
     event BatchVoted(uint64 indexed epoch, address indexed validator, uint256 newCount);
     event BatchFinalized(uint64 indexed epoch, bytes32 indexed merkleRoot);
-    event BatchChallenged(uint64 indexed epoch, address indexed challenger, bytes reason);
     event AttestationClaimed(bytes32 indexed leaf, address indexed beneficiary, uint128 amount);
     event TokenContractUpdated(address indexed oldToken, address indexed newToken);
     event ChallengeWindowUpdated(uint256 oldWindow, uint256 newWindow);
@@ -158,7 +159,9 @@ contract NoethrionAttester is AccessControl, Pausable, ReentrancyGuard {
         if (initialThreshold == 0 || initialThreshold > type(uint64).max) {
             revert InvalidThreshold(initialThreshold);
         }
-        if (initialChallengeWindow == 0) revert InvalidChallengeWindow();
+        if (initialChallengeWindow == 0 || initialChallengeWindow > type(uint64).max) {
+            revert InvalidChallengeWindow();
+        }
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(ADMIN_ROLE, admin);
         _grantRole(PAUSER_ROLE, admin);
@@ -173,6 +176,10 @@ contract NoethrionAttester is AccessControl, Pausable, ReentrancyGuard {
     /**
      * @notice Propose a new attestation batch. The proposer's call also counts as
      *         their vote, so a batch with threshold=1 needs no further votes.
+     * @dev `totalKwh` is informational (event/audit surface). The contract does
+     *      not verify it against the Merkle leaves, and it does not cap how much
+     *      can be minted via claim() for this batch — the hard on-chain supply
+     *      bound is the token's MAX_SUPPLY.
      * @param epoch Sequential epoch number; first writer wins.
      * @param merkleRoot Root of the Merkle tree built off-chain by validator quorum.
      * @param totalKwh Total kWh attested in this batch (sum of all leaves).
@@ -187,8 +194,8 @@ contract NoethrionAttester is AccessControl, Pausable, ReentrancyGuard {
         // Snapshot threshold + challengeWindow at propose time so subsequent
         // setThreshold / setChallengeWindow calls cannot retroactively change
         // the quorum or unlock delay required to finalize this batch. The
-        // uint64 casts are safe because setThreshold and setChallengeWindow
-        // both revert on values that exceed the uint64 range.
+        // uint64 casts are safe because the constructor, setThreshold and
+        // setChallengeWindow all revert on values that exceed the uint64 range.
         uint64 thresholdSnapshot = uint64(threshold);
         uint64 windowSnapshot = uint64(challengeWindow);
         batches[epoch] = AttestationBatch({
@@ -358,6 +365,13 @@ contract NoethrionAttester is AccessControl, Pausable, ReentrancyGuard {
      * @notice Slash a validator — revoke their VALIDATOR_ROLE and record an
      *         off-chain evidence hash for audit. Admin-triggered in v0.2;
      *         on-chain fraud proof verification is v0.3+ work.
+     * @dev Known v0.2 limitation: slashing does not retract votes the
+     *      validator has already cast, and there is no cancelBatch — a
+     *      not-yet-finalized batch tainted by a slashed validator keeps its
+     *      vote count. Mitigation: pause() blocks propose/vote/finalize/claim,
+     *      so a tainted batch can be held unfinalized indefinitely while the
+     *      incident is resolved. Vote retraction / batch cancellation is
+     *      pre-mainnet (v0.3+) work.
      * @param validator Address losing the VALIDATOR_ROLE.
      * @param evidenceHash 32-byte hash of the off-chain misconduct evidence
      *                    (e.g., conflicting signatures, telemetry mismatch).

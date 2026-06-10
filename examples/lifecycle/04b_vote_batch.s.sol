@@ -14,12 +14,14 @@ pragma solidity 0.8.24;
 //                  validator that already voted for this epoch (proposer
 //                  or prior voter) — the contract reverts with AlreadyVoted.
 //
-// Run once per additional voter until voteCount[epoch] >= threshold:
+// Run once per additional voter until voteCount[epoch] >= threshold
+// (via `cast send` — see the note in 04_propose_batch.s.sol on why these
+// example scripts are executed with cast rather than `forge script`):
 //   export ATTESTER=0x...
 //   export EPOCH=1
 //   export PRIVATE_KEY=<distinct validator key>
-//   forge script examples/lifecycle/04b_vote_batch.s.sol \
-//       --rpc-url http://localhost:8545 --broadcast
+//   cast send "$ATTESTER" "voteBatch(uint64)" "$EPOCH" \
+//       --private-key "$PRIVATE_KEY" --rpc-url http://localhost:8545
 
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";

@@ -21,7 +21,7 @@ fi
 # Sample inputs — fixed for reproducibility in the example. In production these
 # come from the kWh meter (wh, timestamp) and the secure element (device serial).
 DEVICE_ID="0123456789ABCDEF12"   # 9-byte hex; ATECC608B serial format
-TIMESTAMP=1747094400              # Unix seconds (2026-05-13 00:00:00 UTC)
+TIMESTAMP=1747094400              # Unix seconds (2025-05-13 00:00:00 UTC)
 WH=1473                           # 1.473 kWh produced in this interval
 
 echo "[02] signing tuple device_id=$DEVICE_ID timestamp=$TIMESTAMP wh=$WH"

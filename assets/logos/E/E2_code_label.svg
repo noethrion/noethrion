@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- E2: Code Label [η] noethrion -->
-<!-- Для GitHub README, terminal, dev контексты -->
+<!-- For GitHub README, terminal, dev contexts -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
   <rect width="800" height="200" fill="#0A0A0A"/>
   <text x="80" y="125" font-family="JetBrains Mono, Courier, monospace" font-size="80" font-weight="400" text-anchor="middle" fill="#6B6862">[</text>

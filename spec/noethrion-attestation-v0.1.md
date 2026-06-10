@@ -180,7 +180,17 @@ A future revision of this document SHALL specify the migration procedure, includ
 
 ### 6.1 Off-chain aggregation
 
-Attestation tokens are aggregated off-chain into Merkle trees. Each tree contains up to 2^16 (65,536) leaves, where each leaf is the SHA-256 hash of one canonically-encoded attestation token. The Merkle tree construction follows [RFC6962] for compatibility with existing Verifier libraries.
+Attestation tokens are aggregated off-chain into Merkle trees. Each tree contains up to 2^16 (65,536) leaves, where each leaf is the SHA-256 hash of one canonically-encoded attestation token.
+
+Interior nodes are computed with a commutative sorted-pair construction:
+
+```text
+parent = keccak256(min(a, b) || max(a, b))
+```
+
+where `a` and `b` are the two 32-byte child hashes and `min`/`max` denote lexicographic byte-wise ordering. Sorting each pair before hashing makes the construction order-independent: an inclusion proof carries only the sibling hashes, with no left/right position flags. This is exactly the construction implemented by the OpenZeppelin `MerkleProof` library used by the on-chain reference contract and by the reference off-chain Verifier tooling. Off-chain builders MUST use this pair hash for any tree whose root is committed on-chain.
+
+**Note on leaf domain separation.** This construction deliberately omits the per-level domain-separation prefixes (`0x00` for leaves, `0x01` for interior nodes) defined by [RFC6962]. The second-preimage class those prefixes guard against — reinterpreting an interior node as a leaf, or vice versa — is structurally closed here by preimage length: an interior-node preimage is exactly 64 bytes (two concatenated 32-byte hashes), whereas leaf preimages are never 64 bytes. The on-chain claim-record leaf (Section 6.3.1) hashes a 160-byte `abi.encode` payload, and the attestation-evidence leaf hashes a canonical CBOR token, which is substantially longer than 64 bytes for any token carrying the required claims of Section 4.1 (and additionally uses a different hash function, SHA-256, than the keccak256 node hash). [RFC6962] informed the design of this layer and is listed as an Informative reference.
 
 A batch is identified by a monotonically increasing epoch number. The aggregator MAY be operated by the device owner, by a service provider, or by the Noethrion Foundation reference implementation; the choice does not affect verifiability.
 
@@ -198,7 +208,7 @@ For each batch, the Merkle root is committed to a public EVM-compatible Layer 2 
 
 The two snapshot fields close the symmetric retroactive-shift class of admin abuses; in the v0.2 reference contract both values fit in `uint64` (lossless under admin parameter validation).
 
-A challenge window (configurable; default one hour) follows submission, during which any party MAY publish a fraud proof on-chain. After the challenge window expires without a successful challenge, the batch is finalized; finalization is irreversible.
+A challenge window (configurable; default one hour) follows submission. In the v0.2 reference contract the fraud-proof path during this window is off-chain: any party MAY report evidence of a fraudulent batch to the contract operators and validators, who can respond through the on-chain `pause` mechanism (blocking finalization) and admin-triggered slashing (Section 8.4). A dedicated on-chain challenge entry point — allowing any party to publish a fraud proof directly on-chain — is deferred to the v0.3 protocol extension, together with fraud-proof-verified slashing. After the challenge window expires without the batch being rejected, the batch is finalized; finalization is irreversible.
 
 ### 6.3 Verification path
 
@@ -267,7 +277,7 @@ Extraction of the signing key from a Common Criteria EAL5+ secure element is cur
 A validator could withhold attestations or propose a batch with a Merkle root not corresponding to the claimed leaves. Three mechanisms address this in combination:
 
 1. **m-of-n threshold quorum.** Finalization requires `threshold` distinct validator votes through the `proposeBatch` + `voteBatch` + `finalizeBatch` sequence. A single party can no longer cause a batch to be finalized; `threshold` MUST be selected such that coalition cost exceeds expected fraud value (typical analogous systems use `threshold = ceil(2n/3)` for Byzantine fault tolerance).
-2. **Challenge window.** Independent of the threshold mechanism: between submission and earliest finalization, any party MAY publish a fraud proof. A successful fraud proof rejects the batch before finalization.
+2. **Challenge window.** Independent of the threshold mechanism: between submission and earliest finalization, any party MAY report evidence of fraud. In v0.2 this path is off-chain — evidence is reported to operators and validators, who block finalization via `pause` and apply slashing; an on-chain challenge entry point is deferred to v0.3 (Section 6.2). A batch successfully challenged within the window is never finalized.
 3. **Slashing.** Validators proven to have voted for fraudulent batches MAY be slashed — `VALIDATOR_ROLE` revoked, off-chain evidence hash recorded on-chain. v0.2 reference contract implements admin-triggered slashing; on-chain fraud-proof verification feeding slashing automatically is deferred to a future revision.
 
 A coalition of `threshold` validators colluding within the challenge window can still finalize a fraudulent batch. This is the residual risk; it shrinks but does not disappear with the threshold mechanism. Production deployments SHOULD treat the challenge-window fraud-proof path as load-bearing.
@@ -329,7 +339,6 @@ Future revisions of this document may request additional CBOR tag allocations an
 ### 12.1 Normative
 
 - **[RFC2119]** Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels," BCP 14, RFC 2119, DOI 10.17487/RFC2119, March 1997.
-- **[RFC6962]** Laurie, B., Langley, A., and E. Kasper, "Certificate Transparency," RFC 6962, DOI 10.17487/RFC6962, June 2013.
 - **[RFC8152]** Schaad, J., "CBOR Object Signing and Encryption (COSE)," RFC 8152, DOI 10.17487/RFC8152, July 2017.
 - **[RFC8174]** Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words," BCP 14, RFC 8174, DOI 10.17487/RFC8174, May 2017.
 - **[RFC8949]** Bormann, C. and P. Hoffman, "Concise Binary Object Representation (CBOR)," STD 94, RFC 8949, DOI 10.17487/RFC8949, December 2020.
@@ -340,6 +349,7 @@ Future revisions of this document may request additional CBOR tag allocations an
 
 - **[FIPS204]** National Institute of Standards and Technology, "Module-Lattice-Based Digital Signature Standard," FIPS 204, August 2024.
 - **[CBAM]** European Commission, "Carbon Border Adjustment Mechanism," Regulation (EU) 2023/956, May 2023.
+- **[RFC6962]** Laurie, B., Langley, A., and E. Kasper, "Certificate Transparency," RFC 6962, DOI 10.17487/RFC6962, June 2013. *Design inspiration for the Merkle aggregation layer; the construction actually used differs — see Section 6.1.*
 
 ### 12.3 Reference implementation
 

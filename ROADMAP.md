@@ -17,7 +17,7 @@ This document is a **direction**, not a contract. Specific dates shift; the orde
 | Foundation | **Initial Development Co. (Delaware C-Corp interim)** — transition to Swiss Stiftung targeted for 2028+ after treasury maturity threshold |
 | Documentation | **Complete for v0.1** — whitepaper, constitution, brand book, spec, threat model, ADRs, hardware vendor matrix, FAQ |
 | Bilingual coverage | **Complete** — EN + RU for all public-facing user documents |
-| First social posts | **Drafted, ready to publish** — Twitter thread + Mirror long-form, both anti-pattern compliant |
+| First social posts | **Drafted, ready to publish** — Twitter thread + Mirror long-form, both editorially reviewed |
 
 ---
 
@@ -77,7 +77,7 @@ This document is a **direction**, not a contract. Specific dates shift; the orde
 - [ ] Swiss Stiftung Foundation incorporated; Initial Development Co. self-dissolves and transfers assets to the Foundation per its charter
 - [ ] First major hardware vendor integration at scale (across the smart-meter and energy-monitoring ecosystem)
 - [ ] First hyperscaler-scale partnership for compute energy attestation disclosure
-- [ ] 3+ independent reference clients of the protocol (multi-client implementation goal per CLAUDE.md Pillar 7)
+- [ ] 3+ independent reference clients of the protocol — the multi-client implementation goal: no single codebase should be a point of capture (see the [Constitution](docs/constitution.html))
 - [ ] First post-quantum signature variant shipped (ML-DSA dual-signing on the wire, single-signature on chain — per spec Section 5.2)
 - [ ] Founder transitions to advisory; protocol authority held by the Foundation
 - [ ] Endorser federation diversified across ≥3 jurisdictions
@@ -102,7 +102,7 @@ The shape of this phase is intentionally underspecified. We do not pretend to kn
 
 - **A Layer 1 chain.** ADR-003 records the decision permanently. We do not build, we anchor.
 - **Token economic engineering** for price targeting, market-making, or insider allocation. ADR-005 records the no-token-sale posture as permanent.
-- **Enterprise direct sales** by the Foundation. CLAUDE.md and the Constitution both record that distribution is through certified third-party integrators, not Foundation-as-vendor.
+- **Enterprise direct sales** by the Foundation. The [Constitution](docs/constitution.html) records that distribution is through certified third-party integrators, not Foundation-as-vendor.
 - **An ICO, presale, allocation round, or airdrop** — see ADR-005.
 - **A founder-led perpetuity.** Section 4 above is explicit about the founder leaving.
 
@@ -116,7 +116,7 @@ This roadmap is updated when:
 - A milestone is dropped (mark it `❌` with a one-line note pointing to a separate decision document or ADR)
 - A new initiative meets the bar of being "in the project's plan", not just "in someone's head"
 
-Roadmap items are aspirational and may slip. The pillars in `CLAUDE.md` and the decisions in `docs/adr/` are not — they are the part of the project that doesn't move.
+Roadmap items are aspirational and may slip. The principles in the [Constitution](docs/constitution.html) and the decisions in `docs/adr/` are not — they are the part of the project that doesn't move.
 
 ---
 

@@ -16,9 +16,11 @@ WITHOUT trusting the operator. It watches a deployed Attester, and for every
   5. (when the attestation + device public key are published) re-verifies the
      ECDSA P-256 signature on the underlying attestation.
 
-If anything does not reconcile, the node raises an ALARM (non-zero exit in
---once mode; logged + alarm counter in daemon mode). This is the "don't trust
-us, verify it yourself" component — the trust-minimizing core of the network.
+If anything does not reconcile — including a FINALIZED epoch whose published
+batch data is absent, malformed, empty, or whose leaf amounts do not sum to
+the on-chain totalKwh — the node raises an ALARM (non-zero exit in --once
+mode; logged + alarm counter in daemon mode). This is the "don't trust us,
+verify it yourself" component — the trust-minimizing core of the network.
 
 Scope v0.1: chain + signatures. Consumption-matching (generation↔spend) is a
 future version and intentionally NOT here.
@@ -40,7 +42,8 @@ The --data-dir holds, per epoch, the operator-published files:
     <data-dir>/attestation.json      (optional — enables signature check)
     <data-dir>/attester.key.pub      (optional — device public key for sig check)
 
-Exit codes (in --once mode): 0 all verified, 1 ALARM (mismatch), 2 usage error.
+Exit codes (in --once mode): 0 all verified, 1 ALARM (mismatch),
+2 usage/connectivity error (e.g. unreachable RPC).
 """
 
 from __future__ import annotations
@@ -142,10 +145,12 @@ def _load_batch_file(data_dir: Path, epoch: int) -> dict | None:
         if not isinstance(obj, dict):
             raise MalformedBatch(f"{p.name} is present but is not a JSON object")
         # batch.json is single-epoch; only accept it if its epoch matches.
-        try:
-            file_epoch = int(obj.get("epoch", -1))
-        except (TypeError, ValueError):
-            raise MalformedBatch(f"{p.name} has a non-numeric `epoch` field")
+        # Strict parsing: `epoch` must be a JSON integer. A string epoch (even
+        # a numeric-looking one) is malformed — same semantics as the Go and
+        # WASM verifiers, which fail to unmarshal a string into uint64.
+        file_epoch = obj.get("epoch")
+        if not isinstance(file_epoch, int) or isinstance(file_epoch, bool):
+            raise MalformedBatch(f"{p.name} has a non-integer `epoch` field")
         if file_epoch == epoch:
             return obj
         # A batch-<epoch>.json whose internal epoch disagrees with its filename
@@ -160,15 +165,16 @@ def _load_batch_file(data_dir: Path, epoch: int) -> dict | None:
 
 def verify_epoch(w3, attester_addr: str, chain_id: int, epoch: int, data_dir: Path) -> tuple[str, list[str]]:
     """Verify one finalized epoch. Returns (status, details) where status is one
-    of 'OK', 'ALARM', 'SKIP' (not finalized / no published data yet).
+    of 'OK', 'ALARM', 'SKIP' (not proposed / not finalized yet).
 
     FAIL-CLOSED contract: once an epoch is FINALIZED on-chain, *any* problem
     reconciling the operator-published data against the on-chain commitment —
-    a mismatch, a forgery, OR merely garbage/malformed/missing-field data we
-    cannot parse — yields ALARM, never a silent OK and never a SKIP. Garbage
-    on a finalized epoch is treated as adversarial (an operator could hide
-    tampering behind 'unparseable' data). Only genuinely-absent published data
-    on a not-yet-finalized epoch is a SKIP.
+    a mismatch, a forgery, ABSENT published data, OR merely garbage/malformed/
+    missing-field data we cannot parse — yields ALARM, never a silent OK and
+    never a SKIP. Garbage (or nothing at all) on a finalized epoch is treated
+    as adversarial: an operator could hide tampering behind 'unparseable' or
+    'not yet published' data. The only SKIP is an epoch that is not finalized
+    on-chain yet.
     """
     contract = w3.eth.contract(
         address=Web3.to_checksum_address(attester_addr), abi=ATTESTER_ABI
@@ -178,6 +184,7 @@ def verify_epoch(w3, attester_addr: str, chain_id: int, epoch: int, data_dir: Pa
     # retries), rather than mislabeling a flaky RPC as a protocol violation.
     b = contract.functions.batches(epoch).call()
     merkle_root_onchain = "0x" + b[0].hex() if isinstance(b[0], (bytes, bytearray)) else b[0]
+    total_kwh_onchain = b[2]
     timestamp = b[3]
     finalized = b[5]
 
@@ -189,13 +196,8 @@ def verify_epoch(w3, attester_addr: str, chain_id: int, epoch: int, data_dir: Pa
     # From here the epoch is FINALIZED — fail closed on ANY data problem.
     try:
         return _verify_finalized_epoch(
-            attester_addr, chain_id, epoch, data_dir, merkle_root_onchain
+            attester_addr, chain_id, epoch, data_dir, merkle_root_onchain, total_kwh_onchain
         )
-    except _AbsentData as e:
-        # The one not-adversarial case: the operator has not yet published the
-        # batch data for a freshly-finalized epoch. Surfaced as SKIP so the
-        # daemon retries; in --once mode this is a clean "nothing to verify".
-        return "SKIP", [f"epoch {epoch}: {e}"]
     except MalformedBatch as e:
         return "ALARM", [
             f"epoch {epoch}: FINALIZED on-chain but published batch data is malformed — {e}"
@@ -218,28 +220,27 @@ def verify_epoch(w3, attester_addr: str, chain_id: int, epoch: int, data_dir: Pa
         ]
 
 
-class _AbsentData(Exception):
-    """No operator-published data exists yet for a finalized epoch (benign-ish:
-    the publisher may simply be lagging the chain). Surfaced as SKIP."""
-
-
 def _verify_finalized_epoch(
-    attester_addr: str, chain_id: int, epoch: int, data_dir: Path, merkle_root_onchain: str
+    attester_addr: str,
+    chain_id: int,
+    epoch: int,
+    data_dir: Path,
+    merkle_root_onchain: str,
+    total_kwh_onchain: int,
 ) -> tuple[str, list[str]]:
     """The data-reconciliation core for an already-finalized epoch. Raises on
-    any malformed/missing data; the caller maps those to ALARM/SKIP."""
+    any malformed data; the caller maps those to ALARM."""
     details: list[str] = []
     batch = _load_batch_file(data_dir, epoch)
     if batch is None:
         # On-chain says finalized but the operator published no data at all.
-        # We deliberately treat this as ABSENT (SKIP/retry) rather than ALARM:
-        # the publisher legitimately lags finalization. A persistent absence
-        # will keep re-SKIPping every tick, which is visible without crying
-        # forgery on a timing gap.
-        raise _AbsentData(
-            f"FINALIZED on-chain but no published batch data in {data_dir} yet — "
-            "cannot verify (publisher may be lagging; will retry)"
-        )
+        # FINALIZED + absent data = ALARM (fail closed, same as the Go and
+        # WASM verifiers): a finalized epoch whose data cannot be verified is
+        # exactly the case the watchdog exists to catch — an operator must not
+        # be able to dodge verification by simply not publishing.
+        return "ALARM", [
+            f"epoch {epoch}: FINALIZED on-chain but no published batch data in {data_dir}"
+        ]
 
     # 1. Published root must equal the on-chain committed root.
     raw_root = batch.get("root")
@@ -258,6 +259,14 @@ def _verify_finalized_epoch(
     leaves = batch.get("leaves", [])
     if not isinstance(leaves, list):
         raise MalformedBatch("`leaves` is present but is not a JSON array")
+    if not leaves:
+        # A FINALIZED batch with zero leaves cannot be reconciled with
+        # anything: the operator committed a root on-chain but published no
+        # claims under it. Fail closed.
+        return "ALARM", [
+            f"epoch {epoch}: FINALIZED on-chain but published batch has no leaves"
+        ]
+    sum_amounts = 0
     for i, lf in enumerate(leaves):
         if not isinstance(lf, dict):
             raise MalformedBatch(f"leaf[{i}] is not a JSON object")
@@ -270,6 +279,8 @@ def _verify_finalized_epoch(
         # int() of a garbage string / wrong type raises ValueError/TypeError,
         # which the caller maps to ALARM (fail closed on non-numeric amounts).
         amount = int(raw_amount)
+        if amount < 0:
+            raise MalformedBatch(f"leaf[{i}] ({beneficiary}) has a negative amount {amount}")
         # compute_leaf checksums the addresses; a malformed beneficiary raises
         # (ValueError) and is mapped to ALARM by the caller.
         recomputed = compute_leaf(chain_id, attester_addr, beneficiary, amount, epoch)
@@ -289,7 +300,17 @@ def _verify_finalized_epoch(
         ok, m = va._verify_merkle_proof_impl(recomputed, proof, merkle_root_onchain, "keccak256")
         if not ok:
             return "ALARM", [f"epoch {epoch} leaf[{i}] ({beneficiary}): Merkle proof FAILED — {m}"]
+        sum_amounts += amount
     details.append(f"epoch {epoch}: all {len(leaves)} leaf(s) re-derived + Merkle-verified against on-chain root")
+
+    # 2b. Cross-check the published amounts against the on-chain totalKwh
+    #     commitment: the contract stores the proposer-supplied total verbatim,
+    #     so this reconciliation lives in the verifier (same as Go/WASM).
+    if sum_amounts != total_kwh_onchain:
+        return "ALARM", [
+            f"epoch {epoch}: sum of published leaf amounts {sum_amounts} != on-chain totalKwh {total_kwh_onchain}"
+        ]
+    details.append(f"epoch {epoch}: leaf amounts sum to on-chain totalKwh ({total_kwh_onchain})")
 
     # 3. Signature check. If the operator publishes BOTH attestation + pubkey,
     #    the signature MUST validate (fail closed — a present-but-invalid sig is
@@ -308,6 +329,7 @@ def _verify_finalized_epoch(
         if not ok:
             return "ALARM", [f"epoch {epoch}: attestation signature FAILED — {m}"]
         details.append(f"epoch {epoch}: attestation P-256 signature OK")
+        details.append(f"epoch {epoch} fully verified")
     elif att_present or pub_present:
         # Exactly one of the two present: fail closed (mirrors the Go node). An
         # operator must not be able to publish an attestation while withholding
@@ -317,7 +339,10 @@ def _verify_finalized_epoch(
             f"epoch {epoch}: signature material is half-published ({missing} missing) — refusing to skip"
         ]
     else:
-        details.append(f"epoch {epoch}: no attestation/pubkey published — signature check skipped (chain checks still passed)")
+        details.append(f"epoch {epoch}: no attestation/pubkey published — signature check skipped")
+        # Honest labeling (mirrors the Go/WASM verifiers): never claim "fully
+        # verified" when the signature was not actually checked.
+        details.append(f"epoch {epoch} verified: chain checks OK, signature not checked")
 
     return "OK", details
 
@@ -359,7 +384,7 @@ def run(args: argparse.Namespace) -> int:
             log("INFO" if status != "ALARM" else "ALARM", d)
         if status == "OK":
             last_verified = epoch
-            log("OK", f"epoch {epoch} fully verified · last_verified_epoch={last_verified}")
+            log("OK", f"epoch {epoch} verified · last_verified_epoch={last_verified}")
             epoch += 1
             continue
         if status == "ALARM":

@@ -99,8 +99,6 @@ explorer_base() {
   case "$CHAIN_ID" in
     11155111) echo "https://sepolia.etherscan.io" ;;
     17000)    echo "https://holesky.etherscan.io" ;;
-    84532)    echo "https://sepolia.basescan.org" ;;
-    11155420) echo "https://sepolia-optimism.etherscan.io" ;;
     *)        echo "" ;;
   esac
 }

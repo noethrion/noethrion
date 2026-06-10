@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- D2 Primary - Circular Mask Version -->
-<!-- Для платформ которые крошат avatar в круг (Twitter, Discord, etc.) -->
-<!-- Контент центрирован с safe zone -->
+<!-- For platforms that crop avatars to a circle (Twitter, Discord, etc.) -->
+<!-- Content centered with safe zone -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
     <clipPath id="circleClip">

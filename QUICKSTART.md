@@ -51,7 +51,7 @@ forge install
 forge test
 ```
 
-Expected output: **all tests pass** (currently 127/127 across the unit, security, invariant, deployment-handoff, deployment-validation, and deployment-Timelock suites; plus 25/25 Halmos symbolic checks via `halmos --contract NoethrionAttesterHalmosTest`).
+Expected output: **all tests pass** (currently 127/127 across the unit, security, invariant, deployment-handoff, deployment-validation, and deployment-Timelock suites; plus 25/25 Halmos symbolic checks via `halmos --contract NoethrionAttesterHalmosTest` and `halmos --contract NoethrionTokenHalmosTest`).
 
 Useful follow-ups:
 
@@ -94,7 +94,7 @@ Once a device produces a real attestation (forthcoming milestone), independent v
 5. Confirm the candidate root matches the committed root and that the batch is finalized (challenge window elapsed).
 6. Validate the ECDSA P-256 signature against the device's endorsed public key.
 
-A `tools/verify_attestation.py` reference implementation is on the near-term roadmap and will live in the [`tools/`](tools/) directory.
+A reference implementation, `tools/verify_attestation.py`, lives in the [`tools/`](tools/) directory.
 
 The protocol specification — `spec/noethrion-attestation-v0.1.md`, Sections 4 through 7 — defines every step normatively.
 

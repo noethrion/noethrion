@@ -35,6 +35,9 @@ void log_banner() {
     Serial.print(F(" cores @ "));
     Serial.print(ESP.getCpuFreqMHz());
     Serial.println(F(" MHz"));
+    // SDA/SCL below echo the -DATECC_I2C_SDA / -DATECC_I2C_SCL build flags for
+    // reference only — the I²C bus itself is configured inside atcab_init()
+    // by the cryptoauthlib ESP32 HAL.
     Serial.print(F("i2c sda : GPIO"));
     Serial.println(ATECC_I2C_SDA);
     Serial.print(F("i2c scl : GPIO"));
@@ -100,6 +103,9 @@ uint64_t read_meter_wh_stub() {
     return fake_total_wh;
 }
 
+// Placeholder only — production token format is Canonical CBOR per
+// spec/noethrion-attestation-v0.1.md §4.1 (iat = Unix UTC seconds, wh = delta
+// since previous attestation, plus seq/prev/iss).
 void emit_attestation_stub(uint64_t total_wh) {
     JsonDocument doc;  // ArduinoJson v7 — heap-allocated, no fixed capacity needed
     doc["ts"]   = (uint32_t)(millis() / 1000);
@@ -140,8 +146,10 @@ void loop() {
     static uint32_t next_tick = 0;
     const uint32_t now = millis();
 
-    if (now >= next_tick) {
-        next_tick = now + TICK_INTERVAL_MS;
+    // Rollover-safe schedule check: the signed delta survives the uint32_t
+    // millis() wrap at ~49.7 days, unlike a direct `now >= next_tick` compare.
+    if ((int32_t)(now - next_tick) >= 0) {
+        next_tick += TICK_INTERVAL_MS;
         emit_attestation_stub(read_meter_wh_stub());
     }
 }

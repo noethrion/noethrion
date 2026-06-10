@@ -14,10 +14,17 @@ For every **finalized** batch on a deployed Attester, the node independently:
 4. re-derives every leaf as `keccak256(abi.encode(chainId, attesterAddr, beneficiary, amount, epoch))`
    — the exact encoding the contract enforces in `claim()` — and replays the
    Merkle proof against the on-chain root,
-5. re-verifies the ECDSA P-256 attestation signature (when published).
+5. cross-checks that the batch is non-empty and that the published leaf
+   amounts sum exactly to the on-chain `totalKwh` commitment,
+6. re-verifies the ECDSA P-256 attestation signature (when published).
 
-Any mismatch → **ALARM**. The node never trusts the operator's word; it recomputes
-everything from the on-chain commitment.
+Any mismatch → **ALARM**. So is a **finalized** epoch whose published batch data
+is absent, malformed, or missing required fields (`leaf` is mandatory on every
+leaf record): fail closed — an operator must not be able to dodge verification
+by not publishing. The node never trusts the operator's word; it recomputes
+everything from the on-chain commitment. When no attestation/pubkey is
+published, the chain checks still gate the verdict, but the node reports
+honestly: "chain checks OK, signature not checked" — never "fully verified".
 
 **Scope v0.1:** chain + signatures. Consumption-matching (generation↔spend) is a
 later version and intentionally not here.
@@ -50,7 +57,9 @@ python3 node/verifier_node.py \
 | `attestation.json` | optional | enables the ECDSA P-256 signature check |
 | `attester.key.pub` | optional | device public key for the signature check |
 
-Exit codes (`--once`): `0` all verified · `1` ALARM (mismatch) · `2` usage error.
+Exit codes (`--once`): `0` all verified · `1` ALARM (mismatch) · `2` usage or
+connectivity error (e.g. unreachable RPC / undecodable response — never silently
+reported as success). Same contract in both the Python and Go implementations.
 
 ## Deploy as a daemon (any Linux host)
 

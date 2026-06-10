@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- F1: Hero Display Version -->
-<!-- Огромная η + label слева "Eta · Greek letter · symbol of efficiency" -->
-<!-- Editorial style — для hero sections, presentations -->
+<!-- Oversized η with left label "Eta · Greek letter · symbol of efficiency" -->
+<!-- Editorial style — for hero sections and presentations -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
   <rect width="1200" height="600" fill="#0A0A0A"/>
 

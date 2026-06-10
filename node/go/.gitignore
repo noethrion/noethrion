@@ -1,6 +1,7 @@
 # Build outputs — source is committed, binaries are not.
 noethrion-verify
 noethrion-verify-*
+verifier-node-go
 *.exe
 *.wasm
 build.err

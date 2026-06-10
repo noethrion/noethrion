@@ -1,7 +1,7 @@
 # Smart contracts pre-audit readiness report
 
 **Conducted:** 2026-05-13
-**Author:** Mel (Claude Code)
+**Author:** Noethrion core team (internal review — not an external audit)
 **Status:** Initial · pre-launch · self-audit
 **Scope:** `contracts/src/NoethrionAttester.sol`, `contracts/src/NoethrionToken.sol`
 **Toolchain:** Foundry `forge` 1.6.0, Solidity 0.8.24, OpenZeppelin Contracts 5.x

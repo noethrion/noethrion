@@ -12,7 +12,7 @@ pragma solidity 0.8.24;
 //   $PROOF      — comma-separated hex siblings, e.g. "0xabc...,0xdef..."
 //   $PRIVATE_KEY — any account (claim is permissionless)
 //
-// Run:
+// Run (via `cast` — see the note in 04_propose_batch.s.sol):
 //   export ATTESTER=0x...
 //   export TOKEN=0x...
 //   export EPOCH=1
@@ -20,8 +20,11 @@ pragma solidity 0.8.24;
 //   export AMOUNT=100000000000000000000   # 100 NOET in 18-decimal wei
 //   export PROOF=0xabc...,0xdef...        # from batch.json -> leaves[i].proof
 //   export PRIVATE_KEY=0xac0974...80c9
-//   forge script examples/lifecycle/06_claim.s.sol \
-//       --rpc-url http://localhost:8545 --broadcast
+//   cast send "$ATTESTER" "claim(uint64,bytes32[],address,uint128)" \
+//       "$EPOCH" "[$PROOF]" "$BENEFICIARY" "$AMOUNT" \
+//       --private-key "$PRIVATE_KEY" --rpc-url http://localhost:8545
+//   cast call "$TOKEN" "balanceOf(address)(uint256)" "$BENEFICIARY" \
+//       --rpc-url http://localhost:8545
 
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";

@@ -18,7 +18,15 @@ DEST="${NOETHRION_HOME:-$HOME/.noethrion}"
 BIN="$DEST/noethrion-verify"
 
 green() { printf '\033[0;32m%s\033[0m\n' "$1"; }
+red()   { printf '\033[0;31m%s\033[0m\n' "$1"; }
 info()  { printf '  %s\n' "$1"; }
+
+# sha256 <file> — portable digest (sha256sum on Linux, shasum on macOS).
+sha256() {
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'
+  else shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
 
 printf '\n  \033[0;32mη\033[0m  Noethrion verifier — installer\n\n'
 
@@ -43,6 +51,28 @@ asset="noethrion-verify-${os}-${arch}"
 url="https://github.com/$REPO/releases/download/$TAG/$asset"
 info "downloading verifier ($asset)..."
 if curl -fsSL "$url" -o "$BIN" 2>/dev/null && [ -s "$BIN" ]; then
+  # Integrity check: if the release publishes SHA256SUMS, the downloaded
+  # binary's digest must match its entry — a mismatch aborts the install.
+  sums_url="https://github.com/$REPO/releases/download/$TAG/SHA256SUMS"
+  sums_file="$DEST/SHA256SUMS"
+  if curl -fsSL "$sums_url" -o "$sums_file" 2>/dev/null && [ -s "$sums_file" ]; then
+    expected="$(awk -v a="$asset" '$2 == a {print $1}' "$sums_file")"
+    if [ -z "$expected" ]; then
+      info "warning: $asset not listed in SHA256SUMS, skipping integrity check"
+    else
+      actual="$(sha256 "$BIN")"
+      if [ "$actual" != "$expected" ]; then
+        red "  checksum mismatch for $asset"
+        info "expected: $expected"
+        info "got:      $actual"
+        rm -f "$BIN"
+        exit 1
+      fi
+      green "  checksum verified ($asset)"
+    fi
+  else
+    info "warning: checksum file not found in release, skipping integrity check"
+  fi
   chmod +x "$BIN"
   green "  installed: $BIN"
 else
@@ -63,10 +93,19 @@ curl -fsSL "$BATCH_URL" -o "$DEST/published/batch-1.json"
 
 # ── verify the genesis live, on YOUR machine ─────────────────────────────────
 printf '\n  verifying the genesis attestation against the live chain...\n\n'
+rc=0
 "$BIN" --rpc "$RPC" \
        --attester 0x02De07a2CF1E757D8D53de217B5dA372E84114cC \
        --chain-id "$CHAIN_ID" \
-       --data-dir "$DEST/published" --once --start-epoch 1 || true
+       --data-dir "$DEST/published" --once --start-epoch 1 || rc=$?
+
+printf '\n'
+if [ "$rc" -eq 0 ]; then
+  green "  verified — the on-chain commitment and the published data reconcile"
+else
+  red "  verification FAILED (exit $rc) — see the verifier output above"
+  exit "$rc"
+fi
 
 cat <<EOF
 

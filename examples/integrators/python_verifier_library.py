@@ -79,6 +79,8 @@ class NoethrionVerifier:
 
     def verify_signature(self, attestation: dict) -> VerificationResult:
         try:
+            # Field contains raw canonical JSON, not base64 — naming kept for
+            # v0.1 wire-format compatibility.
             payload = attestation["payload_b64_canonical"].encode("utf-8")
             sig_bytes = bytes.fromhex(attestation["signature_rs_hex"])
         except (KeyError, ValueError) as e:

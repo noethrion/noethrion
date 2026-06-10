@@ -13,13 +13,15 @@ pragma solidity 0.8.24;
 //   $WARP       — "1" to fast-forward time past the challenge window (Anvil only)
 //   $PRIVATE_KEY — any account (no role required)
 //
-// Run:
+// Run (via `cast` — see the note in 04_propose_batch.s.sol; the $WARP
+// fast-forward becomes an explicit evm_increaseTime RPC call, Anvil only):
 //   export ATTESTER=0x...
 //   export EPOCH=1
-//   export WARP=1
 //   export PRIVATE_KEY=0xac0974...80c9
-//   forge script examples/lifecycle/05_finalize_batch.s.sol \
-//       --rpc-url http://localhost:8545 --broadcast
+//   cast rpc evm_increaseTime 3700 --rpc-url http://localhost:8545
+//   cast rpc evm_mine --rpc-url http://localhost:8545
+//   cast send "$ATTESTER" "finalizeBatch(uint64)" "$EPOCH" \
+//       --private-key "$PRIVATE_KEY" --rpc-url http://localhost:8545
 
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";

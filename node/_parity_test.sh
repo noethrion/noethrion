@@ -6,9 +6,12 @@
 # batch.json (+ attestation.json + attester.key.pub for the signature check),
 # then runs ALL THREE implementations against the same on-chain root:
 #
-#   honest batch    -> all three must exit 0 (OK)    and agree
-#   tampered batch  -> all three must exit 1 (ALARM) and agree
-#   malformed batch -> all three must ALARM (exit 1), never crash, never OK
+#   honest batch          -> all three must exit 0 (OK)    and agree
+#   tampered batch        -> all three must exit 1 (ALARM) and agree
+#   malformed batch       -> all three must ALARM (exit 1), never crash, never OK
+#   missing batch (FINAL) -> all three must ALARM (finalized + absent data)
+#   negative amount / missing leaf field / string epoch / empty leaves
+#                         -> all three must ALARM (fail-closed field validation)
 #
 # The WASM leg loads verifier.wasm in headless Node (wasm_gate_runner.mjs),
 # proxies its eth_call fetch to the same live Anvil RPC, and reaches its verdict
@@ -58,7 +61,7 @@ GO_BIN="$REPO/node/go/noethrion-verify"
 
 # Build the WASM verifier up front too (the third parity leg).
 echo "[*] Build WASM verifier (GOOS=js GOARCH=wasm)"
-( cd "$WASM_DIR" && GOOS=js GOARCH=wasm go build -o verifier.wasm . )
+( cd "$WASM_DIR" && GOOS=js GOARCH=wasm go build -trimpath -o verifier.wasm . )
 [ -f "$WASM_DIR/verifier.wasm" ] || { echo "[FAIL] wasm build did not produce verifier.wasm"; exit 1; }
 [ -f "$WASM_DIR/wasm_exec.js" ] || { echo "[FAIL] missing $WASM_DIR/wasm_exec.js"; exit 1; }
 command -v node >/dev/null 2>&1 || { echo "[FAIL] node not on PATH (needed for WASM leg)"; exit 1; }
@@ -171,31 +174,53 @@ check_parity3 "tampered" 1 "ALARM"
 # --- CASE 3: malformed published batch.json — fail closed ----------------
 # A FINALIZED epoch whose published batch.json is garbage / truncated / wrong
 # is a transparency failure: every impl must ALARM (exit 1), never crash, never
-# OK. (The Python+Go fail-closed hardening is being made by a parallel agent; if
-# those two aren't hardened yet when this runs, the case still executes and the
-# divergence is reported — WASM is hardened here regardless.)
+# OK.
 run_malformed_case() {  # $1 = label, $2 = how to corrupt batch.json (python snippet writing to $p)
   local label="$1" corrupt="$2"
   rm -rf "$GARBAGE"; mkdir -p "$GARBAGE"
   cp "$DATA"/* "$GARBAGE/"
   $LC_PY -c "p='$GARBAGE/batch.json'; $corrupt"
   echo ""
-  echo "[*] CASE 3.$label (malformed published batch): all three must ALARM, never crash, never OK"
+  echo "[*] CASE ($label) (corrupted published batch): all three must ALARM, never crash, never OK"
   run_py "$GARBAGE"; run_go "$GARBAGE"; run_wasm "$GARBAGE"
-  check_parity3 "malformed:$label" 1 "ALARM"
+  check_parity3 "$label" 1 "ALARM"
 }
 
 # 3a — not valid JSON at all
-run_malformed_case "raw-garbage" "open(p,'w').write('}{ not json at all {{{')"
+run_malformed_case "malformed:raw-garbage" "open(p,'w').write('}{ not json at all {{{')"
 # 3b — valid JSON but truncated structure (missing leaves / root)
-run_malformed_case "missing-fields" "import json;json.dump({'epoch': $EPOCH}, open(p,'w'))"
+run_malformed_case "malformed:missing-fields" "import json;json.dump({'epoch': $EPOCH}, open(p,'w'))"
 # 3c — wrong-field types (leaves is a string, amount non-numeric)
-run_malformed_case "wrong-types" "import json;json.dump({'epoch': $EPOCH, 'root': '0x00', 'leaves': 'not-a-list'}, open(p,'w'))"
+run_malformed_case "malformed:wrong-types" "import json;json.dump({'epoch': $EPOCH, 'root': '0x00', 'leaves': 'not-a-list'}, open(p,'w'))"
+
+# --- CASE 4: FINALIZED epoch with NO published batch file — fail closed ----
+# Finalized + absent data = ALARM in all three implementations: an operator
+# must not be able to dodge verification by simply not publishing.
+echo ""
+echo "[*] CASE 4 (missing-batch-finalized): all three must ALARM / exit 1"
+rm -rf "$GARBAGE"; mkdir -p "$GARBAGE"
+cp "$DATA/attestation.json" "$DATA/attester.key.pub" "$GARBAGE/"
+run_py "$GARBAGE"; run_go "$GARBAGE"; run_wasm "$GARBAGE"
+check_parity3 "missing-batch-finalized" 1 "ALARM"
+
+# --- CASE 5: per-field fail-closed validation ------------------------------
+# 5a — negative leaf amount (root untouched; the amount itself must trip it)
+run_malformed_case "negative-amount" \
+  "import json;d=json.load(open(p));d['leaves'][0]['amount_wei']=-abs(int(d['leaves'][0]['amount_wei']));json.dump(d,open(p,'w'))"
+# 5b — missing required `leaf` field on a leaf record
+run_malformed_case "missing-leaf-field" \
+  "import json;d=json.load(open(p));d['leaves'][0].pop('leaf');json.dump(d,open(p,'w'))"
+# 5c — string epoch (strict parsing: `epoch` must be a JSON integer everywhere)
+run_malformed_case "string-epoch" \
+  "import json;d=json.load(open(p));d['epoch']=str(d['epoch']);json.dump(d,open(p,'w'))"
+# 5d — empty leaves array on a FINALIZED epoch (also breaks the totalKwh sum)
+run_malformed_case "empty-leaves" \
+  "import json;d=json.load(open(p));d['leaves']=[];json.dump(d,open(p,'w'))"
 
 # --- summary -------------------------------------------------------------
 echo ""
 if [ "$FAILED" -eq 0 ]; then
-  echo "==== PARITY PASS (3-way): Python + Go + WASM return identical, correct verdicts on honest, tampered, and malformed data ===="
+  echo "==== PARITY PASS (3-way): Python + Go + WASM return identical, correct verdicts on honest, tampered, malformed, missing, and field-invalid data ===="
   exit 0
 else
   echo "==== PARITY FAIL: the implementations diverged or one crashed (see [FAIL] above) ===="

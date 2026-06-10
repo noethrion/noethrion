@@ -1,7 +1,7 @@
 # Performance audit — landing page
 
 **Conducted:** 2026-05-13
-**Author:** Mel (Claude Code)
+**Author:** Noethrion core team (internal review — not an external audit)
 **Target:** `docs/index.html` (the page served at `noethrion.com` after Cloudflare Pages deploy)
 **Method:** Manual review — Lighthouse / WebPageTest / PageSpeed Insights not installed locally; founder is expected to run an automated audit post-deploy.
 
