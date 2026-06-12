@@ -51,28 +51,36 @@ asset="noethrion-verify-${os}-${arch}"
 url="https://github.com/$REPO/releases/download/$TAG/$asset"
 info "downloading verifier ($asset)..."
 if curl -fsSL "$url" -o "$BIN" 2>/dev/null && [ -s "$BIN" ]; then
-  # Integrity check: if the release publishes SHA256SUMS, the downloaded
-  # binary's digest must match its entry — a mismatch aborts the install.
+  # Integrity check (mandatory): the downloaded binary's digest must match its
+  # entry in the release's SHA256SUMS. If the checksum file can't be fetched or
+  # has no entry for this asset, the install aborts — we never run an
+  # unverified binary.
   sums_url="https://github.com/$REPO/releases/download/$TAG/SHA256SUMS"
   sums_file="$DEST/SHA256SUMS"
-  if curl -fsSL "$sums_url" -o "$sums_file" 2>/dev/null && [ -s "$sums_file" ]; then
-    expected="$(awk -v a="$asset" '$2 == a {print $1}' "$sums_file")"
-    if [ -z "$expected" ]; then
-      info "warning: $asset not listed in SHA256SUMS, skipping integrity check"
-    else
-      actual="$(sha256 "$BIN")"
-      if [ "$actual" != "$expected" ]; then
-        red "  checksum mismatch for $asset"
-        info "expected: $expected"
-        info "got:      $actual"
-        rm -f "$BIN"
-        exit 1
-      fi
-      green "  checksum verified ($asset)"
-    fi
-  else
-    info "warning: checksum file not found in release, skipping integrity check"
+  if ! curl -fsSL "$sums_url" -o "$sums_file" 2>/dev/null || [ ! -s "$sums_file" ]; then
+    red "  could not fetch SHA256SUMS from the release — refusing to install an unverified binary"
+    info "expected at: $sums_url"
+    info "this may be a transient network issue — re-run the installer"
+    rm -f "$BIN"
+    exit 1
   fi
+  expected="$(awk -v a="$asset" '$2 == a {print $1}' "$sums_file")"
+  if [ -z "$expected" ]; then
+    red "  $asset is not listed in SHA256SUMS — refusing to install an unverified binary"
+    info "the release checksum file has no entry for this asset; report this at"
+    info "https://github.com/$REPO/issues"
+    rm -f "$BIN"
+    exit 1
+  fi
+  actual="$(sha256 "$BIN")"
+  if [ "$actual" != "$expected" ]; then
+    red "  checksum mismatch for $asset"
+    info "expected: $expected"
+    info "got:      $actual"
+    rm -f "$BIN"
+    exit 1
+  fi
+  green "  checksum verified ($asset)"
   chmod +x "$BIN"
   green "  installed: $BIN"
 else
@@ -80,7 +88,7 @@ else
   command -v go  >/dev/null 2>&1 || { echo "  Go not found — install from https://go.dev/dl/ and re-run."; exit 1; }
   command -v git >/dev/null 2>&1 || { echo "  git not found."; exit 1; }
   tmp="$(mktemp -d)"
-  git clone --depth 1 "https://github.com/$REPO" "$tmp/src" >/dev/null 2>&1
+  git clone --depth 1 --branch "$TAG" "https://github.com/$REPO" "$tmp/src" >/dev/null 2>&1
   ( cd "$tmp/src/node/go" && go build -o "$BIN" . )
   chmod +x "$BIN"
   rm -rf "$tmp"
@@ -102,8 +110,14 @@ rc=0
 printf '\n'
 if [ "$rc" -eq 0 ]; then
   green "  verified — the on-chain commitment and the published data reconcile"
+elif [ "$rc" -eq 2 ]; then
+  red "  could not complete verification (RPC/connectivity issue) — this is NOT a"
+  red "  verification failure; the binary is installed. Re-run once you're online:"
+  info "\"$BIN\" --rpc $RPC --attester 0x02De07a2CF1E757D8D53de217B5dA372E84114cC --chain-id $CHAIN_ID --data-dir \"$DEST/published\" --once"
+  exit "$rc"
 else
-  red "  verification FAILED (exit $rc) — see the verifier output above"
+  red "  verification FAILED (exit $rc) — the published data did not reconcile with"
+  red "  the chain; see the verifier output above"
   exit "$rc"
 fi
 

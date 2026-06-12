@@ -271,6 +271,9 @@ async function verifyHero() {
     } else if (status === "ALARM") {
       setHero("alarm", "ALARM — verification failed",
         "the published data did not match the chain. This is exactly what a watcher is for.");
+    } else if (details.some((d) => /rpc error/i.test(d))) {
+      setHero("skip", "Couldn't reach the chain",
+        "could not reach the RPC endpoint — verification unavailable, hit Verify to try again.");
     } else {
       setHero("skip", "Skipped", "the chain did not return a finalized batch to verify.");
     }

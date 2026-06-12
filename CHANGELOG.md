@@ -10,7 +10,9 @@ this changelog will adopt strict semver.
 
 ## Unreleased
 
-Pre-launch work. Everything below is in main but not yet behind a tag.
+Pre-launch work. The verifier node has its own tag line — `node-v0.1.1` is published with platform binaries
+and `SHA256SUMS` (see the GitHub Releases page). Everything else below is in main but not yet behind a tag;
+the protocol/spec itself remains untagged pending `v0.1.0-spec`.
 
 ### Added
 
@@ -289,17 +291,17 @@ Pre-launch work. Everything below is in main but not yet behind a tag.
 - All public-facing user documents (README, QUICKSTART, EXAMPLES, FAQ) shipped bilingually (EN + RU)
 - Technical specifications (Spec, ADRs, threat model, hardware matrix, audit reports) shipped in English per
   project convention
-- Internal-only Russian translation review and grant application drafts tracked in vault (not in this
-  repository)
+- Professional Russian-language review of technical documents scheduled post-launch
 
 ---
 
 ## How this changelog is maintained
 
-Each substantive commit to `main` adds a bullet to the appropriate section of "Unreleased". When the first
-tagged release ships (anticipated as `v0.1.0-spec` after the IETF Internet-Draft submission completes one
-review cycle), the "Unreleased" section becomes the body of that release; a new empty "Unreleased" section
-starts immediately above.
+Each substantive commit to `main` adds a bullet to the appropriate section of "Unreleased". The verifier
+node already ships tagged releases on its own line (`node-v0.1.x`, currently `node-v0.1.1`, each with
+platform binaries and `SHA256SUMS`). When the first protocol/spec tagged release ships (anticipated as
+`v0.1.0-spec` after the IETF Internet-Draft submission completes one review cycle), the "Unreleased"
+section becomes the body of that release; a new empty "Unreleased" section starts immediately above.
 
 Roadmap items that move from planned to shipped graduate from `ROADMAP.md` into this changelog. The two
 files together describe "what is done" (changelog) and "what is next" (roadmap).

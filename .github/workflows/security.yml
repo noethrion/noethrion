@@ -41,18 +41,18 @@ jobs:
         working-directory: contracts
     steps:
       - name: Checkout (with submodules)
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           submodules: recursive
 
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+        uses: foundry-rs/foundry-toolchain@c7450ba673e133f5ee30098b3b54f444d3a2ca2d # v1.8.0
         with:
           version: stable
 
       - name: Run Slither
         id: slither
-        uses: crytic/slither-action@v0.4.0
+        uses: crytic/slither-action@f197989dea5b53e986d0f88c60a034ddd77ec9a8 # v0.4.0
         with:
           target: contracts/
           slither-config: contracts/.slither.config.json
@@ -64,7 +64,7 @@ jobs:
 
       - name: Upload SARIF to GitHub Security tab
         if: always() && steps.slither.outputs.sarif != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@dd903d2e4f5405488e5ef1422510ee31c8b32357 # v3.36.2
         with:
           sarif_file: ${{ steps.slither.outputs.sarif }}
         # Soft-fail. GitHub Advanced Security (required for SARIF upload on

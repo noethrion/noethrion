@@ -77,6 +77,8 @@ We enumerate ten adversary classes. Some compose (a corrupt manufacturer is also
 
 **Residual risk (v0.2).** A coalition of `threshold` validators colluding can still finalize a fraudulent batch within the challenge window. The risk surface shrinks from "any single malicious validator" to "a Byzantine coalition", but does not disappear. Production-grade relying parties should require a threshold high enough that coalition cost exceeds expected fraud value (typical analogues use `threshold = ceil(2n/3)`), and should rely on independent re-verification during the challenge window — escalating to `pause()` + `slash()` — as the second line of defence.
 
+**Accepted limitation (v0.2) — epoch-number squatting.** `proposeBatch` is first-writer-wins: a single `VALIDATOR_ROLE` holder can occupy any epoch number with an arbitrary (even garbage) Merkle root, and the contract has no `cancelBatch`, so an occupied epoch number is permanently consumed. A rogue validator could pre-fill the next N expected epoch numbers as a griefing move — no fraud or collusion required. Impact is low: nothing on-chain requires contiguous epoch numbers, and a garbage root is unclaimable (no valid Merkle proofs exist against it), so no value is at risk. The recovery path is operational: `slash()` the squatting validator and continue proposing under alternative epoch numbers. An admin- or timelock-gated `cancelBatch` is under consideration for the v0.3 vote-retraction work.
+
 ### A5. Endorser issuing bad endorsements
 
 **Capability.** Signs endorsements binding device public keys to identity metadata.
