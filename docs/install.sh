@@ -10,7 +10,7 @@
 set -eu
 
 REPO="noethrion/noethrion"
-TAG="node-v0.1.0"
+TAG="node-v0.1.1"
 RPC="https://ethereum-sepolia-rpc.publicnode.com"
 CHAIN_ID="11155111"
 BATCH_URL="https://noethrion.com/network/batch.json"
