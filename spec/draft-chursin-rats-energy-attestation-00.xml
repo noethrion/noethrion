@@ -40,7 +40,8 @@
     <abstract>
       <t>This document specifies an attestation token format and verification
       protocol for hardware-rooted measurements of electricity generation. The
-      protocol enables a tamper-evident chain of custody from a metering device
+      protocol enables a tamper-evident chain of custody from the secure
+      element at a metering device
       to a publicly verifiable settlement layer, using ECDSA P-256 signatures
       generated inside a certified secure element and carried in a COSE_Sign1
       structure. It defines: (a) the CBOR-encoded attestation token, aligned
@@ -837,17 +838,82 @@ parent = keccak256(min(a, b) || max(a, b))
       </section>
 
       <section anchor="threat-physical" numbered="true">
-        <name>Physical Tampering</name>
+        <name>Meter Substitution and Physical Tampering</name>
 
-        <t>The meter or its sealing may be physically tampered with in order to
-        inject false readings. The protocol does not by itself detect physical
-        tampering of the upstream meter; detection relies on the existing
-        physical-seal and audit procedures of revenue-grade metering, which
-        predate this protocol and are out of scope.</t>
+        <t>The Attester is composed of a measurer and a signer (<xref
+        target="role-attester"/>). Every cryptographic guarantee in this
+        document applies to the signer: a valid attestation proves that a
+        particular secure element signed a particular set of numbers. It does
+        not, on its own, prove that those numbers came from the meter the
+        Endorser expects, nor that they correspond to physical energy flow. The
+        measurer-to-signer interface is consequently the weakest link in the
+        chain of custody, and it is where the adversaries below operate.</t>
 
-        <t>The protocol does detect substitution of one secure element for
-        another, because the device serial number changes and the new public
-        key has no endorsement chain.</t>
+        <t>Meter substitution. An adversary with physical access may replace
+        the meter, or interpose on the measurer-to-signer interface, and
+        present fabricated readings to the secure element. The secure element
+        signs them faithfully and verification succeeds at every later stage:
+        the signature is valid, the endorsement chain is intact, the hash chain
+        is continuous, and the on-chain commitment is well formed. Where the
+        measurer-to-signer interface is unauthenticated, as it is on a bare
+        pulse output or an unauthenticated serial connection, no mechanism
+        defined in this document detects this attack.</t>
+
+        <t>Substitution after verification. A measurer that is verified only
+        once, at commissioning or at Attester power-on, provides no continuing
+        guarantee: an adversary may satisfy the check with a genuine meter and
+        substitute afterwards. Implementations <bcp14>MUST NOT</bcp14> treat a
+        commissioning-time verification of the measurer as evidence about
+        readings produced later.</t>
+
+        <t>Physical tampering of a genuine meter. The meter or its sealing may
+        be tampered with in order to distort readings at the point of
+        measurement. This protocol does not detect such tampering; the existing
+        physical-seal and audit regime of revenue-grade metering, which predates
+        this protocol, remains necessary. That regime is complementary to the
+        mitigations below, not a substitute for them, because a seal constrains
+        the meter itself and says nothing about what reaches the signer.</t>
+
+        <t>Secure-element substitution. This case is detected, because the
+        device serial number changes and the new public key has no endorsement
+        chain.</t>
+
+        <t>The following mitigations apply to the measurer-to-signer
+        interface.</t>
+
+        <ul spacing="normal">
+          <li>Authenticated measurement. The Attester <bcp14>SHOULD</bcp14> be
+          built on a meter whose metrology function authenticates each reading
+          under a key held in the meter's own protected storage, and the secure
+          element <bcp14>SHOULD</bcp14> verify that authentication before
+          including a reading in the claim set.</li>
+          <li>Continuous rather than one-time verification. Where the interface
+          supports authentication, the Attester <bcp14>SHOULD</bcp14> verify it
+          at every reporting interval rather than only at commissioning, so
+          that no window exists in which a verified measurer can be exchanged
+          for an unverified one without detection.</li>
+          <li>Fail-closed behaviour. If the measurer cannot be authenticated,
+          becomes unavailable, or returns readings inconsistent with the
+          Attester's monotonic energy counter, the Attester
+          <bcp14>MUST NOT</bcp14> emit an attestation covering the affected
+          interval. Emitting an attestation over unauthenticated readings, or
+          falling back to an unauthenticated interface, defeats the purpose of
+          signing them. A Relying Party <bcp14>MUST</bcp14> treat the absence
+          of an attestation as the absence of attested generation, and
+          <bcp14>MUST NOT</bcp14> substitute an unattested reading in its
+          place.</li>
+        </ul>
+
+        <t>Residual risk. Deployments whose measurer-to-signer interface is
+        unauthenticated retain the full meter-substitution risk described above.
+        For those deployments the assurance offered by this protocol degrades
+        from "this quantity of energy was generated" to "this secure element
+        reported this quantity", and the binding to physical generation rests
+        entirely on out-of-band procedures. Deployments supporting regulatory
+        or financial settlement <bcp14>SHOULD</bcp14> use an authenticated
+        measurement interface for this reason. A claim conveying the class of
+        measurer-to-signer protection, so that a Relying Party can apply policy
+        to it rather than assuming it, is [TBD in -01].</t>
       </section>
 
       <section anchor="threat-extraction" numbered="true">
@@ -972,6 +1038,12 @@ parent = keccak256(min(a, b) || max(a, b))
       implementers are advised of the following.</t>
 
       <ul spacing="normal">
+        <li>Measurement-interface integrity. The protocol binds a signature to
+        a set of readings, not to a physical quantity. The strength of the
+        overall system is bounded by the protection of the measurer-to-signer
+        interface, and an implementation that authenticates every other link
+        while leaving that one open gains little. See <xref
+        target="threat-physical"/>.</li>
         <li>Time source integrity. The "iat" timestamp depends on the device's
         local clock. Implementations <bcp14>MUST</bcp14> authenticate the time
         source, for example by using NTP with cryptographic verification or

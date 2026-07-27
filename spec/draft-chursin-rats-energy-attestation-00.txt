@@ -15,18 +15,18 @@ Abstract
 
    This document specifies an attestation token format and verification
    protocol for hardware-rooted measurements of electricity generation.
-   The protocol enables a tamper-evident chain of custody from a
-   metering device to a publicly verifiable settlement layer, using
-   ECDSA P-256 signatures generated inside a certified secure element
-   and carried in a COSE_Sign1 structure.  It defines: (a) the CBOR-
-   encoded attestation token, aligned with the Entity Attestation Token
-   format of RFC 9711 and the Remote ATtestation procedureS (RATS)
-   architecture of RFC 9334; (b) a Merkle-aggregation and on-chain
-   commitment scheme for scalable verification; and (c) a registry
-   mechanism for endorsing device public keys.  The token is intended
-   for use by relying parties, such as energy producers, consumers,
-   regulators, and standards bodies, that require cryptographic
-   provenance for clean-energy claims.
+   The protocol enables a tamper-evident chain of custody from the
+   secure element at a metering device to a publicly verifiable
+   settlement layer, using ECDSA P-256 signatures generated inside a
+   certified secure element and carried in a COSE_Sign1 structure.  It
+   defines: (a) the CBOR-encoded attestation token, aligned with the
+   Entity Attestation Token format of RFC 9711 and the Remote
+   ATtestation procedureS (RATS) architecture of RFC 9334; (b) a Merkle-
+   aggregation and on-chain commitment scheme for scalable verification;
+   and (c) a registry mechanism for endorsing device public keys.  The
+   token is intended for use by relying parties, such as energy
+   producers, consumers, regulators, and standards bodies, that require
+   cryptographic provenance for clean-energy claims.
 
 Status of This Memo
 
@@ -98,14 +98,14 @@ Table of Contents
      7.3.  Device-Level Revocation . . . . . . . . . . . . . . . . .  17
    8.  Threat Model  . . . . . . . . . . . . . . . . . . . . . . . .  17
      8.1.  Compromised Host MCU  . . . . . . . . . . . . . . . . . .  17
-     8.2.  Physical Tampering  . . . . . . . . . . . . . . . . . . .  17
-     8.3.  Secure-Element Key Extraction . . . . . . . . . . . . . .  18
-     8.4.  Validator Collusion . . . . . . . . . . . . . . . . . . .  18
-     8.5.  Replay Attacks  . . . . . . . . . . . . . . . . . . . . .  19
-     8.6.  Side-Channel Observation  . . . . . . . . . . . . . . . .  19
-   9.  Privacy Considerations  . . . . . . . . . . . . . . . . . . .  19
-     9.1.  Inferences from Attestations  . . . . . . . . . . . . . .  19
-     9.2.  Mitigations . . . . . . . . . . . . . . . . . . . . . . .  19
+     8.2.  Meter Substitution and Physical Tampering . . . . . . . .  17
+     8.3.  Secure-Element Key Extraction . . . . . . . . . . . . . .  19
+     8.4.  Validator Collusion . . . . . . . . . . . . . . . . . . .  19
+     8.5.  Replay Attacks  . . . . . . . . . . . . . . . . . . . . .  20
+     8.6.  Side-Channel Observation  . . . . . . . . . . . . . . . .  20
+   9.  Privacy Considerations  . . . . . . . . . . . . . . . . . . .  20
+     9.1.  Inferences from Attestations  . . . . . . . . . . . . . .  20
+     9.2.  Mitigations . . . . . . . . . . . . . . . . . . . . . . .  20
 
 
 
@@ -114,15 +114,15 @@ Chursin                  Expires 28 January 2027                [Page 2]
 Internet-Draft          Energy Attestation Tokens              July 2026
 
 
-     9.3.  Right to Opt Out  . . . . . . . . . . . . . . . . . . . .  20
-   10. Security Considerations . . . . . . . . . . . . . . . . . . .  20
-   11. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  20
-   12. References  . . . . . . . . . . . . . . . . . . . . . . . . .  21
-     12.1.  Normative References . . . . . . . . . . . . . . . . . .  21
-     12.2.  Informative References . . . . . . . . . . . . . . . . .  22
-   Appendix A.  Reference Implementation . . . . . . . . . . . . . .  22
-   Acknowledgements  . . . . . . . . . . . . . . . . . . . . . . . .  22
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  23
+     9.3.  Right to Opt Out  . . . . . . . . . . . . . . . . . . . .  21
+   10. Security Considerations . . . . . . . . . . . . . . . . . . .  21
+   11. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  22
+   12. References  . . . . . . . . . . . . . . . . . . . . . . . . .  22
+     12.1.  Normative References . . . . . . . . . . . . . . . . . .  22
+     12.2.  Informative References . . . . . . . . . . . . . . . . .  23
+   Appendix A.  Reference Implementation . . . . . . . . . . . . . .  24
+   Acknowledgements  . . . . . . . . . . . . . . . . . . . . . . . .  24
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  24
 
 1.  Introduction
 
@@ -932,20 +932,20 @@ Internet-Draft          Energy Attestation Tokens              July 2026
    claims.  A Relying Party that knows the expected Reference Values can
    detect a tampered host.
 
-8.2.  Physical Tampering
+8.2.  Meter Substitution and Physical Tampering
 
-   The meter or its sealing may be physically tampered with in order to
-   inject false readings.  The protocol does not by itself detect
-   physical tampering of the upstream meter; detection relies on the
-   existing physical-seal and audit procedures of revenue-grade
-   metering, which predate this protocol and are out of scope.
+   The Attester is composed of a measurer and a signer (Section 3.1).
+   Every cryptographic guarantee in this document applies to the signer:
+   a valid attestation proves that a particular secure element signed a
+   particular set of numbers.  It does not, on its own, prove that those
+   numbers came from the meter the Endorser expects, nor that they
+   correspond to physical energy flow.  The measurer-to-signer interface
+   is consequently the weakest link in the chain of custody, and it is
+   where the adversaries below operate.
 
-   The protocol does detect substitution of one secure element for
-   another, because the device serial number changes and the new public
-   key has no endorsement chain.
-
-
-
+   Meter substitution.  An adversary with physical access may replace
+   the meter, or interpose on the measurer-to-signer interface, and
+   present fabricated readings to the secure element.  The secure
 
 
 
@@ -953,6 +953,78 @@ Chursin                  Expires 28 January 2027               [Page 17]
 
 Internet-Draft          Energy Attestation Tokens              July 2026
 
+
+   element signs them faithfully and verification succeeds at every
+   later stage: the signature is valid, the endorsement chain is intact,
+   the hash chain is continuous, and the on-chain commitment is well
+   formed.  Where the measurer-to-signer interface is unauthenticated,
+   as it is on a bare pulse output or an unauthenticated serial
+   connection, no mechanism defined in this document detects this
+   attack.
+
+   Substitution after verification.  A measurer that is verified only
+   once, at commissioning or at Attester power-on, provides no
+   continuing guarantee: an adversary may satisfy the check with a
+   genuine meter and substitute afterwards.  Implementations MUST NOT
+   treat a commissioning-time verification of the measurer as evidence
+   about readings produced later.
+
+   Physical tampering of a genuine meter.  The meter or its sealing may
+   be tampered with in order to distort readings at the point of
+   measurement.  This protocol does not detect such tampering; the
+   existing physical-seal and audit regime of revenue-grade metering,
+   which predates this protocol, remains necessary.  That regime is
+   complementary to the mitigations below, not a substitute for them,
+   because a seal constrains the meter itself and says nothing about
+   what reaches the signer.
+
+   Secure-element substitution.  This case is detected, because the
+   device serial number changes and the new public key has no
+   endorsement chain.
+
+   The following mitigations apply to the measurer-to-signer interface.
+
+   *  Authenticated measurement.  The Attester SHOULD be built on a
+      meter whose metrology function authenticates each reading under a
+      key held in the meter's own protected storage, and the secure
+      element SHOULD verify that authentication before including a
+      reading in the claim set.
+
+   *  Continuous rather than one-time verification.  Where the interface
+      supports authentication, the Attester SHOULD verify it at every
+      reporting interval rather than only at commissioning, so that no
+      window exists in which a verified measurer can be exchanged for an
+      unverified one without detection.
+
+   *  Fail-closed behaviour.  If the measurer cannot be authenticated,
+      becomes unavailable, or returns readings inconsistent with the
+      Attester's monotonic energy counter, the Attester MUST NOT emit an
+      attestation covering the affected interval.  Emitting an
+      attestation over unauthenticated readings, or falling back to an
+      unauthenticated interface, defeats the purpose of signing them.  A
+
+
+
+Chursin                  Expires 28 January 2027               [Page 18]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+      Relying Party MUST treat the absence of an attestation as the
+      absence of attested generation, and MUST NOT substitute an
+      unattested reading in its place.
+
+   Residual risk.  Deployments whose measurer-to-signer interface is
+   unauthenticated retain the full meter-substitution risk described
+   above.  For those deployments the assurance offered by this protocol
+   degrades from "this quantity of energy was generated" to "this secure
+   element reported this quantity", and the binding to physical
+   generation rests entirely on out-of-band procedures.  Deployments
+   supporting regulatory or financial settlement SHOULD use an
+   authenticated measurement interface for this reason.  A claim
+   conveying the class of measurer-to-signer protection, so that a
+   Relying Party can apply policy to it rather than assuming it, is [TBD
+   in -01].
 
 8.3.  Secure-Element Key Extraction
 
@@ -986,6 +1058,14 @@ Internet-Draft          Energy Attestation Tokens              July 2026
        deferred to a future revision (Section 6.2).  A batch
        successfully challenged within the window is never finalized.
 
+
+
+
+Chursin                  Expires 28 January 2027               [Page 19]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
    3.  Slashing.  Validators proven to have voted for fraudulent batches
        MAY be slashed: the validator role is revoked and the off-chain
        evidence hash is recorded on-chain.  The current reference
@@ -998,17 +1078,6 @@ Internet-Draft          Energy Attestation Tokens              July 2026
    residual risk; it shrinks but does not disappear with the threshold
    mechanism.  Production deployments SHOULD treat the challenge-window
    fraud-proof path as load-bearing.
-
-
-
-
-
-
-
-Chursin                  Expires 28 January 2027               [Page 18]
-
-Internet-Draft          Energy Attestation Tokens              July 2026
-
 
 8.5.  Replay Attacks
 
@@ -1046,6 +1115,13 @@ Internet-Draft          Energy Attestation Tokens              July 2026
       resolution, for example ten-minute buckets, at the cost of reduced
       verification granularity.
 
+
+
+Chursin                  Expires 28 January 2027               [Page 20]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
    *  Batch padding.  Aggregators SHOULD pad batches with dummy leaves
       so that a small-scale producer's contribution count is not
       distinguishable.
@@ -1054,17 +1130,6 @@ Internet-Draft          Energy Attestation Tokens              July 2026
       specify an optional zero-knowledge-friendly attestation variant in
       which the per-device identifier is replaced by a commitment, with
       selective-disclosure proofs available to authorized auditors.
-
-
-
-
-
-
-
-Chursin                  Expires 28 January 2027               [Page 19]
-
-Internet-Draft          Energy Attestation Tokens              July 2026
-
 
 9.3.  Right to Opt Out
 
@@ -1077,6 +1142,13 @@ Internet-Draft          Energy Attestation Tokens              July 2026
 
    In addition to the threat model in Section 8, implementers are
    advised of the following.
+
+   *  Measurement-interface integrity.  The protocol binds a signature
+      to a set of readings, not to a physical quantity.  The strength of
+      the overall system is bounded by the protection of the measurer-
+      to-signer interface, and an implementation that authenticates
+      every other link while leaving that one open gains little.  See
+      Section 8.2.
 
    *  Time source integrity.  The "iat" timestamp depends on the
       device's local clock.  Implementations MUST authenticate the time
@@ -1096,6 +1168,16 @@ Internet-Draft          Energy Attestation Tokens              July 2026
       support upgradability only through a transparent governance
       process.
 
+
+
+
+
+
+Chursin                  Expires 28 January 2027               [Page 21]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
    *  Settlement-layer reliance.  The protocol depends on the liveness
       and integrity of the chosen settlement layer.  Operators SHOULD
       evaluate the settlement layer's security model, including its
@@ -1114,14 +1196,6 @@ Internet-Draft          Energy Attestation Tokens              July 2026
 
    Type name:  application
    Subtype name:  noethrion+cbor
-
-
-
-Chursin                  Expires 28 January 2027               [Page 20]
-
-Internet-Draft          Energy Attestation Tokens              July 2026
-
-
    Required parameters:  N/A
    Optional parameters:  profile (a URI identifying the attestation
       profile in use)
@@ -1153,6 +1227,13 @@ Internet-Draft          Energy Attestation Tokens              July 2026
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/info/rfc2119>.
 
+
+
+Chursin                  Expires 28 January 2027               [Page 22]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/info/rfc8174>.
@@ -1167,16 +1248,6 @@ Internet-Draft          Energy Attestation Tokens              July 2026
               Representation (CBOR)", STD 94, RFC 8949,
               DOI 10.17487/RFC8949, December 2020,
               <https://www.rfc-editor.org/info/rfc8949>.
-
-
-
-
-
-
-Chursin                  Expires 28 January 2027               [Page 21]
-
-Internet-Draft          Energy Attestation Tokens              July 2026
-
 
    [RFC9052]  Schaad, J., "CBOR Object Signing and Encryption (COSE):
               Structures and Process", STD 96, RFC 9052,
@@ -1212,6 +1283,13 @@ Internet-Draft          Energy Attestation Tokens              July 2026
               Architecture", RFC 9334, DOI 10.17487/RFC9334, January
               2023, <https://www.rfc-editor.org/info/rfc9334>.
 
+
+
+Chursin                  Expires 28 January 2027               [Page 23]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
 Appendix A.  Reference Implementation
 
    A reference implementation of the Attester (firmware) and of the
@@ -1225,14 +1303,6 @@ Acknowledgements
 
    The author thanks the participants of the RATS and COSE working
    groups whose published work this specification builds upon.
-
-
-
-
-Chursin                  Expires 28 January 2027               [Page 22]
-
-Internet-Draft          Energy Attestation Tokens              July 2026
-
 
 Author's Address
 
@@ -1271,18 +1341,4 @@ Author's Address
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Chursin                  Expires 28 January 2027               [Page 23]
+Chursin                  Expires 28 January 2027               [Page 24]
