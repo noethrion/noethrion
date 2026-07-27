@@ -1,0 +1,1201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE rfc [
+]>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude"
+     category="std"
+     docName="draft-chursin-rats-energy-attestation-00"
+     ipr="trust200902"
+     submissionType="IETF"
+     consensus="true"
+     tocInclude="true"
+     tocDepth="3"
+     sortRefs="true"
+     symRefs="true"
+     xml:lang="en"
+     version="3">
+
+  <front>
+    <title abbrev="Energy Attestation Tokens">Hardware-Rooted Attestation Tokens for Electricity Generation</title>
+    <seriesInfo name="Internet-Draft" value="draft-chursin-rats-energy-attestation-00"/>
+
+    <author initials="A." surname="Chursin" fullname="Aleksey Chursin">
+      <organization>Noethrion Foundation</organization>
+      <address>
+        <email>team@noethrion.com</email>
+        <uri>https://noethrion.com</uri>
+      </address>
+    </author>
+
+    <date year="2026" month="July" day="27"/>
+
+    <area>Security</area>
+
+    <keyword>attestation</keyword>
+    <keyword>RATS</keyword>
+    <keyword>COSE</keyword>
+    <keyword>EAT</keyword>
+    <keyword>CBOR</keyword>
+    <keyword>energy</keyword>
+
+    <abstract>
+      <t>This document specifies an attestation token format and verification
+      protocol for hardware-rooted measurements of electricity generation. The
+      protocol enables a tamper-evident chain of custody from a metering device
+      to a publicly verifiable settlement layer, using ECDSA P-256 signatures
+      generated inside a certified secure element and carried in a COSE_Sign1
+      structure. It defines: (a) the CBOR-encoded attestation token, aligned
+      with the Entity Attestation Token format of RFC 9711 and the Remote
+      ATtestation procedureS (RATS) architecture of RFC 9334; (b) a
+      Merkle-aggregation and on-chain commitment scheme for scalable
+      verification; and (c) a registry mechanism for endorsing device public
+      keys. The token is intended for use by relying parties, such as energy
+      producers, consumers, regulators, and standards bodies, that require
+      cryptographic provenance for clean-energy claims.</t>
+    </abstract>
+  </front>
+
+  <middle>
+
+    <section anchor="introduction" numbered="true">
+      <name>Introduction</name>
+
+      <t>Clean-energy claims today rest on accounting infrastructure:
+      Renewable Energy Certificates (RECs) in the United States, Guarantees of
+      Origin (GoOs) in the European Union, and International RECs (I-RECs)
+      elsewhere. These instruments are issued annually, traded through brokered
+      email confirmations, and reconciled against grid-level dispatch records
+      that the issuance system does not cryptographically verify. Published
+      analyses of certificate markets have reported material discrepancies
+      between dispatched generation and registered certificate issuance.</t>
+
+      <t>Two regulatory and industrial trends, both effective in 2026, make
+      this verification gap acute:</t>
+
+      <ol spacing="normal">
+        <li>Twenty-four-hour, hourly carbon-free energy matching has become a
+        procurement requirement in several energy-intensive industrial and
+        computing sectors, backed by long-term contracts for dedicated firm
+        generation capacity. Hourly matching cannot be evidenced by annual
+        certificate aggregation.</li>
+        <li>The European Union's Carbon Border Adjustment Mechanism (CBAM)
+        <xref target="CBAM"/>, effective 1 January 2026, requires importers of
+        cement, iron, steel, aluminum, fertilizer, electricity, and hydrogen to
+        demonstrate embedded carbon content at the source. There is no globally
+        interoperable system for verifiable energy provenance that can satisfy
+        this requirement.</li>
+      </ol>
+
+      <t>This document specifies an open standard intended to close that gap.
+      The protocol places a hardware secure element adjacent to a
+      kilowatt-hour meter; the secure element signs the tuple (energy delta,
+      timestamp, device identifier) with a private key that is generated
+      on-chip and cannot be extracted; the resulting attestation tokens are
+      aggregated into Merkle trees and committed to a public settlement layer;
+      any relying party holding the device's endorsed public key can
+      independently verify any single attestation.</t>
+
+      <t>The protocol is deliberately narrow in scope. It defines verification,
+      not trading. It does not specify payment rails, market-clearing
+      mechanisms, or currency-like token economics. The unit of accounting in
+      the protocol (NOET) represents one verified kilowatt-hour and is a
+      verifiable attestation unit used internally by the protocol. It is not a
+      payment instrument, a currency, or a store-of-value asset, and this
+      document specifies no transfer, pricing, or settlement-of-value semantics
+      for it.</t>
+
+      <t>This document is intended for review by the Remote ATtestation
+      procedureS (RATS) Working Group and other interested IETF participants.
+      Comments are welcome at the address given in the Authors' Addresses
+      section.</t>
+    </section>
+
+    <section anchor="terminology" numbered="true">
+      <name>Conventions and Terminology</name>
+
+      <t>The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+      "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>",
+      "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>",
+      "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>",
+      "<bcp14>NOT RECOMMENDED</bcp14>", "<bcp14>MAY</bcp14>", and
+      "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+      described in BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/>
+      when, and only when, they appear in all capitals, as shown here.</t>
+
+      <section anchor="terms" numbered="true">
+        <name>Terms</name>
+
+        <dl newline="false" spacing="normal">
+          <dt>Attester:</dt>
+          <dd>A metering device, paired with a secure element, that produces
+          attestation tokens. This aligns with the Attester role in the RATS
+          architecture <xref target="RFC9334"/>.</dd>
+
+          <dt>Verifier:</dt>
+          <dd>Any party that reconstructs and validates an attestation,
+          including its Merkle inclusion proof and on-chain commitment.</dd>
+
+          <dt>Relying Party (RP):</dt>
+          <dd>An economic actor consuming an attestation as evidence of
+          clean-energy generation: a producer, consumer, regulator, or
+          integrator.</dd>
+
+          <dt>Endorser:</dt>
+          <dd>An entity that issues an endorsement linking a device's public
+          key to a real-world identity, such as a manufacturer, a certification
+          authority, or a self-attested operator.</dd>
+
+          <dt>Reference Values:</dt>
+          <dd>The expected device configuration, firmware hash, and
+          certification status against which Verifiers may assess an
+          Attester.</dd>
+
+          <dt>Attestation Token:</dt>
+          <dd>A CBOR-encoded COSE_Sign1 object carrying the signed measurement
+          and ancillary claims.</dd>
+
+          <dt>Evidence Payload:</dt>
+          <dd>The CBOR claims map carried inside an Attestation Token, as
+          defined in <xref target="claim-set"/>.</dd>
+
+          <dt>Settlement Layer:</dt>
+          <dd>A publicly accessible verifiable data structure on which Merkle
+          roots of attestation batches are committed. In this version, the
+          Settlement Layer is an EVM-compatible Layer 2 rollup; future
+          revisions <bcp14>MAY</bcp14> broaden this.</dd>
+
+          <dt>Batch:</dt>
+          <dd>An ordered collection of attestation tokens whose hashes form the
+          leaves of a single Merkle tree.</dd>
+
+          <dt>Epoch:</dt>
+          <dd>The sequence number identifying a batch in time. Epochs increase
+          monotonically.</dd>
+
+          <dt>Challenge Window:</dt>
+          <dd>A configurable period following batch submission during which the
+          batch can be challenged before finalization.</dd>
+
+          <dt>NOET:</dt>
+          <dd>The attestation accounting unit of the protocol. One NOET
+          represents one verified kilowatt-hour. NOET is a unit of attestation,
+          not a payment instrument, a currency, or a store of value; this
+          document specifies no transfer, pricing, or settlement-of-value
+          semantics for it.</dd>
+        </dl>
+      </section>
+    </section>
+
+    <section anchor="architecture" numbered="true">
+      <name>Architecture and Roles</name>
+
+      <t>This document follows the role decomposition of the RATS architecture
+      <xref target="RFC9334"/>. Each role has a specific scope of
+      responsibility and security boundary.</t>
+
+      <section anchor="role-attester" numbered="true">
+        <name>Attester</name>
+
+        <t>The Attester is composed of two physical components: a
+        kilowatt-hour meter (the measurer) and a secure element (the signer).
+        The Attester:</t>
+
+        <ul spacing="normal">
+          <li><bcp14>MUST</bcp14> generate the device's signing key inside the
+          secure element using on-chip entropy.</li>
+          <li><bcp14>MUST NOT</bcp14> permit the signing key to leave the
+          secure element under any operational condition.</li>
+          <li><bcp14>MUST</bcp14> sign each evidence payload with the device's
+          private key, as a COSE_Sign1 structure (<xref target="envelope"/>),
+          before transmission.</li>
+          <li><bcp14>SHOULD</bcp14> include in each attestation a hash of the
+          previous attestation produced by the same device, forming a
+          per-device hash chain.</li>
+          <li><bcp14>MAY</bcp14> include firmware version, model identifier,
+          and configuration claims in the attestation token.</li>
+        </ul>
+      </section>
+
+      <section anchor="role-verifier" numbered="true">
+        <name>Verifier</name>
+
+        <t>The Verifier is software, executed by any interested party,
+        that:</t>
+
+        <ul spacing="normal">
+          <li><bcp14>MUST</bcp14> validate the COSE_Sign1 signature of the
+          attestation token, as specified in <xref target="envelope"/>, using
+          the Attester's endorsed public key, and <bcp14>MUST</bcp14> reject
+          any token whose protected header names an algorithm the Verifier does
+          not accept.</li>
+          <li><bcp14>MUST</bcp14> verify the Merkle inclusion proof against the
+          on-chain committed root for the corresponding epoch.</li>
+          <li><bcp14>SHOULD</bcp14> check the endorsement chain of the
+          Attester's public key against a trusted Endorser registry.</li>
+          <li><bcp14>MAY</bcp14> apply additional Reference Values checks
+          (firmware version, model, certification status) where required.</li>
+        </ul>
+      </section>
+
+      <section anchor="role-rp" numbered="true">
+        <name>Relying Party</name>
+
+        <t>The Relying Party consumes attestations and acts on them. A Relying
+        Party:</t>
+
+        <ul spacing="normal">
+          <li><bcp14>MUST</bcp14> independently invoke a Verifier, either as a
+          library or as a service; it <bcp14>MUST NOT</bcp14> rely on an
+          Attester's self-report alone.</li>
+          <li><bcp14>SHOULD</bcp14> apply use-case-specific validity criteria
+          beyond signature verification, for example timestamp freshness or
+          jurisdiction.</li>
+        </ul>
+      </section>
+
+      <section anchor="role-endorser" numbered="true">
+        <name>Endorser</name>
+
+        <t>An Endorser issues an endorsement binding a device public key to
+        identity metadata such as manufacturer, model, and certification batch.
+        Endorsers:</t>
+
+        <ul spacing="normal">
+          <li><bcp14>MUST</bcp14> publish their own public key in a manner that
+          is itself verifiable, such as an X.509 certificate, a well-known DNS
+          record, or an on-chain registry.</li>
+          <li><bcp14>SHOULD</bcp14> specify the procedure by which they obtain
+          assurance that a given public key originates from a tamper-evident
+          secure element.</li>
+        </ul>
+
+        <t>This document does not mandate a single Endorser hierarchy. A
+        federation of Endorsers is expected to emerge in practice; relying
+        parties choose which Endorsers to trust.</t>
+      </section>
+
+      <section anchor="role-validator" numbered="true">
+        <name>Validator</name>
+
+        <t>The Validator is an on-chain role responsible for confirming Merkle
+        root submissions before they are finalized for claim. Validators extend
+        the RATS architecture; they exist because the on-chain commitment layer
+        requires a defined set of accountable parties whose signed actions are
+        the basis of finalization. A Validator:</t>
+
+        <ul spacing="normal">
+          <li><bcp14>MUST</bcp14> hold the validator role granted by the holder
+          of the settlement contract's administrative role. Production
+          deployments place that administrative role in a multi-signature
+          wallet.</li>
+          <li><bcp14>MUST</bcp14> independently verify the Merkle root it is
+          voting on against its own reconstruction of the underlying leaf set
+          before broadcasting a batch proposal or a vote. A Validator that
+          votes without independent verification is a single point of trust and
+          defeats the m-of-n property the quorum is designed to provide.</li>
+          <li><bcp14>SHOULD</bcp14> publish its identity (operator,
+          jurisdiction, and contact) so that fraud-proof challengers and
+          relying parties can attribute votes.</li>
+          <li><bcp14>MAY</bcp14> be operated by the standards body, by a
+          delegated operator, or by an independent third party. The m-of-n
+          design treats Validators as Byzantine-tolerant peers, not as trusted
+          authorities.</li>
+        </ul>
+
+        <t>Validator accountability is enforced through two mechanisms whose
+        details appear in <xref target="threat-collusion"/>:</t>
+
+        <ol spacing="normal">
+          <li>Quorum. No single Validator can cause finalization on its own;
+          the m-of-n threshold ensures that a minimum of "threshold" distinct
+          Validators must independently agree. The threshold value is a
+          deployment parameter; production deployments <bcp14>SHOULD</bcp14>
+          select a threshold of at least ceil(2n/3) for Byzantine fault
+          tolerance, where n is the size of the active Validator set.</li>
+          <li>Slashing. A Validator proven to have voted for a fraudulent batch
+          loses the validator role and has the off-chain evidence hash recorded
+          on-chain. A Validator that has been slashed for a prior epoch retains
+          the vote it cast before the slash: historical votes are durable in
+          order to preserve the audit trail.</li>
+        </ol>
+
+        <t>The Validator role is distinct from the Attester (the on-device
+        measurer and signer) and from the Verifier (the relying-party-side
+        software). The Attester proves a measurement was taken on certified
+        hardware; the Validator proves a quorum of independent parties agree
+        the measurement appeared in a legitimate batch; the Verifier checks
+        both layers when consuming an attestation.</t>
+      </section>
+    </section>
+
+    <section anchor="token-format" numbered="true">
+      <name>Attestation Token Format</name>
+
+      <t>An attestation token is a CBOR <xref target="RFC8949"/> object
+      consisting of a claims map (the evidence payload,
+      <xref target="claim-set"/>) enveloped in a COSE_Sign1 structure
+      <xref target="RFC9052"/> (<xref target="envelope"/>). Both the claims map
+      and the COSE_Sign1 structure <bcp14>MUST</bcp14> be serialized using the
+      deterministic encoding requirements of <xref target="RFC8949"/>,
+      Section 4.2.1, so that signature inputs and leaf hashes are
+      unambiguous.</t>
+
+      <t>Throughout this document, "attestation token" refers to the complete
+      tagged COSE_Sign1 structure, and "evidence payload" refers to the claims
+      map that it carries.</t>
+
+      <section anchor="claim-set" numbered="true">
+        <name>Claim Set</name>
+
+        <t>The evidence payload is a CBOR map using the integer labels listed
+        in <xref target="tbl-claims"/>. These labels are local to this profile
+        and are scoped to the payload map only; they are independent of the
+        COSE header labels used in the enveloping structure
+        (<xref target="alg-id"/>).</t>
+
+        <table anchor="tbl-claims">
+          <name>Evidence payload claim set</name>
+          <thead>
+            <tr>
+              <th align="right">Label</th>
+              <th align="left">Claim</th>
+              <th align="left">Type</th>
+              <th align="left">Required</th>
+              <th align="left">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="right">1</td>
+              <td align="left">iss</td>
+              <td align="left">bstr</td>
+              <td align="left">MUST</td>
+              <td align="left">Device identifier: the 9-byte serial number of
+              the secure element.</td>
+            </tr>
+            <tr>
+              <td align="right">2</td>
+              <td align="left">iat</td>
+              <td align="left">uint</td>
+              <td align="left">MUST</td>
+              <td align="left">Issued-at timestamp, in seconds since the UNIX
+              epoch, UTC.</td>
+            </tr>
+            <tr>
+              <td align="right">3</td>
+              <td align="left">wh</td>
+              <td align="left">uint</td>
+              <td align="left">MUST</td>
+              <td align="left">Energy delta in watt-hours since the previous
+              attestation from the same device.</td>
+            </tr>
+            <tr>
+              <td align="right">4</td>
+              <td align="left">seq</td>
+              <td align="left">uint</td>
+              <td align="left">MUST</td>
+              <td align="left">Per-device monotonic sequence number, starting
+              at 1 and incremented for each emitted attestation.</td>
+            </tr>
+            <tr>
+              <td align="right">5</td>
+              <td align="left">prev</td>
+              <td align="left">bstr / null</td>
+              <td align="left">MUST</td>
+              <td align="left">Hash of the previous attestation token from the
+              same device. It is CBOR null for the first attestation, that is
+              when seq equals 1.</td>
+            </tr>
+            <tr>
+              <td align="right">6</td>
+              <td align="left">fwv</td>
+              <td align="left">tstr</td>
+              <td align="left">SHOULD</td>
+              <td align="left">Firmware version string.</td>
+            </tr>
+            <tr>
+              <td align="right">7</td>
+              <td align="left">mdl</td>
+              <td align="left">tstr</td>
+              <td align="left">SHOULD</td>
+              <td align="left">Device model identifier.</td>
+            </tr>
+            <tr>
+              <td align="right">8</td>
+              <td align="left">cfg</td>
+              <td align="left">bstr</td>
+              <td align="left">MAY</td>
+              <td align="left">Hash of the device configuration relevant to
+              measurement integrity.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <t>The evidence payload carries no signature claim and no algorithm
+        claim. The signature, the signature algorithm, and the key identifier
+        are carried by the enveloping COSE_Sign1 structure as described in
+        <xref target="alg-id"/> and <xref target="envelope"/>.</t>
+      </section>
+
+      <section anchor="alg-id" numbered="true">
+        <name>Algorithm and Key Identification</name>
+
+        <t>Algorithm agility in this protocol is provided exclusively by the
+        COSE protected header of the enveloping COSE_Sign1 structure.
+        Specifically:</t>
+
+        <ul spacing="normal">
+          <li>The "alg" header parameter (COSE header label 1) identifies the
+          signature algorithm. It <bcp14>MUST</bcp14> be present in the
+          protected header. For this version of the protocol its value
+          <bcp14>MUST</bcp14> be -7 (ES256), as registered in
+          <xref target="RFC9053"/>.</li>
+          <li>The "kid" header parameter (COSE header label 4) identifies the
+          endorsed device key used to produce the signature. It
+          <bcp14>SHOULD</bcp14> be present in the protected header. Where it is
+          absent, a Verifier <bcp14>MUST</bcp14> resolve the key from the "iss"
+          claim through the registry of <xref target="key-registry"/>.</li>
+        </ul>
+
+        <t>An implementation <bcp14>MUST NOT</bcp14> convey the signature
+        algorithm as a claim inside the evidence payload. A Verifier that
+        encounters an algorithm indication inside the evidence payload
+        <bcp14>MUST</bcp14> reject the token, because such an indication would
+        create a second and possibly disagreeing source of truth for algorithm
+        selection.</t>
+      </section>
+
+      <section anchor="cddl" numbered="true">
+        <name>CDDL Definition</name>
+
+        <t>The following CDDL <xref target="RFC8610"/> defines the attestation
+        token. It is normative for the structures it covers.</t>
+
+        <sourcecode type="cddl"><![CDATA[
+; A Noethrion attestation token is a tagged COSE_Sign1 structure.
+Noethrion-Attestation = #6.18(Noethrion-Sign1)
+
+Noethrion-Sign1 = [
+  protected   : bstr .cbor Noethrion-Protected-Header,
+  unprotected : Noethrion-Unprotected-Header,
+  payload     : bstr .cbor Noethrion-Claims,
+  signature   : bstr
+]
+
+Noethrion-Protected-Header = {
+  1 => int,               ; alg; MUST be -7 (ES256) in this version
+  ? 4 => bstr,            ; kid; endorsed device key identifier
+  * cose-label => any
+}
+
+Noethrion-Unprotected-Header = {
+  * cose-label => any
+}
+
+Noethrion-Claims = {
+  1 => bstr,              ; iss:  secure element serial number
+  2 => uint,              ; iat:  issued-at, UTC seconds
+  3 => uint,              ; wh:   energy delta, watt-hours
+  4 => uint,              ; seq:  per-device monotonic counter, >= 1
+  5 => bstr / null,       ; prev: hash of previous token;
+                          ;       null if and only if seq == 1
+  ? 6 => tstr,            ; fwv:  firmware version
+  ? 7 => tstr,            ; mdl:  device model identifier
+  ? 8 => bstr,            ; cfg:  device configuration hash
+}
+
+cose-label = int / tstr
+]]></sourcecode>
+
+        <t>The Merkle aggregation layer of <xref target="merkle"/> and the
+        claim-record encoding of <xref target="two-layer"/> are not yet
+        expressed in CDDL. [TBD: full CDDL covering the batch,
+        inclusion-proof, and claim-record structures in -01]</t>
+      </section>
+
+      <section anchor="eat-mapping" numbered="true">
+        <name>Mapping to EAT</name>
+
+        <t>The claim set above is intentionally compatible with the Entity
+        Attestation Token (EAT) format defined in <xref target="RFC9711"/>. EAT
+        is itself carried in COSE, so the envelope chosen in
+        <xref target="envelope"/> is the same one an EAT profile would use.
+        Implementations <bcp14>MAY</bcp14> choose to additionally emit a fully
+        EAT-conformant variant by mapping "iss", "iat", and "seq" to their
+        CWT-registered claim numbers. A formal EAT profile for energy
+        attestation will be specified in a follow-up document.
+        [TBD: EAT profile claim mapping table in -01]</t>
+      </section>
+    </section>
+
+    <section anchor="signature-scheme" numbered="true">
+      <name>Signature Scheme</name>
+
+      <t>This document specifies a single signature algorithm for this version
+      of the protocol: ECDSA over the NIST P-256 curve (secp256r1) with
+      SHA-256, denoted ES256 and assigned COSE algorithm value -7 in
+      <xref target="RFC9053"/>.</t>
+
+      <section anchor="envelope" numbered="true">
+        <name>Signature Envelope</name>
+
+        <t>Attestation tokens <bcp14>MUST</bcp14> be signed as a COSE_Sign1
+        structure as defined in <xref target="RFC9052"/>, Section 4.2, tagged
+        with CBOR tag 18. COSE_Sign1 is chosen over a bare signature field for
+        three reasons:</t>
+
+        <ol spacing="normal">
+          <li>It is the envelope used by the Entity Attestation Token
+          <xref target="RFC9711"/> and by the wider RATS ecosystem
+          <xref target="RFC9334"/>, so that evidence produced under this
+          specification can be consumed by existing COSE and EAT tooling
+          without a bespoke parser.</li>
+          <li>It provides integrity protection over the algorithm and key
+          identifiers themselves, through the protected header, which a bare
+          signature over a claims map does not.</li>
+          <li>It gives a single, already-specified path for algorithm rotation
+          (<xref target="pq-migration"/>).</li>
+        </ol>
+
+        <t>The signature is computed over the Sig_structure defined in
+        <xref target="RFC9052"/>, Section 4.4, with:</t>
+
+        <ul spacing="normal">
+          <li>"context" set to the text string "Signature1";</li>
+          <li>"body_protected" set to the serialized protected header;</li>
+          <li>"external_aad" set to a zero-length byte string in this
+          version;</li>
+          <li>"payload" set to the deterministically encoded evidence payload
+          of <xref target="claim-set"/>.</li>
+        </ul>
+
+        <t>Implementations <bcp14>MUST NOT</bcp14> emit an attestation token as
+        a bare claims map with an adjacent signature field. Pre-standard
+        implementations of this protocol, including the genesis deployment of
+        the reference implementation, used such a bare encoding. That encoding
+        is historical, is not conformant with this document, and
+        <bcp14>MUST NOT</bcp14> be used for new deployments. Verifiers
+        <bcp14>MAY</bcp14> retain support for it solely in order to re-verify
+        pre-standard historical records.</t>
+      </section>
+
+      <section anchor="p256-rationale" numbered="true">
+        <name>Rationale for P-256</name>
+
+        <t>P-256 is selected because:</t>
+
+        <ol spacing="normal">
+          <li>It is the curve natively supported by widely available secure
+          elements suitable for low-cost meter integration, including parts
+          certified to Common Criteria EAL5+.</li>
+          <li>It is broadly understood, has mature implementations, and is
+          acceptable to relying parties whose internal cryptographic policies
+          typically permit NIST curves.</li>
+          <li>Performance on constrained microcontrollers is sufficient for the
+          protocol's per-minute signing cadence.</li>
+        </ol>
+      </section>
+
+      <section anchor="pq-migration" numbered="true">
+        <name>Post-Quantum Migration</name>
+
+        <t>It is acknowledged that P-256 is not post-quantum secure. A
+        migration path to a post-quantum signature scheme, anticipated to be
+        ML-DSA as standardized in <xref target="FIPS204"/>, is part of the
+        protocol's long-term plan. No new format machinery is required for that
+        migration: the "alg" and "kid" parameters of the COSE protected header
+        (<xref target="alg-id"/>) are the algorithm and key rotation mechanism,
+        and a future revision need only permit an additional "alg" value and
+        specify the transition policy. Historical attestations remain
+        verifiable because each token names, under integrity protection, the
+        algorithm with which it was signed.</t>
+
+        <t>A future revision of this document <bcp14>SHALL</bcp14> specify the
+        migration procedure, including dual-signing transitions and the policy
+        under which historical P-256 attestations remain verifiable.</t>
+      </section>
+    </section>
+
+    <section anchor="merkle" numbered="true">
+      <name>Merkle Aggregation and Settlement</name>
+
+      <section anchor="offchain" numbered="true">
+        <name>Off-Chain Aggregation</name>
+
+        <t>Attestation tokens are aggregated off-chain into Merkle trees. Each
+        tree contains up to 2^16 (65,536) leaves, where each leaf is the
+        SHA-256 hash of the complete deterministically encoded, tagged
+        COSE_Sign1 attestation token of <xref target="token-format"/>.</t>
+
+        <t>Interior nodes are computed with a commutative sorted-pair
+        construction:</t>
+
+        <artwork type="ascii-art"><![CDATA[
+parent = keccak256(min(a, b) || max(a, b))
+]]></artwork>
+
+        <t>where a and b are the two 32-byte child hashes and min and max
+        denote lexicographic byte-wise ordering. Sorting each pair before
+        hashing makes the construction order-independent: an inclusion proof
+        carries only the sibling hashes, with no left/right position flags.
+        This is the construction implemented by the widely used Merkle proof
+        library employed by the on-chain reference contract and by the
+        reference off-chain Verifier tooling. Off-chain builders
+        <bcp14>MUST</bcp14> use this pair hash for any tree whose root is
+        committed on-chain.</t>
+
+        <t>Note on leaf domain separation: this construction deliberately omits
+        the per-level domain-separation prefixes (0x00 for leaves, 0x01 for
+        interior nodes) defined by <xref target="RFC9162"/>. The
+        second-preimage class those prefixes guard against, namely
+        reinterpreting an interior node as a leaf or vice versa, is
+        structurally closed here by preimage length: an interior-node preimage
+        is exactly 64 bytes (two concatenated 32-byte hashes), whereas leaf
+        preimages are never 64 bytes. The on-chain claim-record leaf
+        (<xref target="two-layer"/>) hashes a 160-byte encoded payload, and the
+        attestation-evidence leaf hashes a tagged COSE_Sign1 token, which is
+        substantially longer than 64 bytes for any token carrying the required
+        claims of <xref target="claim-set"/> together with a 64-byte ECDSA
+        P-256 signature. The attestation-evidence leaf additionally uses a
+        different hash function, SHA-256, from the keccak256 node hash.
+        <xref target="RFC9162"/> informed the design of this layer and is
+        listed as an informative reference.</t>
+
+        <t>A batch is identified by a monotonically increasing epoch number.
+        The aggregator <bcp14>MAY</bcp14> be operated by the device owner, by a
+        service provider, or by the reference implementation; the choice does
+        not affect verifiability.</t>
+      </section>
+
+      <section anchor="onchain" numbered="true">
+        <name>On-Chain Commitment</name>
+
+        <t>For each batch, the Merkle root is committed to a public
+        EVM-compatible Layer 2 settlement network through a reference smart
+        contract. Note that the reference contract is named "Attester" for
+        historical reasons unrelated to the RATS Attester role of
+        <xref target="role-attester"/>; the two are distinct. The on-chain
+        commitment record <bcp14>SHALL</bcp14> include, at minimum:</t>
+
+        <ul spacing="normal">
+          <li>the epoch number;</li>
+          <li>the Merkle root (32 bytes);</li>
+          <li>the total watt-hour sum claimed in the batch, for cross-check
+          against grid-level dispatch records;</li>
+          <li>the proposing validator's address, and, through separate vote
+          events, the addresses of all validators who voted to reach
+          quorum;</li>
+          <li>the block timestamp at submission;</li>
+          <li>the quorum threshold value active at the moment of submission.
+          Snapshotting this at submission, rather than reading live storage at
+          finalization, ensures that a subsequent administrative change to the
+          global threshold cannot retroactively pass or block this specific
+          batch;</li>
+          <li>the challenge-window value active at the moment of submission.
+          Snapshotting prevents retroactive shrinking, which would let an
+          administrator finalize batches early, and retroactive extension,
+          which would freeze finalization of legitimately voted batches.</li>
+        </ul>
+
+        <t>The two snapshot fields close the symmetric retroactive-shift class
+        of administrative abuses.</t>
+
+        <t>A challenge window, configurable and defaulting to one hour, follows
+        submission. In the current reference contract the fraud-proof path
+        during this window is off-chain: any party <bcp14>MAY</bcp14> report
+        evidence of a fraudulent batch to the contract operators and
+        validators, who can respond through the on-chain pause mechanism,
+        blocking finalization, and administratively triggered slashing
+        (<xref target="threat-collusion"/>). A dedicated on-chain challenge
+        entry point, allowing any party to publish a fraud proof directly
+        on-chain, is deferred to a future protocol extension, together with
+        fraud-proof-verified slashing. After the challenge window expires
+        without the batch being rejected, the batch is finalized; finalization
+        is irreversible.</t>
+      </section>
+
+      <section anchor="verification-path" numbered="true">
+        <name>Verification Path</name>
+
+        <t>A Verifier resolves a single attestation as follows:</t>
+
+        <ol spacing="normal">
+          <li>Receive the candidate attestation token and a Merkle inclusion
+          proof, consisting of the sibling hashes along the tree path.</li>
+          <li>Compute the SHA-256 leaf hash over the deterministically encoded,
+          tagged COSE_Sign1 token.</li>
+          <li>Apply the inclusion proof to derive the candidate Merkle
+          root.</li>
+          <li>Look up the on-chain commitment for the corresponding epoch.</li>
+          <li>Confirm that the candidate root equals the committed root.</li>
+          <li>Confirm that the batch is finalized, that is, that the challenge
+          window has elapsed without a successful challenge.</li>
+          <li>Validate the COSE_Sign1 signature (<xref target="envelope"/>)
+          against the device Attester's endorsed public key: the
+          secure-element-bound key of <xref target="role-attester"/>, and not
+          the on-chain contract of <xref target="onchain"/>.</li>
+        </ol>
+
+        <t>All seven steps <bcp14>MUST</bcp14> succeed for the attestation to
+        be accepted.</t>
+
+        <section anchor="two-layer" numbered="true">
+          <name>Note on the Two-Layer Leaf Encoding</name>
+
+          <t>The Merkle tree described in <xref target="offchain"/>, whose
+          leaves are SHA-256 hashes of deterministically encoded, tagged
+          COSE_Sign1 attestation tokens, is the attestation-evidence layer. It
+          proves that a particular signed measurement was included in a
+          committed batch.</t>
+
+          <t>The on-chain claim function in the reference contract enforces a
+          separate claim-record layer: each on-chain leaf is the keccak256 hash
+          of the encoded tuple (chain identifier, contract address,
+          beneficiary, amount, epoch), identifying a specific redemption, that
+          is, which address receives how many NOET against which epoch, bound
+          to a specific contract instance on a specific chain. The first two
+          fields act as a domain separator, so that a Merkle tree built for one
+          contract instance cannot be replayed against a fork or a sibling
+          deployment. The two layers are related but not identical: each claim
+          record aggregates one or more attestation tokens whose summed energy
+          underwrites the redemption amount.</t>
+
+          <t>A future revision will document the aggregation function from
+          attestation tokens to claim records explicitly. For this version,
+          off-chain builders <bcp14>MUST</bcp14> produce claim-record trees
+          whose leaves match the contract's encoding exactly, including the
+          chain-identifier and contract-address domain separator. The
+          attestation-evidence tree is verified separately by the off-chain
+          Verifier path above and is not yet referenced on-chain.</t>
+        </section>
+      </section>
+    </section>
+
+    <section anchor="endorsement" numbered="true">
+      <name>Endorsement and Verification</name>
+
+      <section anchor="key-registry" numbered="true">
+        <name>Public Key Registry</name>
+
+        <t>Endorsed device public keys are recorded in a registry. The registry
+        <bcp14>MAY</bcp14> be:</t>
+
+        <ul spacing="normal">
+          <li>on-chain, as a smart-contract mapping from device serial number
+          to public key and endorsement metadata, with role-based mutation
+          rights restricted to Endorsers. This is the reference
+          deployment;</li>
+          <li>off-chain, distributed as signed JSON files at well-known URLs
+          maintained by Endorsers;</li>
+          <li>hybrid, with on-chain anchors and off-chain bulk
+          distribution.</li>
+        </ul>
+
+        <t>The choice is operational and does not affect the verification
+        semantics: a Verifier <bcp14>MUST</bcp14> be able to obtain a device's
+        endorsed public key, traceable to an Endorser whose own key is
+        verifiable.</t>
+      </section>
+
+      <section anchor="endorser-revocation" numbered="true">
+        <name>Endorser Revocation</name>
+
+        <t>An Endorser <bcp14>MAY</bcp14> revoke an endorsement, for example on
+        discovery of a compromised provisioning batch. Revocations
+        <bcp14>SHALL</bcp14> be timestamped; a Verifier evaluating an
+        attestation <bcp14>MUST</bcp14> consider revocations issued before the
+        attestation's "iat" timestamp.</t>
+      </section>
+
+      <section anchor="device-revocation" numbered="true">
+        <name>Device-Level Revocation</name>
+
+        <t>A device's endorsement <bcp14>MAY</bcp14> be revoked individually,
+        for example on suspicion of physical tampering reported through the
+        protocol's challenge mechanism. Attestations from a revoked device with
+        an "iat" value after the revocation timestamp <bcp14>MUST</bcp14> be
+        rejected.</t>
+      </section>
+    </section>
+
+    <section anchor="threat-model" numbered="true">
+      <name>Threat Model</name>
+
+      <t>The following adversaries are explicitly considered.</t>
+
+      <section anchor="threat-mcu" numbered="true">
+        <name>Compromised Host MCU</name>
+
+        <t>The host microcontroller adjacent to the secure element may be
+        compromised. Because the signing key is generated on-chip and never
+        leaves the secure element, a compromised host can lie about what to
+        sign but cannot forge signatures under the device's public key.</t>
+
+        <t>The protocol mitigates this through Reference Values, namely the
+        firmware hash and configuration hash included in the attestation
+        claims. A Relying Party that knows the expected Reference Values can
+        detect a tampered host.</t>
+      </section>
+
+      <section anchor="threat-physical" numbered="true">
+        <name>Physical Tampering</name>
+
+        <t>The meter or its sealing may be physically tampered with in order to
+        inject false readings. The protocol does not by itself detect physical
+        tampering of the upstream meter; detection relies on the existing
+        physical-seal and audit procedures of revenue-grade metering, which
+        predate this protocol and are out of scope.</t>
+
+        <t>The protocol does detect substitution of one secure element for
+        another, because the device serial number changes and the new public
+        key has no endorsement chain.</t>
+      </section>
+
+      <section anchor="threat-extraction" numbered="true">
+        <name>Secure-Element Key Extraction</name>
+
+        <t>Extraction of the signing key from a Common Criteria EAL5+ secure
+        element is currently considered infeasible against the design
+        assumptions of state-of-the-art parts. If such an extraction becomes
+        feasible, the affected device family's endorsements
+        <bcp14>SHALL</bcp14> be revoked. The protocol's per-device hash chain,
+        carried in the "prev" claim, limits the value of an extracted key for
+        back-dating, because all historical attestations are anchored
+        on-chain.</t>
+      </section>
+
+      <section anchor="threat-collusion" numbered="true">
+        <name>Validator Collusion</name>
+
+        <t>A validator could withhold attestations or propose a batch with a
+        Merkle root that does not correspond to the claimed leaves. Three
+        mechanisms address this in combination:</t>
+
+        <ol spacing="normal">
+          <li>m-of-n threshold quorum. Finalization requires a threshold number
+          of distinct validator votes through the propose, vote, and finalize
+          sequence. A single party cannot cause a batch to be finalized. The
+          threshold <bcp14>MUST</bcp14> be selected such that coalition cost
+          exceeds expected fraud value; analogous systems typically use
+          ceil(2n/3) for Byzantine fault tolerance.</li>
+          <li>Challenge window. Independently of the threshold mechanism,
+          between submission and earliest finalization any party
+          <bcp14>MAY</bcp14> report evidence of fraud. In the current reference
+          implementation this path is off-chain: evidence is reported to
+          operators and validators, who block finalization through the pause
+          mechanism and apply slashing. An on-chain challenge entry point is
+          deferred to a future revision (<xref target="onchain"/>). A batch
+          successfully challenged within the window is never finalized.</li>
+          <li>Slashing. Validators proven to have voted for fraudulent batches
+          <bcp14>MAY</bcp14> be slashed: the validator role is revoked and the
+          off-chain evidence hash is recorded on-chain. The current reference
+          contract implements administratively triggered slashing; on-chain
+          fraud-proof verification feeding slashing automatically is deferred
+          to a future revision.</li>
+        </ol>
+
+        <t>A coalition of threshold-many validators colluding within the
+        challenge window can still finalize a fraudulent batch. This is the
+        residual risk; it shrinks but does not disappear with the threshold
+        mechanism. Production deployments <bcp14>SHOULD</bcp14> treat the
+        challenge-window fraud-proof path as load-bearing.</t>
+      </section>
+
+      <section anchor="threat-replay" numbered="true">
+        <name>Replay Attacks</name>
+
+        <t>The combination of the per-device monotonic "seq" claim and the
+        previous-attestation hash chain, carried in "prev", prevents replay of
+        an old attestation as a new one. A Verifier that observes a "seq" value
+        that is not strictly greater than the highest previously observed value
+        for the same device <bcp14>MUST</bcp14> reject the attestation.</t>
+      </section>
+
+      <section anchor="threat-sidechannel" numbered="true">
+        <name>Side-Channel Observation</name>
+
+        <t>Side-channel attacks against the secure element, including power
+        analysis, electromagnetic analysis, and fault injection, are mitigated
+        by the Common Criteria certification regime governing the part.
+        Operators <bcp14>SHOULD</bcp14> follow vendor guidance on physical
+        deployment in order to reduce exposure.</t>
+      </section>
+    </section>
+
+    <section anchor="privacy" numbered="true">
+      <name>Privacy Considerations</name>
+
+      <t>The protocol produces a public, durable record of per-device energy
+      generation. This has direct privacy implications, particularly for
+      small-scale producers such as residential rooftop solar
+      installations.</t>
+
+      <section anchor="privacy-inference" numbered="true">
+        <name>Inferences from Attestations</name>
+
+        <t>A continuous record of per-device generation timestamps can be
+        correlated with consumption patterns in order to infer the occupancy
+        and behavior of a household. Aggregation and timestamp rounding
+        mitigate but do not eliminate this risk.</t>
+      </section>
+
+      <section anchor="privacy-mitigations" numbered="true">
+        <name>Mitigations</name>
+
+        <ul spacing="normal">
+          <li>Timestamp rounding. Producers <bcp14>MAY</bcp14> round "iat" to a
+          coarser resolution, for example ten-minute buckets, at the cost of
+          reduced verification granularity.</li>
+          <li>Batch padding. Aggregators <bcp14>SHOULD</bcp14> pad batches with
+          dummy leaves so that a small-scale producer's contribution count is
+          not distinguishable.</li>
+          <li>Optional zero-knowledge extensions. A future revision will
+          specify an optional zero-knowledge-friendly attestation variant in
+          which the per-device identifier is replaced by a commitment, with
+          selective-disclosure proofs available to authorized auditors.</li>
+        </ul>
+      </section>
+
+      <section anchor="privacy-optout" numbered="true">
+        <name>Right to Opt Out</name>
+
+        <t>Participation in the protocol is, by design, voluntary. Operators
+        are not required to publish attestations; the protocol's value derives
+        from voluntary adoption by parties that wish to be cryptographically
+        credible.</t>
+      </section>
+    </section>
+
+    <section anchor="security" numbered="true">
+      <name>Security Considerations</name>
+
+      <t>In addition to the threat model in <xref target="threat-model"/>,
+      implementers are advised of the following.</t>
+
+      <ul spacing="normal">
+        <li>Time source integrity. The "iat" timestamp depends on the device's
+        local clock. Implementations <bcp14>MUST</bcp14> authenticate the time
+        source, for example by using NTP with cryptographic verification or
+        GNSS-based time, in order to prevent clock-manipulation attacks.</li>
+        <li>Key provisioning. Endorsement integrity depends on a trustworthy
+        provisioning ceremony, in which the device's public key is read from
+        the secure element under chain-of-custody guarantees. Implementations
+        <bcp14>SHOULD</bcp14> use vendor-provided pre-provisioning programs
+        where available.</li>
+        <li>Smart-contract risk. The on-chain commitment contract is a
+        security-critical component. Implementations <bcp14>SHOULD</bcp14>
+        subject it to independent audit prior to production deployment and
+        <bcp14>SHOULD</bcp14> support upgradability only through a transparent
+        governance process.</li>
+        <li>Settlement-layer reliance. The protocol depends on the liveness and
+        integrity of the chosen settlement layer. Operators
+        <bcp14>SHOULD</bcp14> evaluate the settlement layer's security model,
+        including its consensus assumptions and its fault-recovery
+        procedures.</li>
+        <li>Algorithm agility. Because the signature algorithm is named only in
+        the COSE protected header (<xref target="alg-id"/>), it is covered by
+        the signature itself. Verifiers <bcp14>MUST</bcp14> apply a local
+        policy for acceptable algorithms rather than trusting the value found
+        in the token, in order to avoid algorithm-downgrade attacks.</li>
+      </ul>
+    </section>
+
+    <section anchor="iana" numbered="true">
+      <name>IANA Considerations</name>
+
+      <t>This document requests that IANA register the following media type in
+      the "Media Types" registry.</t>
+
+      <dl newline="false" spacing="compact">
+        <dt>Type name:</dt><dd>application</dd>
+        <dt>Subtype name:</dt><dd>noethrion+cbor</dd>
+        <dt>Required parameters:</dt><dd>N/A</dd>
+        <dt>Optional parameters:</dt><dd>profile (a URI identifying the
+        attestation profile in use)</dd>
+        <dt>Encoding considerations:</dt><dd>binary</dd>
+        <dt>Security considerations:</dt><dd>See <xref target="security"/> of
+        this document.</dd>
+        <dt>Interoperability considerations:</dt><dd>See
+        <xref target="token-format"/> of this document.</dd>
+        <dt>Published specification:</dt><dd>This document.</dd>
+        <dt>Applications that use this media type:</dt><dd>Producers and
+        consumers of energy attestation tokens as defined in this
+        document.</dd>
+        <dt>Fragment identifier considerations:</dt><dd>N/A</dd>
+        <dt>Additional information:</dt><dd>Magic number(s): N/A; File
+        extension(s): N/A; Macintosh file type code(s): N/A</dd>
+        <dt>Person and email address to contact for further
+        information:</dt><dd>IETF RATS Working Group
+        (rats@ietf.org)</dd>
+        <dt>Intended usage:</dt><dd>COMMON</dd>
+        <dt>Restrictions on usage:</dt><dd>N/A</dd>
+        <dt>Author:</dt><dd>See the Authors' Addresses section of this
+        document.</dd>
+        <dt>Change controller:</dt><dd>IETF</dd>
+      </dl>
+
+      <t>Future revisions of this document may request additional CBOR tag
+      allocations and CoAP profile registrations.</t>
+    </section>
+
+  </middle>
+
+  <back>
+    <references>
+      <name>References</name>
+
+      <references>
+        <name>Normative References</name>
+
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner"/>
+            <date year="1997" month="March"/>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba"/>
+            <date year="2017" month="May"/>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+
+        <reference anchor="RFC8610" target="https://www.rfc-editor.org/info/rfc8610">
+          <front>
+            <title>Concise Data Definition Language (CDDL): A Notational Convention to Express Concise Binary Object Representation (CBOR) and JSON Data Structures</title>
+            <author initials="H." surname="Birkholz" fullname="H. Birkholz"/>
+            <author initials="C." surname="Vigano" fullname="C. Vigano"/>
+            <author initials="C." surname="Bormann" fullname="C. Bormann"/>
+            <date year="2019" month="June"/>
+          </front>
+          <seriesInfo name="RFC" value="8610"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8610"/>
+        </reference>
+
+        <reference anchor="RFC8949" target="https://www.rfc-editor.org/info/rfc8949">
+          <front>
+            <title>Concise Binary Object Representation (CBOR)</title>
+            <author initials="C." surname="Bormann" fullname="C. Bormann"/>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman"/>
+            <date year="2020" month="December"/>
+          </front>
+          <seriesInfo name="STD" value="94"/>
+          <seriesInfo name="RFC" value="8949"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8949"/>
+        </reference>
+
+        <reference anchor="RFC9052" target="https://www.rfc-editor.org/info/rfc9052">
+          <front>
+            <title>CBOR Object Signing and Encryption (COSE): Structures and Process</title>
+            <author initials="J." surname="Schaad" fullname="J. Schaad"/>
+            <date year="2022" month="August"/>
+          </front>
+          <seriesInfo name="STD" value="96"/>
+          <seriesInfo name="RFC" value="9052"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9052"/>
+        </reference>
+
+        <reference anchor="RFC9053" target="https://www.rfc-editor.org/info/rfc9053">
+          <front>
+            <title>CBOR Object Signing and Encryption (COSE): Initial Algorithms</title>
+            <author initials="J." surname="Schaad" fullname="J. Schaad"/>
+            <date year="2022" month="August"/>
+          </front>
+          <seriesInfo name="RFC" value="9053"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9053"/>
+        </reference>
+
+        <reference anchor="RFC9711" target="https://www.rfc-editor.org/info/rfc9711">
+          <front>
+            <title>The Entity Attestation Token (EAT)</title>
+            <author initials="L." surname="Lundblade" fullname="L. Lundblade"/>
+            <author initials="G." surname="Mandyam" fullname="G. Mandyam"/>
+            <author initials="J." surname="O'Donoghue" fullname="J. O'Donoghue"/>
+            <author initials="C." surname="Wallace" fullname="C. Wallace"/>
+            <date year="2025" month="April"/>
+          </front>
+          <seriesInfo name="RFC" value="9711"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9711"/>
+        </reference>
+      </references>
+
+      <references>
+        <name>Informative References</name>
+
+        <reference anchor="RFC9334" target="https://www.rfc-editor.org/info/rfc9334">
+          <front>
+            <title>Remote ATtestation procedureS (RATS) Architecture</title>
+            <author initials="H." surname="Birkholz" fullname="H. Birkholz"/>
+            <author initials="D." surname="Thaler" fullname="D. Thaler"/>
+            <author initials="M." surname="Richardson" fullname="M. Richardson"/>
+            <author initials="N." surname="Smith" fullname="N. Smith"/>
+            <author initials="W." surname="Pan" fullname="W. Pan"/>
+            <date year="2023" month="January"/>
+          </front>
+          <seriesInfo name="RFC" value="9334"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9334"/>
+        </reference>
+
+        <reference anchor="RFC9162" target="https://www.rfc-editor.org/info/rfc9162">
+          <front>
+            <title>Certificate Transparency Version 2.0</title>
+            <author initials="B." surname="Laurie" fullname="B. Laurie"/>
+            <author initials="E." surname="Messeri" fullname="E. Messeri"/>
+            <author initials="R." surname="Stradling" fullname="R. Stradling"/>
+            <date year="2021" month="December"/>
+          </front>
+          <seriesInfo name="RFC" value="9162"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9162"/>
+        </reference>
+
+        <reference anchor="FIPS204" target="https://doi.org/10.6028/NIST.FIPS.204">
+          <front>
+            <title>Module-Lattice-Based Digital Signature Standard</title>
+            <author>
+              <organization>National Institute of Standards and Technology</organization>
+            </author>
+            <date year="2024" month="August"/>
+          </front>
+          <seriesInfo name="FIPS" value="204"/>
+          <seriesInfo name="DOI" value="10.6028/NIST.FIPS.204"/>
+        </reference>
+
+        <reference anchor="CBAM" target="https://eur-lex.europa.eu/eli/reg/2023/956/oj">
+          <front>
+            <title>Regulation (EU) 2023/956 establishing a carbon border adjustment mechanism</title>
+            <author>
+              <organization>European Union</organization>
+            </author>
+            <date year="2023" month="May"/>
+          </front>
+        </reference>
+      </references>
+    </references>
+
+    <section anchor="reference-impl" numbered="true">
+      <name>Reference Implementation</name>
+
+      <t>A reference implementation of the Attester (firmware) and of the
+      Verifier (settlement contract plus off-chain library) is available from
+      the project repository identified on the author's organization web site.
+      The reference implementation is provided for interoperability testing and
+      is not normative; where it differs from this document, this document
+      prevails.</t>
+    </section>
+
+    <section anchor="acknowledgements" numbered="false">
+      <name>Acknowledgements</name>
+
+      <t>The author thanks the participants of the RATS and COSE working groups
+      whose published work this specification builds upon.</t>
+    </section>
+  </back>
+</rfc>
