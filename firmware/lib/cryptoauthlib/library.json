@@ -1,0 +1,25 @@
+{
+  "name": "cryptoauthlib",
+  "version": "3.7.9",
+  "description": "Microchip CryptoAuthentication Library (ATECC608B et al.), vendored subset of MicrochipTech/cryptoauthlib v3.7.9 lib/ for the Noethrion ESP32 Arduino firmware. Upstream library.json has no build section, so PlatformIO cannot build it from git directly; this manifest fixes srcDir/includeDir and trims non-ESP32 HALs, PKCS#11, TLS backends and JWT. atca_config.h is hand-written (CMake would normally generate it).",
+  "keywords": "atecc608, cryptoauthentication, secure element, i2c",
+  "repository": { "type": "git", "url": "https://github.com/MicrochipTech/cryptoauthlib.git" },
+  "license": "Microchip",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "build": {
+    "srcDir": "src",
+    "includeDir": "src",
+    "srcFilter": [
+      "+<*>",
+      "-<hal/>",
+      "+<hal/atca_hal.c>",
+      "+<hal/hal_esp32_i2c.c>",
+      "+<hal/hal_esp32_timer.c>",
+      "-<crypto/mbedtls/>",
+      "-<crypto/openssl/>",
+      "-<crypto/wolfssl/>"
+    ],
+    "flags": [ "-Wno-unused-parameter", "-Wno-missing-field-initializers" ]
+  }
+}

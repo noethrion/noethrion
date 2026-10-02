@@ -13,7 +13,7 @@
 
 namespace {
 
-constexpr uint32_t TICK_INTERVAL_MS = 10'000;
+constexpr uint32_t TICK_INTERVAL_MS = 10000;
 
 // Default ATECC608B I²C address (8-bit form, library convention).
 // 0x60 (7-bit) << 1 = 0xC0. Some pre-provisioned parts ship at 0x6A → 0xD4.
@@ -98,7 +98,7 @@ bool init_secure_element() {
 
 uint64_t read_meter_wh_stub() {
     // TODO: replace with real meter integration (Modbus RTU or S0 pulse counter).
-    static uint64_t fake_total_wh = 1'000'000;
+    static uint64_t fake_total_wh = 1000000;
     fake_total_wh += 250; // pretend 250 Wh elapsed each tick
     return fake_total_wh;
 }
