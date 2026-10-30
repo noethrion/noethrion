@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Noethrion — Hardware-attested energy production protocol</title>
-<meta name="description" content="One kilowatt-hour. One signature. Settled at the source.">
+<title>Noethrion — Proof at the meter. An open standard for verifiable energy claims</title>
+<meta name="description" content="Every kilowatt-hour, signed where it's measured. Verifiable by anyone. An open standard for hardware-attested energy data, published as an IETF Internet-Draft.">
 <link rel="canonical" href="https://noethrion.com/">
 
 <!-- Open Graph — link-preview metadata for social platforms. -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="Noethrion — Hardware-attested energy production protocol">
-<meta property="og:description" content="An open standard for verifiable clean energy. 1 NOET = 1 verified kWh, signed at the meter, anchored on a public ledger.">
+<meta property="og:title" content="Noethrion — Proof at the meter">
+<meta property="og:description" content="Every kilowatt-hour, signed where it's measured. Verifiable by anyone. An open standard for hardware-attested energy data.">
 <meta property="og:url" content="https://noethrion.com/">
 <meta property="og:site_name" content="Noethrion">
 <meta property="og:image" content="https://noethrion.com/og-image.png">
@@ -19,8 +19,8 @@
 
 <!-- Twitter / X card metadata. -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Noethrion — Hardware-attested energy production protocol">
-<meta name="twitter:description" content="An open standard for verifiable clean energy. 1 NOET = 1 verified kWh, signed at the meter, anchored on a public ledger.">
+<meta name="twitter:title" content="Noethrion — Proof at the meter">
+<meta name="twitter:description" content="Every kilowatt-hour, signed where it's measured. Verifiable by anyone. An open standard for hardware-attested energy data.">
 <meta name="twitter:image" content="https://noethrion.com/og-image.png">
 
 <!-- Favicon: η in Eta-green on Noir, inline SVG so no extra request and no 404. -->
@@ -925,6 +925,165 @@
     opacity: 1;
     transform: translateY(0);
   }
+
+  /* ============================================
+     v2 ADDITIONS (site-v2, 2026-10-30)
+     ============================================ */
+  .hero { min-height: auto; padding: 9rem 0 5rem; }
+  .hero-headline { font-size: clamp(60px, 10vw, 148px); }
+  .hero-sub strong { color: var(--bone); font-weight: 400; }
+  .stat-num.small { font-size: clamp(26px, 2.4vw, 36px); }
+
+  @media (max-width: 480px) {
+    .hero { padding: 7.5rem 0 3.5rem; }
+    .hero-cta-row { margin-bottom: 3rem; }
+    .hero-cta-row a { width: 100%; justify-content: center; }
+    .btn-primary, .btn-ghost { padding: 14px 20px; }
+  }
+
+  /* THE GAP */
+  .gap-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 1px solid var(--noir-4);
+    border-radius: 4px;
+  }
+  @media (max-width: 900px) { .gap-grid { grid-template-columns: 1fr; } }
+  .gap-cell { padding: 2.25rem 2rem; border-right: 1px solid var(--noir-4); }
+  .gap-cell:last-child { border-right: none; }
+  @media (max-width: 900px) {
+    .gap-cell { border-right: none; border-bottom: 1px solid var(--noir-4); }
+    .gap-cell:last-child { border-bottom: none; }
+  }
+  .gap-cell .k {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--eta); margin-bottom: 1rem;
+  }
+  .gap-cell h3 {
+    font-family: var(--font-display); font-weight: 400; font-size: clamp(24px, 2.2vw, 28px);
+    line-height: 1.2; color: var(--bone); margin-bottom: 0.75rem;
+  }
+  .gap-cell p { font-size: 15px; color: var(--bone-2); line-height: 1.6; }
+  .gap-close {
+    margin-top: 2.5rem; font-family: var(--font-display); font-style: italic;
+    font-size: clamp(24px, 2.6vw, 32px); color: var(--bone); max-width: 860px; line-height: 1.3;
+  }
+  .gap-close em { color: var(--eta); }
+
+  /* DEMO + TECH LIST under steps */
+  .demo-grid { margin-top: 4rem; }
+  .code-block .ok { color: var(--eta); }
+  .code-note {
+    font-family: var(--font-mono); font-size: 11px; color: var(--bone-3);
+    letter-spacing: 0.05em; margin-top: 0.75rem;
+  }
+  .step-meta .cert { color: var(--bone-2); }
+
+  /* AUDIENCE DOORS */
+  .doors {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;
+  }
+  @media (max-width: 800px) { .doors { grid-template-columns: 1fr; } }
+  .door {
+    background: var(--noir-2); border: 1px solid var(--noir-4); border-radius: 4px;
+    padding: 2.25rem 2rem; display: flex; flex-direction: column; gap: 1rem;
+    transition: border-color 0.2s;
+  }
+  .door:hover { border-color: var(--eta); }
+  .door .who {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--eta);
+  }
+  .door h3 {
+    font-family: var(--font-display); font-weight: 400; color: var(--bone);
+    font-size: clamp(26px, 2.4vw, 32px); line-height: 1.15;
+  }
+  .door p { font-size: 15px; color: var(--bone-2); line-height: 1.6; flex: 1; }
+  .door .links { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .door .btn-ghost, .door .btn-primary { font-size: 12px; padding: 11px 18px; }
+
+  /* WHERE IT FITS — layer stack */
+  .layers { display: grid; gap: 0.5rem; max-width: 820px; }
+  .layer {
+    display: grid; grid-template-columns: 180px 1fr; gap: 1.25rem; align-items: center;
+    padding: 1.1rem 1.5rem; border: 1px solid var(--noir-4); border-radius: 4px;
+    background: var(--noir-2);
+  }
+  .layer .lk {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--bone-3);
+  }
+  .layer .lv { color: var(--bone-2); font-size: 15px; }
+  .layer.ours { border-color: var(--eta); background: rgba(20, 241, 149, 0.06); }
+  .layer.ours .lk, .layer.ours .lv strong { color: var(--eta); font-weight: 400; }
+  @media (max-width: 600px) {
+    .layer { grid-template-columns: 1fr; gap: 0.35rem; padding: 1rem 1.1rem; }
+  }
+
+  /* STATUS */
+  .status-list { list-style: none; border-top: 1px solid var(--noir-4); max-width: 980px; }
+  .status-list li {
+    display: grid; grid-template-columns: 28px 1fr auto; gap: 1rem; align-items: baseline;
+    padding: 1.15rem 0; border-bottom: 1px solid var(--noir-4);
+  }
+  .status-list .mark { font-family: var(--font-mono); color: var(--eta); font-size: 14px; }
+  .status-list .mark.todo { color: var(--bone-3); }
+  .status-list .what { color: var(--bone); font-size: 16px; }
+  .status-list .what small {
+    display: block; color: var(--bone-2); font-size: 14px; margin-top: 0.25rem; line-height: 1.5;
+  }
+  .status-list .what a { color: var(--eta); text-underline-offset: 3px; }
+  .status-list .when {
+    font-family: var(--font-mono); font-size: 11px; color: var(--bone-3);
+    letter-spacing: 0.08em; white-space: nowrap;
+  }
+  @media (max-width: 600px) {
+    .status-list li { grid-template-columns: 22px 1fr; }
+    .status-list .when { grid-column: 2; white-space: normal; }
+  }
+  .status-sub {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--bone-3); margin: 3rem 0 0.75rem;
+  }
+
+  /* η — compact */
+  .eta-block { padding: 3rem; gap: 3rem; }
+  .eta-display { font-size: clamp(140px, 15vw, 220px); }
+  @media (max-width: 600px) { .eta-block { padding: 2rem 1.25rem; } }
+
+  /* small-screen tidy-ups for base components */
+  @media (max-width: 480px) {
+    .step { padding: 2rem 1.25rem; }
+    .principle { padding: 2rem 1.25rem; }
+    .door { padding: 1.75rem 1.25rem; }
+    .gap-cell { padding: 1.75rem 1.25rem; }
+    .spec-list li { grid-template-columns: 100px 1fr; }
+    .code-block { padding: 1.25rem 1rem; font-size: 11px; }
+    .section-headline { font-size: clamp(34px, 9vw, 44px); }
+  }
+
+  /* heading-level fixes: principle / mark / footer titles are now real h2/h3 */
+  .principle h3 {
+    font-family: var(--font-display); font-size: clamp(24px, 2.2vw, 28px); color: var(--bone);
+    margin-bottom: 0.75rem; font-weight: 400; line-height: 1.2;
+  }
+  .eta-meaning h2 {
+    font-family: var(--font-display); font-size: clamp(28px, 2.8vw, 36px); color: var(--bone);
+    margin-bottom: 1.5rem; font-weight: 400; line-height: 1.2;
+  }
+  .eta-meaning h2 em { color: var(--eta); }
+  .footer-col h2 {
+    font-family: var(--font-mono); font-size: 11px; color: var(--bone-3); letter-spacing: 0.15em;
+    text-transform: uppercase; margin-bottom: 1rem; font-weight: 400;
+  }
+  /* overflow guards: grid children may shrink below their min-content (long code lines, long RU words) */
+  .spec-grid > *, .steps > *, .doors > *, .gap-grid > *, .principles > *, .footer-grid > *, .hero-stats > * { min-width: 0; }
+  .hero-headline, .section-headline, .cta-headline { overflow-wrap: break-word; hyphens: auto; }
+  @media (max-width: 480px) {
+    .hero-headline { font-size: clamp(44px, 12.5vw, 60px); }
+    .hero-eyebrow { font-size: 11px; letter-spacing: 0.14em; }
+  }
 </style>
 
 <!-- Self-hosted, cookieless analytics. No personal data, no cross-site tracking. -->
@@ -939,17 +1098,18 @@
 <!-- ============================================ -->
 <!-- NAV                                            -->
 <!-- ============================================ -->
-<nav>
+<nav aria-label="Primary">
   <div class="nav-inner">
-    <a href="/" style="text-decoration: none;" class="nav-mark">
-      <span class="eta-symbol">η</span>
+    <a href="/" style="text-decoration: none;" class="nav-mark" aria-label="Noethrion home">
+      <span class="eta-symbol" aria-hidden="true">η</span>
       <span>noethrion</span>
     </a>
     <div class="nav-right">
       <div class="nav-links">
+        <a href="#gap"><span data-lang-en>The gap</span><span data-lang-ru>Проблема</span></a>
         <a href="#how"><span data-lang-en>How it works</span><span data-lang-ru>Как работает</span></a>
-        <a href="#spec"><span data-lang-en>Spec</span><span data-lang-ru>Спецификация</span></a>
-        <a href="#principles"><span data-lang-en>Principles</span><span data-lang-ru>Принципы</span></a>
+        <a href="#built-for"><span data-lang-en>Built for</span><span data-lang-ru>Для кого</span></a>
+        <a href="#status"><span data-lang-en>Status</span><span data-lang-ru>Статус</span></a>
         <a href="https://github.com/noethrion/noethrion" style="color: var(--bone);">Github</a>
       </div>
       <div class="lang-toggle" role="group" aria-label="Language toggle">
@@ -960,69 +1120,67 @@
   </div>
 </nav>
 
+<main id="main">
+
 <!-- ============================================ -->
 <!-- HERO                                           -->
 <!-- ============================================ -->
-<section class="hero" id="main">
+<section class="hero" aria-labelledby="hero-title">
   <div class="container">
-    <div class="hero-eyebrow">
-      <span data-lang-en>Energy Attestation Protocol · Working Draft v0.1</span>
-      <span data-lang-ru>Протокол аттестации энергии · Рабочий черновик v0.1</span>
-    </div>
+    <p class="hero-eyebrow">
+      <span data-lang-en>Open standard · IETF Internet-Draft -00</span>
+      <span data-lang-ru>Открытый стандарт · IETF Internet-Draft -00</span>
+    </p>
 
-    <h1 class="hero-headline">
-      <span data-lang-en>One kilowatt-hour.<br><em>One signature.</em><br>Settled at the source.</span>
-      <span data-lang-ru>Один киловатт-час.<br><em>Одна подпись.</em><br>Подтверждено у источника.</span>
+    <h1 class="hero-headline" id="hero-title">
+      <span data-lang-en>Proof at the <em>meter.</em></span>
+      <span data-lang-ru>Доказательство <em>у счётчика.</em></span>
     </h1>
 
     <p class="hero-sub">
-      <span data-lang-en>Noethrion is an open standard for hardware-attested energy production. Read the spec, run a node, audit the math. We administer the protocol — we do not own it.</span>
-      <span data-lang-ru>Noethrion — открытый стандарт для аппаратно-подтверждённой генерации энергии. Читай спецификацию, запускай ноду, проверяй математику. Мы администрируем протокол — мы им не владеем.</span>
+      <span data-lang-en><strong>Every kilowatt-hour, signed where it's measured. Verifiable by anyone.</strong> Noethrion is an open standard that lets producers and compute operators back their energy reports with evidence from the meter itself. We administer the standard — we do not own it.</span>
+      <span data-lang-ru><strong>Каждый киловатт-час подписан там, где измерен. Проверить может любой.</strong> Noethrion — открытый стандарт, который позволяет производителям энергии и операторам вычислений подкреплять свою отчётность данными прямо со счётчика. Мы администрируем стандарт — мы им не владеем.</span>
     </p>
 
     <div class="hero-cta-row">
-      <a href="#how" class="btn-primary">
-        <span data-lang-en>Read the spec</span>
-        <span data-lang-ru>Читать спецификацию</span>
-        <span class="arrow">→</span>
+      <a href="https://datatracker.ietf.org/doc/draft-chursin-rats-energy-attestation/" class="btn-primary">
+        <span data-lang-en>Read the IETF draft</span>
+        <span data-lang-ru>Читать IETF-черновик</span>
+        <span class="arrow" aria-hidden="true">→</span>
       </a>
       <a href="https://noethrion.com/network/" class="btn-ghost">
-        <span data-lang-en>Verify it yourself</span>
-        <span data-lang-ru>Проверь сам</span>
-      </a>
-      <a href="https://github.com/noethrion/noethrion" class="btn-ghost">
-        <span data-lang-en>View on Github</span>
-        <span data-lang-ru>Открыть на Github</span>
+        <span data-lang-en>Verify a reading</span>
+        <span data-lang-ru>Проверить показание</span>
       </a>
     </div>
 
     <div class="hero-stats">
       <div class="stat-cell">
-        <div class="stat-num"><em>η</em> = 1</div>
-        <div class="stat-label">
-          <span data-lang-en>kWh per token</span>
-          <span data-lang-ru>кВт·ч на токен</span>
-        </div>
-      </div>
-      <div class="stat-cell">
         <div class="stat-num">P-256</div>
         <div class="stat-label">
-          <span data-lang-en>Curve · ATECC608</span>
-          <span data-lang-ru>Кривая · ATECC608</span>
+          <span data-lang-en>Signed in a secure element</span>
+          <span data-lang-ru>Подпись в защищённом чипе</span>
         </div>
       </div>
       <div class="stat-cell">
-        <div class="stat-num">L2</div>
+        <div class="stat-num">I-D <em>-00</em></div>
         <div class="stat-label">
-          <span data-lang-en>L2 · Settlement</span>
-          <span data-lang-ru>L2 · Расчёты</span>
+          <span data-lang-en>Posted to the IETF · Jul 2026</span>
+          <span data-lang-ru>Подан в IETF · июль 2026</span>
+        </div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">127</div>
+        <div class="stat-label">
+          <span data-lang-en>Contract tests passing</span>
+          <span data-lang-ru>Тестов контрактов проходят</span>
         </div>
       </div>
       <div class="stat-cell">
         <div class="stat-num">MIT</div>
         <div class="stat-label">
-          <span data-lang-en>License · Forever</span>
-          <span data-lang-ru>Лицензия · Навсегда</span>
+          <span data-lang-en>Open source · Forever</span>
+          <span data-lang-ru>Открытый код · Навсегда</span>
         </div>
       </div>
     </div>
@@ -1030,50 +1188,96 @@
 </section>
 
 <!-- ============================================ -->
-<!-- HOW IT WORKS                                   -->
+<!-- THE GAP                                        -->
 <!-- ============================================ -->
-<section id="how">
+<section id="gap" aria-labelledby="gap-title">
   <div class="container">
-    <div class="section-label">
+    <p class="section-label">
       <span class="num">01</span>
-      <span data-lang-en>How it works</span>
-      <span data-lang-ru>Как это работает</span>
-    </div>
+      <span data-lang-en>The gap</span>
+      <span data-lang-ru>Разрыв</span>
+    </p>
 
-    <h2 class="section-headline">
-      <span data-lang-en>Three steps. <em>No middlemen.</em></span>
-      <span data-lang-ru>Три шага. <em>Без посредников.</em></span>
+    <h2 class="section-headline" id="gap-title">
+      <span data-lang-en>Energy disclosure is growing. <em>Proof isn't.</em></span>
+      <span data-lang-ru>Отчётности об энергии всё больше. <em>Доказательств — нет.</em></span>
     </h2>
 
     <p class="section-intro">
-      <span data-lang-en>Energy is generated. The meter signs it. The blockchain records it. There is no "we'll trust you on this" step — every kilowatt-hour carries cryptographic proof of where, when, and how it was produced.</span>
-      <span data-lang-ru>Энергия произведена. Счётчик её подписывает. Блокчейн её фиксирует. Нет шага "поверим тебе на слово" — каждый киловатт-час несёт криптографическое доказательство того, где, когда и как он был произведён.</span>
+      <span data-lang-en>Data centres, AI infrastructure, factories and clean-energy producers are increasingly asked how much power they use and where it comes from. Today, every one of those answers is a self-report.</span>
+      <span data-lang-ru>Дата-центры, AI-инфраструктуру, заводы и производителей чистой энергии всё чаще спрашивают: сколько энергии вы потребляете и откуда она. Сегодня каждый такой ответ — это самоотчёт.</span>
+    </p>
+
+    <div class="gap-grid reveal">
+      <div class="gap-cell">
+        <p class="k"><span data-lang-en>Disclosure</span><span data-lang-ru>Отчётность</span></p>
+        <h3><span data-lang-en>Reporting is becoming a duty</span><span data-lang-ru>Отчёт становится обязанностью</span></h3>
+        <p><span data-lang-en>Large data centres in Europe already file annual energy reports, and more jurisdictions are drafting similar rules. Investors and customers ask the same questions voluntarily.</span><span data-lang-ru>Крупные дата-центры в Европе уже ежегодно сдают отчёты об энергии, и всё больше юрисдикций готовят похожие правила. Инвесторы и клиенты задают те же вопросы добровольно.</span></p>
+      </div>
+      <div class="gap-cell">
+        <p class="k"><span data-lang-en>Evidence</span><span data-lang-ru>Доказательства</span></p>
+        <h3><span data-lang-en>Numbers start as spreadsheets</span><span data-lang-ru>Цифры начинаются с таблиц</span></h3>
+        <p><span data-lang-en>Readings are exported, copied and aggregated long after they were measured. By the time a figure reaches a report, nothing ties it back to the device that recorded it.</span><span data-lang-ru>Показания выгружают, копируют и сводят спустя долгое время после измерения. Когда цифра доходит до отчёта, её уже ничто не связывает с прибором, который её записал.</span></p>
+      </div>
+      <div class="gap-cell">
+        <p class="k"><span data-lang-en>Verification</span><span data-lang-ru>Проверка</span></p>
+        <h3><span data-lang-en>Checkers lack a signed source</span><span data-lang-ru>Проверяющим не на что опереться</span></h3>
+        <p><span data-lang-en>Certifiers, registries and auditors do careful work — but they start from data that nobody could sign at the source. They deserve better inputs.</span><span data-lang-ru>Сертификаторы, реестры и аудиторы работают тщательно — но начинают с данных, которые никто не мог подписать у источника. Им нужны входные данные получше.</span></p>
+      </div>
+    </div>
+
+    <p class="gap-close reveal">
+      <span data-lang-en>The meter already knows the truth. <em>It just can't sign it — yet.</em></span>
+      <span data-lang-ru>Счётчик уже знает правду. <em>Он просто пока не умеет её подписать.</em></span>
+    </p>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- HOW IT WORKS                                   -->
+<!-- ============================================ -->
+<section id="how" aria-labelledby="how-title">
+  <div class="container">
+    <p class="section-label">
+      <span class="num">02</span>
+      <span data-lang-en>How it works</span>
+      <span data-lang-ru>Как это работает</span>
+    </p>
+
+    <h2 class="section-headline" id="how-title">
+      <span data-lang-en>Measure. Sign. <em>Verify.</em></span>
+      <span data-lang-ru>Измерить. Подписать. <em>Проверить.</em></span>
+    </h2>
+
+    <p class="section-intro">
+      <span data-lang-en>A low-cost secure element sits next to the meter and signs every reading. Signed readings are batched and anchored to a public settlement layer. Anyone can check any reading in seconds — no account, no permission, no "trust us".</span>
+      <span data-lang-ru>Недорогой защищённый чип стоит рядом со счётчиком и подписывает каждое показание. Подписанные показания собираются в пакеты и закрепляются в публичном расчётном слое. Любой может проверить любое показание за секунды — без аккаунта, без разрешения, без «поверьте нам».</span>
     </p>
 
     <div class="steps">
       <div class="step reveal">
         <div class="step-num">STEP 01</div>
-        <div class="step-icon">
+        <div class="step-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
         </div>
         <h3 class="step-title">
-          <span data-lang-en>Generate</span>
-          <span data-lang-ru>Генерация</span>
+          <span data-lang-en>Measure</span>
+          <span data-lang-ru>Измерение</span>
         </h3>
         <p class="step-desc">
-          <span data-lang-en>A solar panel, wind turbine, or battery produces electricity. A smart meter reads the kilowatt-hours in real time.</span>
-          <span data-lang-ru>Солнечная панель, ветрогенератор или батарея производит электричество. Умный счётчик читает киловатт-часы в реальном времени.</span>
+          <span data-lang-en>A solar array, wind turbine, battery or data-centre feed is metered as usual. Nothing about the existing meter has to change.</span>
+          <span data-lang-ru>Солнечная станция, ветряк, батарея или ввод дата-центра измеряются как обычно. Сам счётчик менять не нужно.</span>
         </p>
         <div class="step-meta">
-          <span data-lang-en>Hardware: ATECC608B + ESP32</span>
-          <span data-lang-ru>Железо: ATECC608B + ESP32</span><br>
-          <strong>$0.87 / chip</strong>
+          <span data-lang-en>Reference hardware: ESP32 + ATECC608B</span>
+          <span data-lang-ru>Эталонное железо: ESP32 + ATECC608B</span><br>
+          <strong><span data-lang-en>Commodity parts</span><span data-lang-ru>Серийные компоненты</span></strong>
         </div>
       </div>
 
       <div class="step reveal">
         <div class="step-num">STEP 02</div>
-        <div class="step-icon">
+        <div class="step-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M12 2L4 7v10l8 5 8-5V7l-8-5z"/><path d="M9 12l2 2 4-4"/></svg>
         </div>
         <h3 class="step-title">
@@ -1081,247 +1285,385 @@
           <span data-lang-ru>Подпись</span>
         </h3>
         <p class="step-desc">
-          <span data-lang-en>The secure element inside the meter signs the reading with an ECDSA P-256 signature. The private key never leaves the chip.</span>
-          <span data-lang-ru>Защищённый элемент внутри счётчика подписывает показание подписью ECDSA P-256. Приватный ключ никогда не покидает чип.</span>
+          <span data-lang-en>A secure element signs each reading — kilowatt-hours, time, device — with ECDSA P-256. The private key is generated on the chip and never leaves it.</span>
+          <span data-lang-ru>Защищённый чип подписывает каждое показание — киловатт-часы, время, устройство — подписью ECDSA P-256. Приватный ключ создаётся на чипе и никогда его не покидает.</span>
         </p>
         <div class="step-meta">
-          <span data-lang-en>Tamper-resistant key storage</span>
-          <span data-lang-ru>Защита от подделки ключа</span><br>
-          <strong>CC EAL 6+</strong>
+          <span data-lang-en>Supported secure elements</span>
+          <span data-lang-ru>Поддерживаемые чипы</span><br>
+          <strong>ATECC608B · SE050</strong>
+          <span class="cert"><span data-lang-en>(SE050: CC EAL6+)</span><span data-lang-ru>(SE050: CC EAL6+)</span></span>
         </div>
       </div>
 
       <div class="step reveal">
         <div class="step-num">STEP 03</div>
-        <div class="step-icon">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+        <div class="step-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16 16l5 5"/><path d="M8 11l2 2 4-4"/></svg>
         </div>
         <h3 class="step-title">
-          <span data-lang-en>Settle</span>
-          <span data-lang-ru>Расчёт</span>
+          <span data-lang-en>Verify</span>
+          <span data-lang-ru>Проверка</span>
         </h3>
         <p class="step-desc">
-          <span data-lang-en>The signed reading is bundled into a Merkle tree, posted to Layer 2, and one NOET token is minted per verified kilowatt-hour.</span>
-          <span data-lang-ru>Подписанное показание упаковано в дерево Меркла, опубликовано на Layer 2, и один токен NOET создаётся за каждый верифицированный киловатт-час.</span>
+          <span data-lang-en>Signed readings are bundled into a Merkle tree whose root is anchored publicly. Anyone — a buyer, an auditor, a regulator — can verify one reading without trusting the operator.</span>
+          <span data-lang-ru>Подписанные показания собираются в дерево Меркла, корень которого публикуется открыто. Любой — покупатель, аудитор, регулятор — может проверить отдельное показание, не доверяя оператору.</span>
         </p>
         <div class="step-meta">
-          <span data-lang-en>Settlement layer: EVM-compatible L2</span>
-          <span data-lang-ru>Расчётный слой: EVM-совместимый L2</span><br>
-          <strong>~$0.001 / tx</strong>
+          <span data-lang-en>Anchoring: EVM-compatible L2</span>
+          <span data-lang-ru>Закрепление: EVM-совместимый L2</span><br>
+          <strong><span data-lang-en>Verify in the browser or CLI</span><span data-lang-ru>Проверка в браузере или CLI</span></strong>
         </div>
       </div>
     </div>
-  </div>
-</section>
 
-<!-- ============================================ -->
-<!-- ETA EXPLANATION                                -->
-<!-- ============================================ -->
-<section>
-  <div class="container">
-    <div class="section-label">
-      <span class="num">02</span>
-      <span data-lang-en>The mark</span>
-      <span data-lang-ru>Знак</span>
-    </div>
-
-    <div class="eta-block reveal">
-      <div class="eta-display">η</div>
-      <div class="eta-meaning">
-        <h3>
-          <span data-lang-en>Why <em>η</em></span>
-          <span data-lang-ru>Почему <em>η</em></span>
-        </h3>
-        <p>
-          <span data-lang-en>The Greek letter <strong>eta</strong> is the universal symbol for <strong>efficiency</strong> in physics — the ratio of useful energy to total energy.</span>
-          <span data-lang-ru>Греческая буква <strong>эта</strong> — универсальный символ <strong>КПД</strong> в физике — отношение полезной энергии к затраченной.</span>
-        </p>
-
-        <div class="formula-box">η = E<sub>useful</sub> / E<sub>total</sub></div>
-
-        <p>
-          <span data-lang-en>It also honors <strong>Emmy Noether</strong>, whose 1915 theorem connects every continuous symmetry in nature to a conservation law — including the conservation of energy itself.</span>
-          <span data-lang-ru>Знак также отдаёт дань <strong>Эмми Нётер</strong>, чья теорема 1915 года связывает каждую непрерывную симметрию в природе с законом сохранения — включая закон сохранения энергии.</span>
-        </p>
-
-        <p>
-          <span data-lang-en>Without Noether, modern physics has no foundation. Without foundation, no civilization. Her name is encoded in ours: <strong>Noether</strong> → <strong>Noethrion</strong>.</span>
-          <span data-lang-ru>Без Нётер у современной физики нет фундамента. Без фундамента — нет цивилизации. Её имя зашифровано в нашем: <strong>Noether</strong> → <strong>Noethrion</strong>.</span>
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============================================ -->
-<!-- SPEC                                           -->
-<!-- ============================================ -->
-<section id="spec">
-  <div class="container">
-    <div class="section-label">
-      <span class="num">03</span>
-      <span data-lang-en>Specification</span>
-      <span data-lang-ru>Спецификация</span>
-    </div>
-
-    <h2 class="section-headline">
-      <span data-lang-en>Audit the standard. <em>Run a node.</em><br>Read the spec.</span>
-      <span data-lang-ru>Проверь стандарт. <em>Запусти ноду.</em><br>Читай спецификацию.</span>
-    </h2>
-
-    <p class="section-intro" style="margin-bottom: 4rem;">
-      <span data-lang-en>The protocol is open. The reference implementation is open. The hardware is commodity. There is no proprietary lock-in. There never will be.</span>
-      <span data-lang-ru>Протокол открыт. Эталонная имплементация открыта. Железо — стандартное. Никакой проприетарной привязки. Никогда не будет.</span>
-    </p>
-
-    <div class="spec-grid">
+    <div class="spec-grid demo-grid">
       <div class="spec-text">
         <h3>
           <span data-lang-en>Technical foundations</span>
           <span data-lang-ru>Технические основы</span>
         </h3>
         <p>
-          <span data-lang-en>Built on proven primitives. No experimental cryptography. No custom Layer 1. No reinventing what already works.</span>
-          <span data-lang-ru>Построен на проверенных примитивах. Никакой экспериментальной криптографии. Никакого собственного Layer 1. Не изобретаем то, что уже работает.</span>
+          <span data-lang-en>Built on proven primitives and existing attestation work at the IETF. No experimental cryptography, no custom chain, no proprietary lock-in.</span>
+          <span data-lang-ru>Построен на проверенных примитивах и существующей работе IETF по аттестации. Никакой экспериментальной криптографии, своей цепочки или проприетарной привязки.</span>
         </p>
-
         <ul class="spec-list">
           <li>
-            <span class="key">
-              <span data-lang-en>Token</span>
-              <span data-lang-ru>Токен</span>
-            </span>
-            <span class="val"><em>1 NOET = 1 kWh</em></span>
+            <span class="key"><span data-lang-en>Signature</span><span data-lang-ru>Подпись</span></span>
+            <span class="val">ECDSA P-256 (ES256)</span>
           </li>
           <li>
-            <span class="key">
-              <span data-lang-en>Signature</span>
-              <span data-lang-ru>Подпись</span>
-            </span>
-            <span class="val">ECDSA P-256</span>
+            <span class="key"><span data-lang-en>Architecture</span><span data-lang-ru>Архитектура</span></span>
+            <span class="val">IETF RATS · RFC 9334</span>
           </li>
           <li>
-            <span class="key">
-              <span data-lang-en>Hardware</span>
-              <span data-lang-ru>Железо</span>
-            </span>
-            <span class="val">ATECC608B / SE050</span>
+            <span class="key"><span data-lang-en>Aggregation</span><span data-lang-ru>Агрегация</span></span>
+            <span class="val"><span data-lang-en>Merkle tree, sorted-pair keccak256</span><span data-lang-ru>Дерево Меркла, sorted-pair keccak256</span></span>
           </li>
           <li>
-            <span class="key">
-              <span data-lang-en>Settlement</span>
-              <span data-lang-ru>Расчёты</span>
-            </span>
-            <span class="val">EVM-compatible L2</span>
+            <span class="key"><span data-lang-en>Unit</span><span data-lang-ru>Единица</span></span>
+            <span class="val"><em>1 NOET = 1 verified kWh</em> <span data-lang-en>(see spec)</span><span data-lang-ru>(см. спецификацию)</span></span>
           </li>
           <li>
-            <span class="key">
-              <span data-lang-en>License</span>
-              <span data-lang-ru>Лицензия</span>
-            </span>
-            <span class="val">MIT (Apache 2.0 dual-license planned)</span>
+            <span class="key"><span data-lang-en>License</span><span data-lang-ru>Лицензия</span></span>
+            <span class="val">MIT</span>
           </li>
           <li>
-            <span class="key">
-              <span data-lang-en>Quantum-ready</span>
-              <span data-lang-ru>Квантово-устойчиво</span>
-            </span>
-            <span class="val">ML-DSA roadmap</span>
+            <span class="key"><span data-lang-en>Post-quantum</span><span data-lang-ru>Постквантовость</span></span>
+            <span class="val"><span data-lang-en>ML-DSA on the roadmap</span><span data-lang-ru>ML-DSA в плане</span></span>
           </li>
         </ul>
       </div>
 
-      <div class="code-block reveal">
-<pre><span class="comment"># <span data-lang-en>verify a kilowatt-hour reading</span><span data-lang-ru>проверка показания счётчика</span></span>
-<span class="prompt">$</span> noethrion verify --meter 0xA3F7...8D2C
+      <div>
+        <div class="code-block reveal" role="region" aria-label="Example verification output">
+<pre><span class="comment"># <span data-lang-en>verify one signed reading</span><span data-lang-ru>проверка одного подписанного показания</span></span>
+<span class="prompt">$</span> python3 tools/verify_attestation.py verify-full \
+    --attestation reading.json --pubkey device.pem \
+    --leaf 0x5c1e…9a07 --root 0xc619…fa87e --proof proof.json
 
 <span class="check">✓</span> <span class="meta"><span data-lang-en>signature valid</span><span data-lang-ru>подпись валидна</span></span>
-  <span class="meta">curve: P-256 · ECDSA</span>
-  <span class="meta">chip:  ATECC608B-MAHDA-T</span>
+  <span class="meta">curve:  P-256 · ECDSA</span>
+  <span class="meta">device: ATECC608B</span>
 
-<span class="check">✓</span> <span class="meta"><span data-lang-en>kWh attested</span><span data-lang-ru>кВт·ч подтверждён</span></span>
-  <span class="meta">value: <span class="num">1.0473</span> kWh</span>
-  <span class="meta">at:    2026-05-05T10:32:18Z</span>
-  <span class="meta">by:    meter 0xA3F7...8D2C</span>
+<span class="check">✓</span> <span class="meta"><span data-lang-en>reading intact</span><span data-lang-ru>показание не изменено</span></span>
+  <span class="meta">value:  <span class="num">1.0473</span> kWh</span>
+  <span class="meta">at:     2026-10-30T10:32:18Z</span>
 
-<span class="check">✓</span> <span class="meta"><span data-lang-en>merkle root settled</span><span data-lang-ru>корень меркла зафиксирован</span></span>
-  <span class="meta">block: <span class="num">8412934</span> · l2</span>
-  <span class="meta">tx:    0x9F2D...4A1B</span>
-  <span class="meta">gas:   <span class="num">$0.0008</span></span>
+<span class="check">✓</span> <span class="meta"><span data-lang-en>included in anchored batch</span><span data-lang-ru>входит в закреплённый пакет</span></span>
+  <span class="meta">root:   0xc619…fa87e</span>
 
-<span class="comment"># <span data-lang-en>1 NOET minted to producer wallet</span><span data-lang-ru>1 NOET начислен кошельку производителя</span></span></pre>
+<span class="ok">PASS  <span data-lang-en>attestation verified — anyone can re-run this check</span><span data-lang-ru>аттестация подтверждена — проверку может повторить любой</span></span></pre>
+        </div>
+        <p class="code-note">
+          <span data-lang-en>Illustrative output. The verifier is in the public repo: tools/verify_attestation.py</span>
+          <span data-lang-ru>Пример вывода. Проверяющий скрипт лежит в открытом репозитории: tools/verify_attestation.py</span>
+        </p>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ============================================ -->
+<!-- BUILT FOR — four audience doors                -->
+<!-- ============================================ -->
+<section id="built-for" aria-labelledby="doors-title">
+  <div class="container">
+    <p class="section-label">
+      <span class="num">03</span>
+      <span data-lang-en>Built for</span>
+      <span data-lang-ru>Для кого</span>
+    </p>
+
+    <h2 class="section-headline" id="doors-title">
+      <span data-lang-en>Four doors. <em>One standard.</em></span>
+      <span data-lang-ru>Четыре двери. <em>Один стандарт.</em></span>
+    </h2>
+
+    <p class="section-intro">
+      <span data-lang-en>The Foundation administers the specification. Partners build, sell and operate on top of it. Pick the door that fits you.</span>
+      <span data-lang-ru>Фонд администрирует спецификацию. Партнёры строят, продают и работают поверх неё. Выберите свою дверь.</span>
+    </p>
+
+    <div class="doors">
+      <article class="door reveal">
+        <p class="who"><span data-lang-en>Integrators</span><span data-lang-ru>Интеграторы</span></p>
+        <h3><span data-lang-en>Add verifiable readings to your platform</span><span data-lang-ru>Добавьте проверяемые показания в свою платформу</span></h3>
+        <p><span data-lang-en>Starter code in Python, TypeScript and Solidity, plus a seven-step end-to-end walkthrough from key generation to independent verification.</span><span data-lang-ru>Стартовый код на Python, TypeScript и Solidity и пошаговый пример из семи шагов — от генерации ключа до независимой проверки.</span></p>
+        <div class="links">
+          <a class="btn-primary" href="https://github.com/noethrion/noethrion/blob/main/QUICKSTART.md"><span data-lang-en>Integrate in an afternoon</span><span data-lang-ru>Интеграция за полдня</span> <span class="arrow" aria-hidden="true">→</span></a>
+          <a class="btn-ghost" href="https://github.com/noethrion/noethrion/blob/main/EXAMPLES.md"><span data-lang-en>Examples</span><span data-lang-ru>Примеры</span></a>
+        </div>
+      </article>
+
+      <article class="door reveal">
+        <p class="who"><span data-lang-en>Hardware vendors</span><span data-lang-ru>Производители железа</span></p>
+        <h3><span data-lang-en>Ship a compatible device</span><span data-lang-ru>Выпустите совместимое устройство</span></h3>
+        <p><span data-lang-en>Open reference firmware and a secure-element comparison across chip families. Any vendor can build to the spec — no licence, no fee, no exclusivity. Early pilot partners welcome.</span><span data-lang-ru>Открытая эталонная прошивка и сравнение защищённых чипов разных семейств. Любой производитель может делать устройства по спецификации — без лицензии, платы и эксклюзива. Ищем первых пилотных партнёров.</span></p>
+        <div class="links">
+          <a class="btn-primary" href="https://github.com/noethrion/noethrion/blob/main/docs/hardware-vendor-matrix.md"><span data-lang-en>Build a compatible device</span><span data-lang-ru>Сделать совместимое устройство</span> <span class="arrow" aria-hidden="true">→</span></a>
+          <a class="btn-ghost" href="mailto:team@noethrion.com?subject=Pilot%20vendor"><span data-lang-en>Become a pilot vendor</span><span data-lang-ru>Стать пилотным партнёром</span></a>
+        </div>
+      </article>
+
+      <article class="door reveal">
+        <p class="who"><span data-lang-en>AI infrastructure operators</span><span data-lang-ru>Операторы AI-инфраструктуры</span></p>
+        <h3><span data-lang-en>Prove the green compute you already buy</span><span data-lang-ru>Подтвердите зелёные вычисления, за которые уже платите</span></h3>
+        <p><span data-lang-en>An opt-in way to back energy and sourcing claims for training and inference workloads with signed meter data — so your reports can be checked, not just trusted. The same protocol serves any facility that meters energy.</span><span data-lang-ru>Добровольный способ подкрепить заявления об энергии и её источниках для обучения и инференса подписанными данными счётчиков — чтобы ваши отчёты можно было проверить, а не просто принять на веру. Тот же протокол подходит любому объекту, где энергия измеряется.</span></p>
+        <div class="links">
+          <a class="btn-primary" href="mailto:team@noethrion.com?subject=Verifiable%20energy%20reports"><span data-lang-en>Make your energy reports verifiable</span><span data-lang-ru>Сделать отчёты проверяемыми</span> <span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="door reveal">
+        <p class="who"><span data-lang-en>Researchers &amp; reviewers</span><span data-lang-ru>Исследователи и рецензенты</span></p>
+        <h3><span data-lang-en>Break the design before it ships</span><span data-lang-ru>Найдите слабые места до запуска</span></h3>
+        <p><span data-lang-en>The Internet-Draft, the threat model and formally checked contracts are public. Critical review — especially of the threat model and privacy sections — is the most valuable contribution right now.</span><span data-lang-ru>Internet-Draft, модель угроз и формально проверенные контракты открыты. Критическое ревью — особенно модели угроз и разделов о приватности — сейчас самый ценный вклад.</span></p>
+        <div class="links">
+          <a class="btn-primary" href="https://datatracker.ietf.org/doc/draft-chursin-rats-energy-attestation/"><span data-lang-en>Review the draft</span><span data-lang-ru>Рецензировать черновик</span> <span class="arrow" aria-hidden="true">→</span></a>
+          <a class="btn-ghost" href="https://github.com/noethrion/noethrion/discussions"><span data-lang-en>Discussions</span><span data-lang-ru>Обсуждения</span></a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- WHERE IT FITS                                  -->
+<!-- ============================================ -->
+<section id="fits" aria-labelledby="fits-title">
+  <div class="container">
+    <p class="section-label">
+      <span class="num">04</span>
+      <span data-lang-en>Where it fits</span>
+      <span data-lang-ru>Место в системе</span>
+    </p>
+
+    <h2 class="section-headline" id="fits-title">
+      <span data-lang-en>Under certificates, registries and audits — <em>not instead of them.</em></span>
+      <span data-lang-ru>Под сертификатами, реестрами и аудитом — <em>а не вместо них.</em></span>
+    </h2>
+
+    <p class="section-intro">
+      <span data-lang-en>Noethrion is an evidence layer. It is not a registry, not a marketplace and not a currency. Everything that exists today keeps working — it simply gets a signed source to start from.</span>
+      <span data-lang-ru>Noethrion — слой доказательств. Это не реестр, не маркетплейс и не валюта. Всё, что работает сегодня, продолжает работать — просто получает подписанный источник данных.</span>
+    </p>
+
+    <div class="layers reveal" role="list" aria-label="Layer stack">
+      <div class="layer" role="listitem">
+        <span class="lk"><span data-lang-en>Reports</span><span data-lang-ru>Отчёты</span></span>
+        <span class="lv"><span data-lang-en>Sustainability and energy disclosures, customer claims</span><span data-lang-ru>Отчёты об устойчивости и энергии, заявления для клиентов</span></span>
+      </div>
+      <div class="layer" role="listitem">
+        <span class="lk"><span data-lang-en>Assurance</span><span data-lang-ru>Подтверждение</span></span>
+        <span class="lv"><span data-lang-en>Certificates, registries, auditors, buyers</span><span data-lang-ru>Сертификаты, реестры, аудиторы, покупатели</span></span>
+      </div>
+      <div class="layer ours" role="listitem">
+        <span class="lk">Noethrion</span>
+        <span class="lv"><strong><span data-lang-en>Signed, independently verifiable readings</span><span data-lang-ru>Подписанные показания, проверяемые независимо</span></strong></span>
+      </div>
+      <div class="layer" role="listitem">
+        <span class="lk"><span data-lang-en>Physics</span><span data-lang-ru>Физика</span></span>
+        <span class="lv"><span data-lang-en>Meter + secure element at the point of measurement</span><span data-lang-ru>Счётчик + защищённый чип в точке измерения</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- STATUS — what's real today                     -->
+<!-- ============================================ -->
+<section id="status" aria-labelledby="status-title">
+  <div class="container">
+    <p class="section-label">
+      <span class="num">05</span>
+      <span data-lang-en>Status</span>
+      <span data-lang-ru>Статус</span>
+    </p>
+
+    <h2 class="section-headline" id="status-title">
+      <span data-lang-en>What's real <em>today.</em></span>
+      <span data-lang-ru>Что работает <em>уже сегодня.</em></span>
+    </h2>
+
+    <p class="section-intro">
+      <span data-lang-en>Early, honest, and checkable. Every line below links to something you can open yourself.</span>
+      <span data-lang-ru>Рано, честно и проверяемо. Каждая строка ниже ведёт туда, где можно убедиться самому.</span>
+    </p>
+
+    <ul class="status-list reveal">
+      <li>
+        <span class="mark" aria-hidden="true">✓</span>
+        <span class="what">
+          <span data-lang-en>IETF Internet-Draft -00 posted</span><span data-lang-ru>Опубликован IETF Internet-Draft -00</span>
+          <small><span data-lang-en>"Hardware-Rooted Attestation Tokens for Electricity Generation" — individual submission, aligned with the RATS architecture.</span><span data-lang-ru>«Hardware-Rooted Attestation Tokens for Electricity Generation» — индивидуальная подача, согласована с архитектурой RATS.</span> <a href="https://datatracker.ietf.org/doc/draft-chursin-rats-energy-attestation/">datatracker</a></small>
+        </span>
+        <span class="when"><span data-lang-en>Jul 2026</span><span data-lang-ru>июль 2026</span></span>
+      </li>
+      <li>
+        <span class="mark" aria-hidden="true">✓</span>
+        <span class="what">
+          <span data-lang-en>Public repository, MIT licence</span><span data-lang-ru>Публичный репозиторий, лицензия MIT</span>
+          <small><span data-lang-en>Specification, contracts, firmware, verifier and examples in one place.</span><span data-lang-ru>Спецификация, контракты, прошивка, проверяющая нода и примеры — в одном месте.</span> <a href="https://github.com/noethrion/noethrion">github.com/noethrion</a></small>
+        </span>
+        <span class="when"><span data-lang-en>Public</span><span data-lang-ru>Открыт</span></span>
+      </li>
+      <li>
+        <span class="mark" aria-hidden="true">✓</span>
+        <span class="what">
+          <span data-lang-en>Reference contracts: 127 tests and 25 symbolic proofs passing</span><span data-lang-ru>Эталонные контракты: 127 тестов и 25 символьных доказательств проходят</span>
+          <small><span data-lang-en>Unit, fuzz and invariant tests plus symbolic verification, run in public CI on every change.</span><span data-lang-ru>Модульные, fuzz- и инвариантные тесты плюс символьная верификация — в открытом CI на каждое изменение.</span> <a href="https://github.com/noethrion/noethrion/actions">CI</a></small>
+        </span>
+        <span class="when"><span data-lang-en>Green on main</span><span data-lang-ru>Зелёный на main</span></span>
+      </li>
+      <li>
+        <span class="mark" aria-hidden="true">✓</span>
+        <span class="what">
+          <span data-lang-en>Independent verifier node — Python, Go and in-browser</span><span data-lang-ru>Независимая проверяющая нода — Python, Go и в браузере</span>
+          <small><span data-lang-en>Re-checks anchored testnet batches and signatures without trusting the operator; raises an alarm on any mismatch.</span><span data-lang-ru>Перепроверяет закреплённые пакеты тестовой сети и подписи, не доверяя оператору; поднимает тревогу при любом расхождении.</span> <a href="https://noethrion.com/network/"><span data-lang-en>try it</span><span data-lang-ru>попробовать</span></a></small>
+        </span>
+        <span class="when"><span data-lang-en>Testnet</span><span data-lang-ru>Тестовая сеть</span></span>
+      </li>
+      <li>
+        <span class="mark" aria-hidden="true">✓</span>
+        <span class="what">
+          <span data-lang-en>Reference firmware skeleton builds (ESP32 + ATECC608B)</span><span data-lang-ru>Каркас эталонной прошивки собирается (ESP32 + ATECC608B)</span>
+          <small><span data-lang-en>Probe-only: talks to the secure element and prints its identity. The build fix is in review; real on-device signing is the next milestone.</span><span data-lang-ru>Пока только опрос: связывается с защищённым чипом и выводит его идентификатор. Исправление сборки на ревью; настоящая подпись на устройстве — следующий этап.</span> <a href="https://github.com/noethrion/noethrion/tree/main/firmware">firmware/</a></small>
+        </span>
+        <span class="when"><span data-lang-en>Oct 2026</span><span data-lang-ru>окт 2026</span></span>
+      </li>
+    </ul>
+
+    <p class="status-sub"><span data-lang-en>Not yet</span><span data-lang-ru>Ещё нет</span></p>
+    <ul class="status-list">
+      <li>
+        <span class="mark todo" aria-hidden="true">○</span>
+        <span class="what"><span data-lang-en>Signing on real meters in the field, hardware pilots with partners, mainnet anchoring</span><span data-lang-ru>Подпись на реальных счётчиках в поле, пилоты с партнёрами по железу, закрепление в основной сети</span></span>
+        <span class="when"><span data-lang-en>Next</span><span data-lang-ru>Дальше</span></span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================ -->
 <!-- PRINCIPLES                                     -->
 <!-- ============================================ -->
-<section id="principles">
+<section id="principles" aria-labelledby="principles-title">
   <div class="container">
-    <div class="section-label">
-      <span class="num">04</span>
+    <p class="section-label">
+      <span class="num">06</span>
       <span data-lang-en>Principles</span>
       <span data-lang-ru>Принципы</span>
-    </div>
+    </p>
 
-    <h2 class="section-headline">
+    <h2 class="section-headline" id="principles-title">
       <span data-lang-en>Standard, <em>not startup.</em></span>
       <span data-lang-ru>Стандарт, <em>не стартап.</em></span>
     </h2>
 
     <p class="section-intro">
-      <span data-lang-en>The Foundation administers the protocol. It does not own it. It does not direct ecosystem development. It does not compete with builders. The protocol succeeds when the ecosystem succeeds — not the other way around.</span>
-      <span data-lang-ru>Фонд администрирует протокол. Он им не владеет. Не направляет развитие экосистемы. Не конкурирует со строителями. Протокол побеждает, когда побеждает экосистема — не наоборот.</span>
+      <span data-lang-en>The Foundation administers the protocol. It does not own it, does not direct the ecosystem and does not compete with the people building on it. The protocol succeeds when the ecosystem succeeds.</span>
+      <span data-lang-ru>Фонд администрирует протокол. Он им не владеет, не управляет экосистемой и не конкурирует с теми, кто строит поверх. Протокол побеждает, когда побеждает экосистема.</span>
     </p>
 
     <div class="principles">
       <div class="principle">
-        <div class="principle-num">PRINCIPLE 01</div>
-        <h4>
+        <p class="principle-num">PRINCIPLE 01</p>
+        <h3 class="principle-title">
           <span data-lang-en>Open by default</span>
           <span data-lang-ru>Открытость по умолчанию</span>
-        </h4>
+        </h3>
         <p>
-          <span data-lang-en>Specification, reference implementation, and hardware list are public. Any party can run a node, fork the code, or build on top — without permission, without fees, without negotiation.</span>
+          <span data-lang-en>Specification, reference implementation and hardware list are public. Anyone can run a node, fork the code or build on top — without permission, without fees, without negotiation.</span>
           <span data-lang-ru>Спецификация, эталонная имплементация и список железа публичны. Любой может запустить ноду, форкнуть код или строить сверху — без разрешения, без платы, без переговоров.</span>
         </p>
       </div>
 
       <div class="principle">
-        <div class="principle-num">PRINCIPLE 02</div>
-        <h4>
+        <p class="principle-num">PRINCIPLE 02</p>
+        <h3 class="principle-title">
           <span data-lang-en>Verify, don't trust</span>
           <span data-lang-ru>Проверяй, не доверяй</span>
-        </h4>
+        </h3>
         <p>
-          <span data-lang-en>Every claim about energy is backed by a hardware signature. Every signature is verifiable on-chain. Every reading is auditable in 30 seconds with a single command.</span>
-          <span data-lang-ru>Любое утверждение об энергии подкреплено аппаратной подписью. Любую подпись можно проверить on-chain. Любое показание проверяется за 30 секунд одной командой.</span>
+          <span data-lang-en>Every energy claim built on the protocol traces back to a hardware signature. Every signature can be checked by anyone, with open tools, in seconds.</span>
+          <span data-lang-ru>Любое заявление об энергии на основе протокола восходит к аппаратной подписи. Любую подпись может проверить кто угодно, открытыми инструментами, за секунды.</span>
         </p>
       </div>
 
       <div class="principle">
-        <div class="principle-num">PRINCIPLE 03</div>
-        <h4>
-          <span data-lang-en>No middlemen</span>
-          <span data-lang-ru>Без посредников</span>
-        </h4>
+        <p class="principle-num">PRINCIPLE 03</p>
+        <h3 class="principle-title">
+          <span data-lang-en>Evidence for everyone who verifies</span>
+          <span data-lang-ru>Доказательства для всех, кто проверяет</span>
+        </h3>
         <p>
-          <span data-lang-en>The meter signs. The blockchain settles. There is no certifier issuing paper receipts. There is no registry charging fees. There is no spreadsheet to lose.</span>
-          <span data-lang-ru>Счётчик подписывает. Блокчейн фиксирует. Нет сертификатора с бумажными квитанциями. Нет реестра с платой за услуги. Нет таблицы, которую можно потерять.</span>
+          <span data-lang-en>Certifiers, registries, auditors and buyers read the same signed record. The standard gives them evidence from the source — it does not replace their role or their judgement.</span>
+          <span data-lang-ru>Сертификаторы, реестры, аудиторы и покупатели читают одну и ту же подписанную запись. Стандарт даёт им доказательства от источника — и не заменяет ни их роль, ни их суждение.</span>
         </p>
       </div>
 
       <div class="principle">
-        <div class="principle-num">PRINCIPLE 04</div>
-        <h4>
+        <p class="principle-num">PRINCIPLE 04</p>
+        <h3 class="principle-title">
           <span data-lang-en>Built to outlive us</span>
           <span data-lang-ru>Создано, чтобы пережить нас</span>
-        </h4>
+        </h3>
         <p>
-          <span data-lang-en>The Foundation will eventually have no founders, no CEO, and no single jurisdiction. The protocol will run regardless. This is not a feature — it is a precondition.</span>
+          <span data-lang-en>The Foundation will eventually have no founders, no CEO and no single jurisdiction. The protocol will run regardless. This is not a feature — it is a precondition.</span>
           <span data-lang-ru>У Фонда со временем не будет ни основателей, ни CEO, ни единой юрисдикции. Протокол продолжит работать. Это не функция — это предусловие.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- THE MARK (compact)                             -->
+<!-- ============================================ -->
+<section aria-labelledby="mark-title">
+  <div class="container">
+    <p class="section-label">
+      <span class="num">07</span>
+      <span data-lang-en>The mark</span>
+      <span data-lang-ru>Знак</span>
+    </p>
+
+    <div class="eta-block reveal">
+      <div class="eta-display" aria-hidden="true">η</div>
+      <div class="eta-meaning">
+        <h2 class="mark-title" id="mark-title">
+          <span data-lang-en>Why <em>η</em></span>
+          <span data-lang-ru>Почему <em>η</em></span>
+        </h2>
+        <p>
+          <span data-lang-en>In physics, <strong>eta</strong> stands for <strong>efficiency</strong> — useful energy over total energy.</span>
+          <span data-lang-ru>В физике <strong>эта</strong> обозначает <strong>КПД</strong> — отношение полезной энергии к затраченной.</span>
+        </p>
+        <div class="formula-box">η = E<sub>useful</sub> / E<sub>total</sub></div>
+        <p>
+          <span data-lang-en>The name honours <strong>Emmy Noether</strong>, whose 1915 theorem links symmetry to conservation laws — including the conservation of energy. <strong>Noether</strong> → <strong>Noethrion</strong>.</span>
+          <span data-lang-ru>Имя — дань <strong>Эмми Нётер</strong>, чья теорема 1915 года связала симметрии с законами сохранения, включая закон сохранения энергии. <strong>Noether</strong> → <strong>Noethrion</strong>.</span>
         </p>
       </div>
     </div>
@@ -1331,30 +1673,29 @@
 <!-- ============================================ -->
 <!-- CTA                                            -->
 <!-- ============================================ -->
-<section class="cta-section">
+<section class="cta-section" aria-labelledby="cta-title">
   <div class="container">
-    <span class="cta-eta">η</span>
-    <h2 class="cta-headline">
+    <span class="cta-eta" aria-hidden="true">η</span>
+    <h2 class="cta-headline" id="cta-title">
       <span data-lang-en>Energy speaks for itself.<br>We just give it a <em>signature.</em></span>
       <span data-lang-ru>Энергия говорит сама за себя.<br>Мы просто даём ей <em>подпись.</em></span>
     </h2>
     <p class="cta-sub">
-      <span data-lang-en>The protocol is in early development. The community is small. The work is real. If you build hardware, write Solidity, run renewables, or care about climate verification done right — we want to hear from you.</span>
-      <span data-lang-ru>Протокол в ранней разработке. Сообщество небольшое. Работа реальная. Если ты делаешь железо, пишешь на Solidity, работаешь с возобновляемыми источниками или тебе важна правильная климатическая верификация — мы хотим услышать тебя.</span>
+      <span data-lang-en>The work is early and real. We are looking for hardware partners for a pilot, reviewers for the draft, and integrators who want verifiable energy data in their products.</span>
+      <span data-lang-ru>Работа ранняя, но настоящая. Ищем партнёров по железу для пилота, рецензентов черновика и интеграторов, которым нужны проверяемые данные об энергии в продуктах.</span>
     </p>
     <div class="cta-buttons">
-      <a href="https://github.com/noethrion/noethrion" class="btn-primary">
-        <span data-lang-en>Join on Github</span>
-        <span data-lang-ru>Зайти на Github</span>
-        <span class="arrow">→</span>
+      <a href="#built-for" class="btn-primary">
+        <span data-lang-en>Find your door</span>
+        <span data-lang-ru>Выбрать свою дверь</span>
+        <span class="arrow" aria-hidden="true">→</span>
       </a>
-      <a href="mailto:team@noethrion.com" class="btn-ghost">
-        <span data-lang-en>team@noethrion.com</span>
-        <span data-lang-ru>team@noethrion.com</span>
-      </a>
+      <a href="mailto:team@noethrion.com" class="btn-ghost">team@noethrion.com</a>
     </div>
   </div>
 </section>
+
+</main>
 
 <!-- ============================================ -->
 <!-- FOOTER                                         -->
@@ -1364,33 +1705,33 @@
     <div class="footer-grid">
       <div>
         <div class="footer-mark">
-          <span class="eta-symbol">η</span>
+          <span class="eta-symbol" aria-hidden="true">η</span>
           noethrion
         </div>
         <p class="footer-tagline">
-          <span data-lang-en>An open standard for hardware-attested energy production. Built to outlive its founders.</span>
-          <span data-lang-ru>Открытый стандарт для аппаратно-подтверждённой генерации энергии. Создан, чтобы пережить своих основателей.</span>
+          <span data-lang-en>An open standard for hardware-attested energy data. Built to outlive its founders.</span>
+          <span data-lang-ru>Открытый стандарт для аппаратно-подтверждённых данных об энергии. Создан, чтобы пережить своих основателей.</span>
         </p>
       </div>
 
       <div class="footer-col">
-        <h5>
+        <h2 class="footer-h">
           <span data-lang-en>Protocol</span>
           <span data-lang-ru>Протокол</span>
-        </h5>
+        </h2>
         <ul>
+          <li><a href="https://datatracker.ietf.org/doc/draft-chursin-rats-energy-attestation/"><span data-lang-en>IETF Internet-Draft</span><span data-lang-ru>IETF Internet-Draft</span></a></li>
           <li><a href="https://github.com/noethrion/noethrion/tree/main/spec"><span data-lang-en>Specification</span><span data-lang-ru>Спецификация</span></a></li>
           <li><a href="/whitepaper.html"><span data-lang-en>Whitepaper</span><span data-lang-ru>Whitepaper</span></a></li>
-          <li><a href="https://github.com/noethrion/noethrion">Github</a></li>
-          <li><a href="https://github.com/noethrion/noethrion/tree/main/node"><span data-lang-en>Reference impl.</span><span data-lang-ru>Эталонная имплементация</span></a></li>
+          <li><a href="https://github.com/noethrion/noethrion/tree/main/node"><span data-lang-en>Verifier node</span><span data-lang-ru>Проверяющая нода</span></a></li>
         </ul>
       </div>
 
       <div class="footer-col">
-        <h5>
+        <h2 class="footer-h">
           <span data-lang-en>Foundation</span>
           <span data-lang-ru>Фонд</span>
-        </h5>
+        </h2>
         <ul>
           <li><a href="https://github.com/noethrion/noethrion/blob/main/FAQ.md"><span data-lang-en>About / FAQ</span><span data-lang-ru>О проекте / FAQ</span></a></li>
           <li><a href="/constitution.html"><span data-lang-en>Constitution</span><span data-lang-ru>Конституция</span></a></li>
@@ -1399,11 +1740,12 @@
       </div>
 
       <div class="footer-col">
-        <h5>
+        <h2 class="footer-h">
           <span data-lang-en>Community</span>
           <span data-lang-ru>Сообщество</span>
-        </h5>
+        </h2>
         <ul>
+          <li><a href="https://github.com/noethrion/noethrion/discussions"><span data-lang-en>Discussions</span><span data-lang-ru>Обсуждения</span></a></li>
           <li><a href="https://t.me/noethrion">Telegram</a></li>
           <li><a href="https://x.com/noethrion">Twitter / X</a></li>
           <li><a href="mailto:team@noethrion.com"><span data-lang-en>Email</span><span data-lang-ru>Почта</span></a></li>
@@ -1414,8 +1756,8 @@
     <div class="footer-bottom">
       <span>η = E<sub>useful</sub> / E<sub>total</sub></span>
       <span>
-        <span data-lang-en>v0.1 · working draft · 05.05.2026</span>
-        <span data-lang-ru>v0.1 · рабочий черновик · 05.05.2026</span>
+        <span data-lang-en>Internet-Draft -00 · site v2 · October 2026</span>
+        <span data-lang-ru>Internet-Draft -00 · сайт v2 · октябрь 2026</span>
       </span>
       <span>
         <span data-lang-en>built with care</span>
@@ -1432,8 +1774,8 @@
   const langButtons = document.querySelectorAll('.lang-btn');
   const html = document.documentElement;
 
-  // Try to load saved language preference
-  const savedLang = localStorage.getItem('noethrion-lang');
+  let savedLang = null;
+  try { savedLang = localStorage.getItem('noethrion-lang'); } catch (e) {}
   if (savedLang === 'ru' || savedLang === 'en') {
     setLang(savedLang);
   }
@@ -1457,17 +1799,20 @@
   }
 
   // ============================================
-  // REVEAL ON SCROLL
+  // REVEAL ON SCROLL (content stays visible if IO is unavailable)
   // ============================================
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in');
-      }
-    });
-  }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
-
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  } else {
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+  }
 </script>
 
 </body>
