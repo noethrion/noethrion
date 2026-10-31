@@ -94,7 +94,7 @@
       The protocol places a hardware secure element adjacent to a
       kilowatt-hour meter; the secure element signs the tuple (energy delta,
       timestamp, device identifier) with a private key that is generated
-      on-chip and cannot be extracted; the resulting attestation tokens are
+      on-chip and is designed to be non-extractable; the resulting attestation tokens are
       aggregated into Merkle trees and committed to a public settlement layer;
       any relying party holding the device's endorsed public key can
       independently verify any single attestation.</t>
@@ -120,7 +120,7 @@
       <t>This document is intended for review by the Remote ATtestation
       procedureS (RATS) Working Group and other interested IETF participants.
       Comments are welcome on the RATS mailing list (rats@ietf.org) or at the
-      address given in the Authors' Addresses section.</t>
+      address given in the Author's Address section.</t>
     </section>
 
     <section anchor="terminology" numbered="true">
@@ -145,13 +145,17 @@
           architecture <xref target="RFC9334"/>.</dd>
 
           <dt>Verifier:</dt>
-          <dd>Any party that reconstructs and validates an attestation,
-          including its Merkle inclusion proof and on-chain commitment.</dd>
+          <dd>A role that appraises Evidence about an Attester, using
+          Endorsements, Reference Values, and appraisal policy, and produces
+          Attestation Results, as in <xref target="RFC9334"/>. In this
+          document the appraisal also covers the Merkle inclusion proof and
+          on-chain commitment of an attestation token.</dd>
 
           <dt>Relying Party (RP):</dt>
-          <dd>An economic actor consuming an attestation as evidence of
-          clean-energy generation: a producer, consumer, regulator, or
-          integrator.</dd>
+          <dd>A role that depends on the validity of information about an
+          Attester, as conveyed in Attestation Results, as in
+          <xref target="RFC9334"/>. Examples include producers, consumers,
+          regulators, and integrators of clean-energy claims.</dd>
 
           <dt>Endorser:</dt>
           <dd>An entity that issues an endorsement linking a device's public
@@ -159,9 +163,10 @@
           authority, or a self-attested operator.</dd>
 
           <dt>Reference Values:</dt>
-          <dd>The expected device configuration, firmware hash, and
-          certification status against which Verifiers may assess an
-          Attester.</dd>
+          <dd>The expected device configuration digest, firmware version,
+          and model against which Verifiers may assess an Attester.
+          Properties such as certification status are Endorsements, not
+          Reference Values.</dd>
 
           <dt>Attestation Result:</dt>
           <dd>The output of a Verifier's appraisal of an Attestation Token,
@@ -231,9 +236,10 @@
           <li><bcp14>MUST</bcp14> sign each evidence payload with the device's
           private key, as a COSE_Sign1 structure (<xref target="envelope"/>),
           before transmission.</li>
-          <li><bcp14>SHOULD</bcp14> include in each attestation a hash of the
-          previous attestation produced by the same device, forming a
-          per-device hash chain.</li>
+          <li><bcp14>MUST</bcp14> include in each attestation the "prev"
+          claim (<xref target="claim-set"/>), a hash of the previous
+          attestation produced by the same device, forming a per-device hash
+          chain.</li>
           <li><bcp14>MAY</bcp14> include firmware version, model identifier,
           and configuration claims in the attestation token.</li>
         </ul>
@@ -253,7 +259,7 @@
           not accept.</li>
           <li><bcp14>MUST</bcp14> verify the Merkle inclusion proof against the
           on-chain committed root for the corresponding epoch.</li>
-          <li><bcp14>SHOULD</bcp14> check the endorsement chain of the
+          <li><bcp14>MUST</bcp14> check the endorsement chain of the
           Attester's public key against a trusted Endorser registry.</li>
           <li><bcp14>MAY</bcp14> apply additional Reference Values checks
           (firmware version, model, certification status) where required.</li>
@@ -425,16 +431,19 @@
               <td align="left">uint</td>
               <td align="left">MUST</td>
               <td align="left">Per-device monotonic sequence number, starting
-              at 1 and incremented for each emitted attestation.</td>
+              at 1 and incremented by one for each emitted attestation. The
+              pair ("iss", "seq") identifies a measurement
+              (<xref target="measurement-identity"/>).</td>
             </tr>
             <tr>
               <td align="right">5</td>
               <td align="left">prev</td>
               <td align="left">bstr / null</td>
               <td align="left">MUST</td>
-              <td align="left">Hash of the previous attestation token from the
-              same device. It is CBOR null for the first attestation, that is
-              when seq equals 1.</td>
+              <td align="left">SHA-256 digest (32 bytes) of the evidence
+              payload of the previous attestation token from the same device,
+              computed as specified below the table. It is CBOR null for the
+              first attestation, that is when seq equals 1.</td>
             </tr>
             <tr>
               <td align="right">6</td>
@@ -455,11 +464,24 @@
               <td align="left">cfg</td>
               <td align="left">bstr</td>
               <td align="left">MAY</td>
-              <td align="left">Hash of the device configuration relevant to
-              measurement integrity.</td>
+              <td align="left">SHA-256 digest (32 bytes) of the device
+              configuration relevant to measurement integrity.</td>
             </tr>
           </tbody>
         </table>
+
+        <t>The "prev" value of token n is the SHA-256 digest of the
+        deterministically encoded evidence payload of token n-1, that is, of
+        the content of the "payload" byte string of its COSE_Sign1 structure
+        (<xref target="envelope"/>). Hashing the payload rather than the
+        complete token makes the hash chain independent of the signature
+        value and of the unprotected header. The "cfg" value is a SHA-256
+        digest over a deployment-defined serialization of the configuration
+        it covers; that serialization is identified through the Reference
+        Values against which "cfg" is compared
+        (<xref target="corim-endorsements"/>). Both "fwv" and "cfg" are
+        reported by the host and are subject to the limitation described in
+        <xref target="threat-mcu"/>.</t>
 
         <t>The evidence payload carries no signature claim and no algorithm
         claim. The signature, the signature algorithm, and the key identifier
@@ -478,8 +500,9 @@
           <li>The "alg" header parameter (COSE header label 1) identifies the
           signature algorithm. It <bcp14>MUST</bcp14> be present in the
           protected header. For this version of the protocol its value
-          <bcp14>MUST</bcp14> be -7 (ES256), as registered in
-          <xref target="RFC9053"/>.</li>
+          <bcp14>MUST</bcp14> be -9 (ESP256), as registered in
+          <xref target="RFC9864"/>. The compatibility rule for the value -7
+          is given in <xref target="signature-scheme"/>.</li>
           <li>The "kid" header parameter (COSE header label 4) identifies the
           endorsed device key used to produce the signature. It
           <bcp14>SHOULD</bcp14> be present in the protected header. Where it is
@@ -493,6 +516,15 @@
         <bcp14>MUST</bcp14> reject the token, because such an indication would
         create a second and possibly disagreeing source of truth for algorithm
         selection.</t>
+
+        <t>The unprotected header of an attestation token <bcp14>MUST</bcp14>
+        be an empty map. Attesters and aggregators <bcp14>MUST NOT</bcp14>
+        add unprotected header parameters, and a Verifier <bcp14>MUST
+        NOT</bcp14> use the content of the unprotected header when
+        identifying a measurement (<xref target="measurement-identity"/>).
+        Implementations <bcp14>MAY</bcp14> include the "typ" header parameter
+        <xref target="RFC9596"/> in the protected header; a value for it is
+        left for a future revision.</t>
       </section>
 
       <section anchor="cddl" numbered="true">
@@ -513,26 +545,27 @@ Noethrion-Sign1 = [
 ]
 
 Noethrion-Protected-Header = {
-  1 => int,               ; alg; MUST be -7 (ES256) in this version
+  1 => -9,                ; alg: ESP256 (see Section 5 for -7)
   ? 4 => bstr,            ; kid; endorsed device key identifier
   * cose-label => any
 }
 
-Noethrion-Unprotected-Header = {
-  * cose-label => any
-}
+Noethrion-Unprotected-Header = {}   ; MUST be empty
 
 Noethrion-Claims = {
-  1 => bstr,              ; iss:  secure element serial number
+  1 => bstr .size 9,      ; iss:  secure element serial number
   2 => uint,              ; iat:  issued-at, UTC seconds
   3 => uint,              ; wh:   energy delta, watt-hours
-  4 => uint,              ; seq:  per-device monotonic counter, >= 1
-  5 => bstr / null,       ; prev: hash of previous token;
+  4 => uint .ge 1,        ; seq:  per-device monotonic counter
+  5 => sha256-digest / null,
+                          ; prev: SHA-256 of previous payload;
                           ;       null if and only if seq == 1
-  ? 6 => tstr,            ; fwv:  firmware version
+  ? 6 => tstr,            ; fwv:  firmware version (host-reported)
   ? 7 => tstr,            ; mdl:  device model identifier
-  ? 8 => bstr,            ; cfg:  device configuration hash
+  ? 8 => sha256-digest,   ; cfg:  config digest (host-reported)
 }
+
+sha256-digest = bstr .size 32
 
 cose-label = int / tstr
 ]]></sourcecode>
@@ -555,7 +588,7 @@ cose-label = int / tstr
         to this profile, and the payload is not itself an EAT claims set.</t>
 
         <t><xref target="tbl-eat-map"/> lists, for information, the EAT or
-        CWT claims that correspond most closely to each claim of this
+        CWT <xref target="RFC8392"/> claims that correspond most closely to each claim of this
         profile. It corrects the statement in -00 that "iss", "iat", and
         "seq" can be mapped directly to CWT-registered claims: only "iat"
         has a direct equivalent. The table does not change the wire format
@@ -632,8 +665,20 @@ cose-label = int / tstr
 
       <t>This document specifies a single signature algorithm for this version
       of the protocol: ECDSA over the NIST P-256 curve (secp256r1) with
-      SHA-256, denoted ES256 and assigned COSE algorithm value -7 in
-      <xref target="RFC9053"/>.</t>
+      SHA-256, identified by the fully-specified COSE algorithm ESP256,
+      value -9, defined in <xref target="RFC9864"/>, Section 2.1.
+      Attesters <bcp14>MUST</bcp14> use the value -9.</t>
+
+      <t>Revision -00 of this document specified the polymorphic identifier
+      ES256 (-7) <xref target="RFC9053"/>, which <xref target="RFC9864"/>
+      deprecates in favour of ESP256. With a P-256 key, ES256 and ESP256
+      produce signatures of identical form; only the identifier differs.
+      For compatibility with tokens produced under -00, a Verifier
+      <bcp14>MAY</bcp14> accept the value -7 when the endorsed device key is
+      a P-256 key and the token is contained in a batch committed before a
+      deployment-defined cutoff. Such tokens are otherwise processed as
+      specified in this document. A future revision is expected to remove
+      this allowance.</t>
 
       <section anchor="envelope" numbered="true">
         <name>Signature Envelope</name>
@@ -675,7 +720,11 @@ cose-label = int / tstr
         is historical, is not conformant with this document, and
         <bcp14>MUST NOT</bcp14> be used for new deployments. Verifiers
         <bcp14>MAY</bcp14> retain support for it solely in order to re-verify
-        pre-standard historical records.</t>
+        pre-standard historical records, and then only for records already
+        contained in batches finalized before a fixed, deployment-defined
+        cutoff. Because the secure element signs whatever digest the host
+        presents, a bare record that is not so committed provides no
+        assurance that it was produced before the cutoff.</t>
       </section>
 
       <section anchor="p256-rationale" numbered="true">
@@ -733,8 +782,11 @@ cose-label = int / tstr
 parent = keccak256(min(a, b) || max(a, b))
 ]]></artwork>
 
-        <t>where a and b are the two 32-byte child hashes and min and max
-        denote lexicographic byte-wise ordering. Sorting each pair before
+        <t>where a and b are the two 32-byte child hashes, min and max
+        denote lexicographic byte-wise ordering, and keccak256 is the
+        original Keccak-256 function <xref target="KECCAK"/> with its
+        original padding, which is not the SHA3-256 function standardized in
+        FIPS 202. Sorting each pair before
         hashing makes the construction order-independent: an inclusion proof
         carries only the sibling hashes, with no left/right position flags.
         This is the construction implemented by the widely used Merkle proof
@@ -811,6 +863,17 @@ parent = keccak256(min(a, b) || max(a, b))
         fraud-proof-verified slashing. After the challenge window expires
         without the batch being rejected, the batch is finalized; finalization
         is irreversible.</t>
+
+        <t>The block timestamp recorded at submission is the Anchor Time of
+        every token in the batch. It is set by the settlement layer and not
+        by the Attester or its host, and it is the reference time for the
+        revocation and timestamp-plausibility checks of
+        <xref target="endorser-revocation"/>,
+        <xref target="device-revocation"/>, and
+        <xref target="measurement-identity"/>. A Verifier that appraises a
+        token not yet contained in a committed batch <bcp14>MUST</bcp14> use
+        its own time of receipt of the token in place of the Anchor
+        Time.</t>
       </section>
 
       <section anchor="verification-path" numbered="true">
@@ -833,9 +896,14 @@ parent = keccak256(min(a, b) || max(a, b))
           against the device Attester's endorsed public key: the
           secure-element-bound key of <xref target="role-attester"/>, and not
           the on-chain contract of <xref target="onchain"/>.</li>
+          <li>Confirm, against the Anchor Time of the batch
+          (<xref target="onchain"/>), that neither the device key nor its
+          Endorser is revoked (<xref target="endorser-revocation"/>,
+          <xref target="device-revocation"/>) and that the token's "iat" is
+          plausible (<xref target="measurement-identity"/>).</li>
         </ol>
 
-        <t>All seven steps <bcp14>MUST</bcp14> succeed for the attestation to
+        <t>All eight steps <bcp14>MUST</bcp14> succeed for the attestation to
         be accepted.</t>
 
         <section anchor="two-layer" numbered="true">
@@ -867,6 +935,23 @@ parent = keccak256(min(a, b) || max(a, b))
           attestation-evidence tree is verified separately by the off-chain
           Verifier path above and is not yet referenced on-chain.</t>
         </section>
+      </section>
+
+      <section anchor="transparency" numbered="true">
+        <name>Relationship to Transparency Services</name>
+
+        <t>The commitment layer of this section registers batches of signed
+        statements in a verifiable data structure and lets a Verifier check
+        inclusion. This is the function standardized by the Supply Chain
+        Integrity, Transparency, and Trust (SCITT) architecture
+        <xref target="RFC9943"/>, with inclusion proofs conveyed as COSE
+        Receipts <xref target="RFC9942"/>. A SCITT Transparency Service is a
+        possible IETF-aligned transport and transparency layer for
+        attestation tokens, either alongside or instead of the settlement
+        layer described here. This version does not specify such use; a
+        future revision is expected to evaluate it. The token format of
+        <xref target="token-format"/> does not depend on the commitment
+        layer.</t>
       </section>
     </section>
 
@@ -946,9 +1031,16 @@ parent = keccak256(min(a, b) || max(a, b))
 
         <t>An Endorser <bcp14>MAY</bcp14> revoke an endorsement, for example on
         discovery of a compromised provisioning batch. Revocations
-        <bcp14>SHALL</bcp14> be timestamped; a Verifier evaluating an
-        attestation <bcp14>MUST</bcp14> consider revocations issued before the
-        attestation's "iat" timestamp.</t>
+        <bcp14>SHALL</bcp14> be timestamped with an effective time, which
+        <bcp14>MAY</bcp14> be earlier than the time of issuance when the
+        Endorser knows when a compromise began. A Verifier
+        <bcp14>MUST</bcp14> evaluate revocation against the Anchor Time of
+        the batch containing the attestation (<xref target="onchain"/>), and
+        not against the attestation's "iat", because "iat" is set by the
+        Attester's host and can be back-dated by an adversary that controls
+        the host or holds an extracted key. An attestation whose Anchor Time
+        is at or after the effective time of a revocation of its Endorser
+        <bcp14>MUST</bcp14> be rejected.</t>
       </section>
 
       <section anchor="device-revocation" numbered="true">
@@ -956,9 +1048,11 @@ parent = keccak256(min(a, b) || max(a, b))
 
         <t>A device's endorsement <bcp14>MAY</bcp14> be revoked individually,
         for example on suspicion of physical tampering reported through the
-        protocol's challenge mechanism. Attestations from a revoked device with
-        an "iat" value after the revocation timestamp <bcp14>MUST</bcp14> be
-        rejected.</t>
+        protocol's challenge mechanism, or on detection of equivocation
+        (<xref target="measurement-identity"/>). Attestations from a revoked
+        device whose Anchor Time (<xref target="onchain"/>) is at or after
+        the effective time of the revocation <bcp14>MUST</bcp14> be rejected,
+        whatever their "iat" value.</t>
       </section>
     </section>
 
@@ -979,31 +1073,44 @@ parent = keccak256(min(a, b) || max(a, b))
         <name>Appraisal Records</name>
 
         <t>The EAR contains one EAR-appraisal entry in its "submods" claim
-        for each appraised device. The label of that entry
-        <bcp14>SHOULD</bcp14> be the lowercase hexadecimal encoding of the
-        device's "iss" claim, so that results for the same device are
-        labelled consistently across Verifiers. Where a single EAR reports on
-        several tokens from the same device, the Verifier
-        <bcp14>MUST</bcp14> report the worst applicable result for that
-        device.</t>
+        for each appraised attestation token, because the
+        "ear_attester_claims" of an EAR-appraisal carry the claims of a
+        single appraisal <xref target="I-D.ietf-rats-ear"/>. The label of
+        that entry <bcp14>SHOULD</bcp14> be the lowercase hexadecimal
+        encoding of the token's "iss" claim, followed by a hyphen and the
+        decimal value of its "seq" claim, so that results for the same
+        measurement (<xref target="measurement-identity"/>) are labelled
+        consistently across Verifiers. As required by
+        <xref target="I-D.ietf-rats-ear"/>, the top-level "ear_status" of an
+        EAR reporting on several tokens is no higher than the worst
+        "ear_status" among its entries.</t>
 
-        <t>The "ear_status" of an appraisal entry is one of the four
-        trustworthiness tiers of <xref target="I-D.ietf-rats-ar4si"/>, and
-        is assigned as follows:</t>
+        <t>The "ear_status" of an appraisal entry is a trustworthiness tier
+        of <xref target="I-D.ietf-rats-ar4si"/>. As required by
+        <xref target="I-D.ietf-rats-ear"/>, it <bcp14>MUST NOT</bcp14> be a
+        tier of higher trust than the tier of the worst claim in the
+        trustworthiness vector of that entry. Within that limit, it is
+        assigned as follows:</t>
 
         <ul spacing="normal">
           <li>"affirming" only if all steps of the verification path of
           <xref target="verification-path"/> succeed, including
           finalization, and no claim of the trustworthiness vector is in the
-          contraindicated tier.</li>
+          Warning or Contraindicated tier. Because "sourced-data" is in the
+          Warning tier unless the measurer has itself been appraised
+          (<xref target="ear-vector"/>), a deployment whose
+          measurer-to-signer interface is unauthenticated obtains at most
+          "warning".</li>
           <li>No higher than "warning" if every step other than finalization
           succeeds but the batch is still within its challenge window. Such a
           result <bcp14>MUST NOT</bcp14> be treated by a Relying Party as
           evidence of finalized generation.</li>
           <li>"contraindicated" if the signature fails to validate, the
           Merkle inclusion proof does not match the committed root, the
-          device or its Endorser is revoked as of the token's "iat", or the
-          replay check of <xref target="threat-replay"/> fails.</li>
+          device or its Endorser is revoked as of the Anchor Time of the
+          batch (<xref target="onchain"/>), the "iat" plausibility check
+          fails, or equivocation is detected
+          (<xref target="measurement-identity"/>).</li>
         </ul>
       </section>
 
@@ -1012,33 +1119,49 @@ parent = keccak256(min(a, b) || max(a, b))
 
         <t>The Verifier <bcp14>SHOULD</bcp14> include the trustworthiness
         vector of <xref target="I-D.ietf-rats-ar4si"/>, populated as
-        follows. Values are those defined in that document; claims not listed
-        are left unasserted.</t>
+        follows. Values are those defined in that document. Claims not listed
+        are left unasserted; a value of 0 (no assertion) is equivalent to an
+        unasserted claim.</t>
 
         <dl newline="true" spacing="normal">
           <dt>instance-identity:</dt>
           <dd>2 when the device key is endorsed and not revoked as of the
-          token's "iat"; 96 when it is revoked; 97 when no endorsement is
-          found.</dd>
+          Anchor Time; 96 when it is revoked. 97 only when no endorsement is
+          found for a device that the Verifier expects to recognize, for
+          example because its "iss" appears in an Endorser's provisioning
+          records; otherwise the claim is unasserted. A token without an
+          endorsed key cannot pass the verification path, and its
+          "ear_status" is not "affirming".</dd>
 
           <dt>hardware:</dt>
           <dd>2 when an endorsement asserts that the key is held in a secure
           element meeting the Endorser's stated provisioning procedure
-          (<xref target="role-endorser"/>); 97 when no such assertion is
-          available.</dd>
+          (<xref target="role-endorser"/>); otherwise unasserted (0).</dd>
 
           <dt>executables and configuration:</dt>
-          <dd>Assigned by comparing "fwv" and "cfg" with Reference Values,
-          when Reference Values are available.</dd>
+          <dd>The "fwv" and "cfg" claims are reported by the host and are not
+          measured by the secure element (<xref target="threat-mcu"/>). A
+          Verifier <bcp14>MUST NOT</bcp14> assign a value in the Affirming
+          tier to these claims on the basis of "fwv" and "cfg" alone, unless
+          an Endorsement asserts that those values are measured by a root of
+          trust rather than reported by the host. Where they match Reference
+          Values, the claims are otherwise left unasserted. Where they do not
+          match, the Verifier assigns 33 to "executables" and 95 to
+          "configuration".</dd>
 
           <dt>sourced-data:</dt>
-          <dd>2 when an endorsement asserts that the measurer-to-signer
-          interface is authenticated as described in
-          <xref target="threat-physical"/>; otherwise 32, which denotes data
-          from unattested sources. A Verifier <bcp14>MUST NOT</bcp14> assign
-          an affirming value to this claim on the basis of the Attester's
+          <dd>2 only when the readings are authenticated by the measurer
+          (<xref target="threat-physical"/>) and the measurer has itself been
+          appraised as an Attester, for example as a separate EAR-appraisal
+          of a composite Attester, with a result that meets the conditions of
+          <xref target="I-D.ietf-rats-ar4si"/> for that value. An Endorsement
+          stating that the measurer-to-signer interface is authenticated is
+          not sufficient on its own. Otherwise 32, which denotes data from
+          unattested sources. A Verifier <bcp14>MUST NOT</bcp14> assign an
+          affirming value to this claim on the basis of the Attester's
           signature alone, because that signature does not cover the
-          measurer-to-signer interface.</dd>
+          measurer-to-signer interface. Appraisal of the measurer is not
+          further specified in this version.</dd>
         </dl>
 
         <t>The value 99 (cryptographic validation of the Evidence has
@@ -1053,9 +1176,9 @@ parent = keccak256(min(a, b) || max(a, b))
         quantity of energy appraised. To let a Relying Party act on the
         result without re-parsing the token, the Verifier
         <bcp14>SHOULD</bcp14> include in "ear_attester_claims" the "iss",
-        "iat", "seq", and "wh" claims of each appraised token, and in
-        "ear_verifier_claims" the epoch, the leaf hash of the token, and the
-        Measurement Interval derived as described in
+        "iat", "seq", and "wh" claims of the appraised token, and in
+        "ear_verifier_claims" the epoch, the Anchor Time, the leaf hash of
+        the token, and the Measurement Interval derived as described in
         <xref target="time-granular"/>. The Verifier <bcp14>MAY</bcp14>
         include the complete Attestation Token in "ear_raw_evidence",
         wrapped as a Conceptual Message Wrapper <xref target="RFC9999"/>;
@@ -1087,8 +1210,14 @@ parent = keccak256(min(a, b) || max(a, b))
         "iat" of token n-1, exclusive, to the "iat" of token n, inclusive. A
         Verifier <bcp14>MUST</bcp14> derive a Measurement Interval only from
         a verified contiguous pair: token n-1 has passed the verification path
-        of <xref target="verification-path"/>, and the "prev" claim of token
-        n matches the hash of token n-1. The "wh" of the first token
+        of <xref target="verification-path"/>, the "prev" claim of token n
+        matches the hash of the evidence payload of token n-1
+        (<xref target="claim-set"/>), and the "iat" of token n is strictly
+        greater than the "iat" of token n-1. Attesters <bcp14>MUST</bcp14>
+        emit strictly increasing "iat" values. A pair that satisfies the
+        "prev" check but not the "iat" check is non-conformant: the Verifier
+        <bcp14>MUST NOT</bcp14> derive an interval from it and
+        <bcp14>MUST</bcp14> appraise token n as contraindicated. The "wh" of the first token
         ("seq" equal to 1) has no defined interval and <bcp14>MUST
         NOT</bcp14> be attributed to any interval.</t>
 
@@ -1105,9 +1234,15 @@ parent = keccak256(min(a, b) || max(a, b))
         <t>An Attester intended for hourly accounting <bcp14>SHOULD</bcp14>
         emit a token at each hour boundary in UTC, in addition to any finer
         reporting cadence, so that no Measurement Interval spans a boundary.
-        The hourly total of attested generation for a device is then the sum
-        of "wh" over the tokens whose Measurement Interval lies within that
-        hour.</t>
+        For this purpose, hour h is the half-open interval from h*3600
+        seconds, exclusive, to (h+1)*3600 seconds, inclusive, in the time
+        scale of the "iat" claim, matching the orientation of Measurement
+        Intervals; a token emitted exactly at a boundary closes the hour
+        that ends there. A Measurement Interval from t1, exclusive, to t2,
+        inclusive, lies within hour h if h*3600 is less than or equal to t1
+        and t2 is less than or equal to (h+1)*3600. The hourly total of
+        attested generation for a device is then the sum of "wh" over the
+        tokens whose Measurement Interval lies within that hour.</t>
 
         <t>When a Measurement Interval spans one or more hour boundaries,
         this document does not define how its energy is apportioned among
@@ -1131,8 +1266,10 @@ parent = keccak256(min(a, b) || max(a, b))
         toward more than one claim. Preventing such reuse is the
         responsibility of the claim layer
         (<xref target="two-layer"/>) and of any external scheme that
-        consumes attestations; the leaf hash of each token provides a stable
-        public identifier that such systems can use to detect reuse.</t>
+        consumes attestations; such systems <bcp14>MUST</bcp14> detect reuse
+        using the measurement identifier of
+        <xref target="measurement-identity"/>, and <bcp14>MUST NOT</bcp14>
+        use the leaf hash for that purpose.</t>
       </section>
 
       <section anchor="interval-considerations" numbered="true">
@@ -1143,14 +1280,57 @@ parent = keccak256(min(a, b) || max(a, b))
         (<xref target="security"/>). Deployments that need freshness bounds
         independent of the Attester's clock <bcp14>MAY</bcp14> use Epoch
         Markers <xref target="I-D.ietf-rats-epoch-markers"/>; such use is not
-        specified in this version.</t>
+        specified in this version and would require an Evidence claim
+        carrying the epoch identifier.</t>
 
         <t>Timestamp rounding for privacy (<xref target="privacy-mitigations"/>)
         interacts with hourly accounting: a rounding granularity coarser than
         one hour prevents hourly attribution. Where rounding is applied to
         tokens used for hourly accounting, the granularity
         <bcp14>SHOULD</bcp14> divide one hour evenly, so that rounded
-        boundary tokens remain on the hour boundary.</t>
+        boundary tokens remain on the hour boundary. Rounding
+        <bcp14>MUST</bcp14> preserve strictly increasing "iat" values: an
+        Attester that rounds "iat" emits at most one token per rounding
+        bucket, merging the energy of the bucket into that token.</t>
+      </section>
+
+      <section anchor="measurement-identity" numbered="true">
+        <name>Measurement Identity and Equivocation</name>
+
+        <t>A measurement is identified by the pair ("iss", "seq") of the
+        token that reports it. The leaf hash of <xref target="offchain"/> is
+        not a stable identifier for this purpose: ECDSA signatures are
+        randomized and malleable, so the same evidence payload can appear in
+        several valid tokens with different leaf hashes, and the unprotected
+        header is not covered by the signature. Accordingly:</t>
+
+        <ul spacing="normal">
+          <li>Two tokens with the same ("iss", "seq") and identical evidence
+          payloads report the same measurement. Their energy
+          <bcp14>MUST</bcp14> be counted at most once, whichever batches,
+          intervals, or claims they appear in.</li>
+          <li>Two tokens with the same ("iss", "seq") and different evidence
+          payloads constitute equivocation by the device or its host. A
+          Verifier that observes equivocation <bcp14>MUST</bcp14> appraise
+          both tokens as contraindicated, <bcp14>MUST NOT</bcp14> attribute
+          the energy of either to any interval, and <bcp14>SHOULD</bcp14>
+          report the device for revocation
+          (<xref target="device-revocation"/>). Validators
+          <bcp14>SHOULD</bcp14> check, before voting, that no ("iss", "seq")
+          in a proposed batch appears with a different payload in that batch
+          or in an earlier committed batch.</li>
+          <li>The "iat" of a token <bcp14>MUST NOT</bcp14> exceed its Anchor
+          Time (<xref target="onchain"/>) by more than a deployment-defined
+          maximum clock skew. A token that fails this check is appraised as
+          contraindicated. Because the host controls the Attester's clock,
+          this bound, not the Attester's time source, is the time check that
+          a Verifier can enforce.</li>
+        </ul>
+
+        <t>Equivocation can be detected only by a party that observes both
+        tokens. Detection is therefore strongest at the commitment layer,
+        where all batches are visible, and a Relying Party that relies on a
+        single Verifier depends on that Verifier's view.</t>
       </section>
     </section>
 
@@ -1167,10 +1347,18 @@ parent = keccak256(min(a, b) || max(a, b))
         leaves the secure element, a compromised host can lie about what to
         sign but cannot forge signatures under the device's public key.</t>
 
-        <t>The protocol mitigates this through Reference Values, namely the
-        firmware hash and configuration hash included in the attestation
-        claims. A Relying Party that knows the expected Reference Values can
-        detect a tampered host.</t>
+        <t>The "fwv" and "cfg" claims do not mitigate this threat. They are
+        written by the same host that is assumed to be compromised, and the
+        secure element signs whatever digest it receives without measuring
+        the host: it is not a root of trust for measurement. A compromised
+        host can therefore report the expected firmware version and
+        configuration digest. Unless those values are measured by the secure
+        element or by another root of trust, comparing them with Reference
+        Values detects misconfiguration of an honest host, not a tampered
+        one (see also <xref target="ear-vector"/>). Deployments
+        <bcp14>SHOULD</bcp14> use host secure boot. Layered attestation of
+        the host, in which each boot stage is measured before it runs, is
+        left for a future revision.</t>
       </section>
 
       <section anchor="threat-physical" numbered="true">
@@ -1250,9 +1438,10 @@ parent = keccak256(min(a, b) || max(a, b))
         measurement interface for this reason. So that a Relying Party can
         apply policy to the class of measurer-to-signer protection rather than
         assuming it, that class is asserted by the Endorser
-        (<xref target="corim-endorsements"/>) and reported by the Verifier in
-        the "sourced-data" claim of the Attestation Result
-        (<xref target="ear-vector"/>). A claim by which the Attester itself
+        (<xref target="corim-endorsements"/>) and is reflected in the
+        "sourced-data" claim of the Attestation Result
+        (<xref target="ear-vector"/>), which is affirming only when the
+        measurer has itself been appraised. A claim by which the Attester itself
         reports that class is left for a future revision.</t>
       </section>
 
@@ -1263,10 +1452,12 @@ parent = keccak256(min(a, b) || max(a, b))
         element is currently considered infeasible against the design
         assumptions of state-of-the-art parts. If such an extraction becomes
         feasible, the affected device family's endorsements
-        <bcp14>SHALL</bcp14> be revoked. The protocol's per-device hash chain,
-        carried in the "prev" claim, limits the value of an extracted key for
-        back-dating, because all historical attestations are anchored
-        on-chain.</t>
+        <bcp14>SHALL</bcp14> be revoked. Back-dating with an extracted key
+        is limited because revocation and "iat" plausibility are evaluated
+        against the Anchor Time of the batch, which the key holder does not
+        control (<xref target="device-revocation"/>,
+        <xref target="measurement-identity"/>), and because historical
+        attestations are already anchored on-chain.</t>
       </section>
 
       <section anchor="threat-collusion" numbered="true">
@@ -1309,11 +1500,17 @@ parent = keccak256(min(a, b) || max(a, b))
       <section anchor="threat-replay" numbered="true">
         <name>Replay Attacks</name>
 
-        <t>The combination of the per-device monotonic "seq" claim and the
-        previous-attestation hash chain, carried in "prev", prevents replay of
-        an old attestation as a new one. A Verifier that observes a "seq" value
-        that is not strictly greater than the highest previously observed value
-        for the same device <bcp14>MUST</bcp14> reject the attestation.</t>
+        <t>Replay of an old attestation as a new one gains an adversary
+        nothing, because a measurement is identified by ("iss", "seq") and
+        is counted at most once (<xref target="measurement-identity"/>). A
+        token that reuses an existing ("iss", "seq") with a different payload
+        is equivocation and is handled as specified in
+        <xref target="measurement-identity"/>; the "prev" hash chain links
+        each token to its predecessor (<xref target="interval-derivation"/>).
+        A Verifier <bcp14>MUST NOT</bcp14> reject a token solely because its
+        "seq" is lower than a value it has observed before, since historical
+        and out-of-order verification of single tokens is a supported
+        use.</t>
       </section>
 
       <section anchor="threat-sidechannel" numbered="true">
@@ -1385,10 +1582,18 @@ parent = keccak256(min(a, b) || max(a, b))
         interface, and an implementation that authenticates every other link
         while leaving that one open gains little. See <xref
         target="threat-physical"/>.</li>
-        <li>Time source integrity. The "iat" timestamp depends on the device's
-        local clock. Implementations <bcp14>MUST</bcp14> authenticate the time
-        source, for example by using NTP with cryptographic verification or
-        GNSS-based time, in order to prevent clock-manipulation attacks. This
+        <li>Time source integrity. The "iat" timestamp depends on the clock
+        of the host microcontroller, not of the secure element.
+        Implementations <bcp14>SHOULD</bcp14> authenticate the time source,
+        for example by using Network Time Security <xref target="RFC8915"/>,
+        to protect an honest host against clock manipulation. An
+        authenticated time source does not constrain a compromised host, and
+        GNSS time can be spoofed; the enforceable bounds are therefore the
+        Anchor Time checks of <xref target="measurement-identity"/> and of
+        the revocation sections (<xref target="endorser-revocation"/>,
+        <xref target="device-revocation"/>). In the terms of
+        <xref target="RFC9334"/>, Section 10, this protocol uses implicit,
+        timestamp-based freshness; tokens carry no nonce. Clock accuracy
         matters in particular for time-granular accounting
         (<xref target="time-granular"/>), where a skewed clock moves energy
         between hours.</li>
@@ -1446,11 +1651,11 @@ parent = keccak256(min(a, b) || max(a, b))
         <dt>Additional information:</dt><dd>Magic number(s): N/A; File
         extension(s): N/A; Macintosh file type code(s): N/A</dd>
         <dt>Person and email address to contact for further
-        information:</dt><dd>IETF RATS Working Group
-        (rats@ietf.org)</dd>
+        information:</dt><dd>Aleksey Chursin
+        (team@noethrion.com)</dd>
         <dt>Intended usage:</dt><dd>COMMON</dd>
         <dt>Restrictions on usage:</dt><dd>N/A</dd>
-        <dt>Author:</dt><dd>See the Authors' Addresses section of this
+        <dt>Author:</dt><dd>See the Author's Address section of this
         document.</dd>
         <dt>Change controller:</dt><dd>IETF</dd>
       </dl>
@@ -1525,16 +1730,6 @@ parent = keccak256(min(a, b) || max(a, b))
           <seriesInfo name="DOI" value="10.17487/RFC9052"/>
         </reference>
 
-        <reference anchor="RFC9053" target="https://www.rfc-editor.org/info/rfc9053">
-          <front>
-            <title>CBOR Object Signing and Encryption (COSE): Initial Algorithms</title>
-            <author initials="J." surname="Schaad" fullname="J. Schaad"/>
-            <date year="2022" month="August"/>
-          </front>
-          <seriesInfo name="RFC" value="9053"/>
-          <seriesInfo name="DOI" value="10.17487/RFC9053"/>
-        </reference>
-
         <reference anchor="RFC9711" target="https://www.rfc-editor.org/info/rfc9711">
           <front>
             <title>The Entity Attestation Token (EAT)</title>
@@ -1571,6 +1766,31 @@ parent = keccak256(min(a, b) || max(a, b))
             <date day="31" month="October" year="2026"/>
           </front>
           <seriesInfo name="Internet-Draft" value="draft-ietf-rats-ar4si-11"/>
+        </reference>
+
+        <reference anchor="RFC9334" target="https://www.rfc-editor.org/info/rfc9334">
+          <front>
+            <title>Remote ATtestation procedureS (RATS) Architecture</title>
+            <author initials="H." surname="Birkholz" fullname="H. Birkholz"/>
+            <author initials="D." surname="Thaler" fullname="D. Thaler"/>
+            <author initials="M." surname="Richardson" fullname="M. Richardson"/>
+            <author initials="N." surname="Smith" fullname="N. Smith"/>
+            <author initials="W." surname="Pan" fullname="W. Pan"/>
+            <date year="2023" month="January"/>
+          </front>
+          <seriesInfo name="RFC" value="9334"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9334"/>
+        </reference>
+
+        <reference anchor="RFC9864" target="https://www.rfc-editor.org/info/rfc9864">
+          <front>
+            <title>Fully-Specified Algorithms for JSON Object Signing and Encryption (JOSE) and CBOR Object Signing and Encryption (COSE)</title>
+            <author initials="M.B." surname="Jones" fullname="M.B. Jones"/>
+            <author initials="O." surname="Steele" fullname="O. Steele"/>
+            <date year="2025" month="October"/>
+          </front>
+          <seriesInfo name="RFC" value="9864"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9864"/>
         </reference>
       </references>
 
@@ -1627,20 +1847,6 @@ parent = keccak256(min(a, b) || max(a, b))
           <seriesInfo name="DOI" value="10.17487/RFC9999"/>
         </reference>
 
-        <reference anchor="RFC9334" target="https://www.rfc-editor.org/info/rfc9334">
-          <front>
-            <title>Remote ATtestation procedureS (RATS) Architecture</title>
-            <author initials="H." surname="Birkholz" fullname="H. Birkholz"/>
-            <author initials="D." surname="Thaler" fullname="D. Thaler"/>
-            <author initials="M." surname="Richardson" fullname="M. Richardson"/>
-            <author initials="N." surname="Smith" fullname="N. Smith"/>
-            <author initials="W." surname="Pan" fullname="W. Pan"/>
-            <date year="2023" month="January"/>
-          </front>
-          <seriesInfo name="RFC" value="9334"/>
-          <seriesInfo name="DOI" value="10.17487/RFC9334"/>
-        </reference>
-
         <reference anchor="RFC9162" target="https://www.rfc-editor.org/info/rfc9162">
           <front>
             <title>Certificate Transparency Version 2.0</title>
@@ -1674,6 +1880,91 @@ parent = keccak256(min(a, b) || max(a, b))
             <date year="2023" month="May"/>
           </front>
         </reference>
+        <reference anchor="RFC9053" target="https://www.rfc-editor.org/info/rfc9053">
+          <front>
+            <title>CBOR Object Signing and Encryption (COSE): Initial Algorithms</title>
+            <author initials="J." surname="Schaad" fullname="J. Schaad"/>
+            <date year="2022" month="August"/>
+          </front>
+          <seriesInfo name="RFC" value="9053"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9053"/>
+        </reference>
+
+        <reference anchor="RFC8392" target="https://www.rfc-editor.org/info/rfc8392">
+          <front>
+            <title>CBOR Web Token (CWT)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones"/>
+            <author initials="E." surname="Wahlstroem" fullname="E. Wahlstroem"/>
+            <author initials="S." surname="Erdtman" fullname="S. Erdtman"/>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig"/>
+            <date year="2018" month="May"/>
+          </front>
+          <seriesInfo name="RFC" value="8392"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8392"/>
+        </reference>
+
+        <reference anchor="RFC9596" target="https://www.rfc-editor.org/info/rfc9596">
+          <front>
+            <title>CBOR Object Signing and Encryption (COSE) "typ" (type) Header Parameter</title>
+            <author initials="M.B." surname="Jones" fullname="M.B. Jones"/>
+            <author initials="O." surname="Steele" fullname="O. Steele"/>
+            <date year="2024" month="June"/>
+          </front>
+          <seriesInfo name="RFC" value="9596"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9596"/>
+        </reference>
+
+        <reference anchor="RFC8915" target="https://www.rfc-editor.org/info/rfc8915">
+          <front>
+            <title>Network Time Security for the Network Time Protocol</title>
+            <author initials="D." surname="Franke" fullname="D. Franke"/>
+            <author initials="D." surname="Sibold" fullname="D. Sibold"/>
+            <author initials="K." surname="Teichel" fullname="K. Teichel"/>
+            <author initials="M." surname="Dansarie" fullname="M. Dansarie"/>
+            <author initials="R." surname="Sundblad" fullname="R. Sundblad"/>
+            <date year="2020" month="October"/>
+          </front>
+          <seriesInfo name="RFC" value="8915"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8915"/>
+        </reference>
+
+        <reference anchor="RFC9942" target="https://www.rfc-editor.org/info/rfc9942">
+          <front>
+            <title>CBOR Object Signing and Encryption (COSE) Receipts</title>
+            <author initials="O." surname="Steele" fullname="O. Steele"/>
+            <author initials="H." surname="Birkholz" fullname="H. Birkholz"/>
+            <author initials="A." surname="Delignat-Lavaud" fullname="A. Delignat-Lavaud"/>
+            <author initials="C." surname="Fournet" fullname="C. Fournet"/>
+            <date year="2026" month="June"/>
+          </front>
+          <seriesInfo name="RFC" value="9942"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9942"/>
+        </reference>
+
+        <reference anchor="RFC9943" target="https://www.rfc-editor.org/info/rfc9943">
+          <front>
+            <title>An Architecture for Trustworthy and Transparent Digital Supply Chains</title>
+            <author initials="H." surname="Birkholz" fullname="H. Birkholz"/>
+            <author initials="A." surname="Delignat-Lavaud" fullname="A. Delignat-Lavaud"/>
+            <author initials="C." surname="Fournet" fullname="C. Fournet"/>
+            <author initials="Y." surname="Deshpande" fullname="Y. Deshpande"/>
+            <author initials="S." surname="Lasker" fullname="S. Lasker"/>
+            <date year="2026" month="June"/>
+          </front>
+          <seriesInfo name="RFC" value="9943"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9943"/>
+        </reference>
+
+        <reference anchor="KECCAK" target="https://keccak.team/files/Keccak-reference-3.0.pdf">
+          <front>
+            <title>The Keccak reference, version 3.0</title>
+            <author initials="G." surname="Bertoni" fullname="Guido Bertoni"/>
+            <author initials="J." surname="Daemen" fullname="Joan Daemen"/>
+            <author initials="M." surname="Peeters" fullname="Michael Peeters"/>
+            <author initials="G." surname="Van Assche" fullname="Gilles Van Assche"/>
+            <date year="2011" month="January"/>
+          </front>
+        </reference>
       </references>
     </references>
 
@@ -1696,8 +1987,11 @@ parent = keccak256(min(a, b) || max(a, b))
         output as EAT Attestation Results (EAR), including the assignment of
         "ear_status" and of the AR4SI trustworthiness vector. The
         measurer-to-signer protection class is reported in the
-        "sourced-data" claim. This resolves the "[TBD in -01]" item of
-        <xref target="threat-physical"/> without adding a token claim.</li>
+        "sourced-data" claim. This resolves the "[TBD in -01]" item that
+        -00 carried in its Section 8.2 (now
+        <xref target="threat-physical"/>) without adding a token claim.
+        Sections 8 to 12 of -00 are Sections 10 to 14 of this revision, and
+        Sections 7.2 and 7.3 of -00 are Sections 7.3 and 7.4.</li>
         <li>Added <xref target="corim-endorsements"/>, describing how
         device-key endorsements, Reference Values, and Endorsed Values map
         onto CoRIM. The registry of <xref target="key-registry"/> is retained
@@ -1709,7 +2003,8 @@ parent = keccak256(min(a, b) || max(a, b))
         <li>Replaced the "[TBD: EAT profile claim mapping table in -01]" item
         with an informative correspondence table
         (<xref target="tbl-eat-map"/>), and corrected the -00 statement that
-        "iss" and "seq" map directly to CWT-registered claims.</li>
+        "iss", "iat", and "seq" map directly to CWT-registered claims; only
+        "iat" does.</li>
         <li>Added the terms Attestation Result and Measurement Interval, a
         Verifier requirement to encode results per
         <xref target="attestation-results"/>, and Security Considerations
@@ -1722,8 +2017,48 @@ parent = keccak256(min(a, b) || max(a, b))
         <xref target="threat-physical"/> was already present in -00 as
         posted and is unchanged apart from its final sentence.</li>
         <li>Remaining "-01" placeholders retargeted to a future revision.
-        No changes to the token format, signature scheme, or Merkle
-        construction.</li>
+        No change to the Merkle construction.</li>
+        <li><t>Following review before submission:</t>
+        <ul spacing="normal">
+          <li>"ear_status" can no longer exceed the worst claim of the
+          trustworthiness vector, as required by EAR; "affirming" requires
+          no Warning or Contraindicated claim. AR4SI values corrected: 97 is
+          used only for devices the Verifier expects to recognize,
+          "hardware" without an assertion is unasserted, and "sourced-data"
+          is 2 only when the measurer has itself been appraised. One
+          EAR-appraisal per token, labelled by "iss" and "seq".</li>
+          <li>Signature algorithm identifier changed from ES256 (-7),
+          deprecated by RFC 9864, to the fully-specified ESP256 (-9), with
+          a compatibility allowance for -7 (<xref target="signature-scheme"/>).
+          Signatures are unchanged in form.</li>
+          <li>Added <xref target="measurement-identity"/>: a measurement is
+          identified by ("iss", "seq"), not by the leaf hash; the
+          unprotected header is empty; equivocation is contraindicated;
+          "iat" is bounded by the Anchor Time. "iat" must strictly increase,
+          and hour boundaries are defined. The replay rule of
+          <xref target="threat-replay"/> no longer rejects historical
+          verification.</li>
+          <li>Revocation is evaluated against the Anchor Time of the batch,
+          defined in <xref target="onchain"/>, rather than the
+          Attester-controlled "iat"; added verification step 8.</li>
+          <li>Specified SHA-256 for "prev" (over the previous evidence
+          payload) and "cfg"; tightened the CDDL ("alg", "iss", "seq",
+          "prev", "cfg", empty unprotected header). "prev" and the
+          endorsement check are now MUST throughout.</li>
+          <li><xref target="threat-mcu"/> no longer claims that "fwv" and
+          "cfg" detect a compromised host. The time-source requirement is
+          now a SHOULD, with the Anchor Time bound as the enforceable
+          check.</li>
+          <li>Restricted the legacy bare encoding to records committed
+          before a cutoff; aligned the Verifier, Relying Party, and
+          Reference Values definitions with RFC 9334; added a note on SCITT
+          and COSE Receipts (<xref target="transparency"/>); IANA contact is
+          now the author.</li>
+          <li>References: RFC 9334 moved to normative; RFC 9864 added
+          (normative); RFC 9053 moved to informative; RFC 8392, RFC 8915,
+          RFC 9596, RFC 9942, RFC 9943, and the Keccak reference added
+          (informative).</li>
+        </ul></li>
       </ul>
     </section>
 
