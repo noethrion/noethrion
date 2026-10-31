@@ -1261,6 +1261,23 @@
   @media (prefers-reduced-motion: reduce) {
     .pipe-panel { animation: none; }
   }
+
+  /* BAL 30.10 19:37 «B точно»: headings in Inter Tight 600, the accent word stays Instrument Serif italic; η, stats and logo keep the serif */
+  .hero-headline, .section-headline, .step-title, .cta-headline,
+  .gap-cell h3, .door h3, .principle h3, .principle h4,
+  .eta-meaning h2, .eta-meaning h3, .spec-text h3 {
+    font-family: var(--font-body); font-weight: 600; letter-spacing: -0.035em;
+  }
+  .hero-headline, .section-headline, .cta-headline { letter-spacing: -0.045em; }
+  .hero-headline em, .section-headline em, .step-title em, .cta-headline em,
+  .gap-cell h3 em, .door h3 em, .principle h3 em, .principle h4 em,
+  .eta-meaning h2 em, .eta-meaning h3 em, .spec-text h3 em {
+    font-family: var(--font-display); font-weight: 400; font-style: italic; letter-spacing: -0.01em;
+  }
+
+  .hero .hero-headline { font-size: clamp(48px, 5vw, 80px); }
+  @media (max-width: 1080px) { .hero .hero-headline { font-size: clamp(44px, 8.5vw, 80px); } }
+  @media (max-width: 520px) { .hero .hero-headline { font-size: clamp(38px, 10.5vw, 52px); } }
 </style>
 
 <!-- Self-hosted, cookieless analytics. No personal data, no cross-site tracking. -->
