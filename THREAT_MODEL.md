@@ -11,7 +11,7 @@ The threat model is written from the perspective of a relying party — an entit
 The system consists of five interacting components:
 
 1. **Meter** — measures electricity production at a generation source. Produces measurement tuples `(kWh, timestamp, deviceID)`.
-2. **Secure element** — Common Criteria EAL5+ certified chip adjacent to the meter. Generates an ECDSA P-256 keypair on-die; signs every measurement tuple with the on-die private key. Private key cannot be exported.
+2. **Secure element** — certified secure element adjacent to the meter (production target: Common Criteria EAL5+ or higher, e.g. NXP SE050 at EAL6+; the reference prototype uses Microchip ATECC608B, which has a vendor-cited JIL "High" vulnerability rating rather than a Common Criteria certificate). Generates an ECDSA P-256 keypair on-die; signs every measurement tuple with the on-die private key. Private key cannot be exported.
 3. **Host MCU** — microcontroller that orchestrates measurement, signing, and transmission. Untrusted in the protocol's threat model.
 4. **Aggregator + Validator Quorum** — off-chain process that batches attestations into Merkle trees; one validator proposes the root on-chain via `NoethrionAttester.proposeBatch()` and the remaining quorum members confirm via `voteBatch()`.
 5. **On-chain commitment contract** — stores Merkle roots, enforces a challenge window, and exposes the `claim()` function downstream consumers use to verify individual leaves.

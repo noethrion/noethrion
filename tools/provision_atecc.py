@@ -3,9 +3,10 @@
 
 These commands operate on **software keys** generated and stored in regular
 files. They exist to let an engineer evaluate the protocol primitives without
-real hardware. A production deployment binds the signing key to a Common
-Criteria EAL5+ secure element (Microchip ATECC608B or equivalent); the key
-material never appears outside the silicon. Use Microchip's official tooling
+real hardware. A production deployment binds the signing key to a certified
+secure element (e.g. NXP SE050, Common Criteria EAL6+; the Microchip ATECC608B
+used in the reference prototype has a vendor-cited JIL "High" rating, not a CC
+certificate); the key material never appears outside the silicon. Use Microchip's official tooling
 (TrustPLATFORM, atcacert) for real device provisioning under chain of custody.
 
 Subcommands:
