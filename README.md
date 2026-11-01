@@ -70,7 +70,7 @@ Noethrion does not provide: payment rails, energy trading, market-making, curren
 | Constitution v0.1 | ✅ Published |
 | Brand Book v0.3 | ✅ Published |
 | Reference architecture | ✅ Documented |
-| Internet-Draft v0.1 | ✅ Draft published (RATS WG submission pending review) |
+| Internet-Draft | ✅ [draft-chursin-rats-energy-attestation-01](https://datatracker.ietf.org/doc/draft-chursin-rats-energy-attestation/) posted 2026-11-01 (individual submission, RATS area; -00 posted 2026-07-27) |
 | Smart contracts | ✅ Beta — `claim()` + m-of-n quorum + admin slashing + 127/127 forge tests + 25/25 Halmos symbolic proofs (every public function pinned, including the no-retroactive-shrink guarantee on both threshold and challenge window); pre-audit readiness doc at `docs/audit/smart-contracts-audit.md`; production deploy + incident-response runbooks at `docs/runbooks/` |
 | Hardware POC firmware | ✅ Skeleton — ESP32 + ATECC608B probe-only, bring-up pending |
 | Reference tools (CLI + libraries) | ✅ Published (Python, TypeScript, Solidity) |
@@ -207,7 +207,7 @@ Noethrion не предоставляет: payment rails, energy trading, market
 | Constitution v0.1 | ✅ Опубликована |
 | Brand Book v0.3 | ✅ Опубликован |
 | Reference architecture | ✅ Документирована |
-| Internet-Draft v0.1 | ✅ Draft опубликован (submission в RATS WG после review) |
+| Internet-Draft | ✅ [draft-chursin-rats-energy-attestation-01](https://datatracker.ietf.org/doc/draft-chursin-rats-energy-attestation/) опубликован 2026-11-01 (individual submission, RATS; -00 — 2026-07-27) |
 | Smart contracts | ✅ Beta — `claim()` + m-of-n кворум + admin slashing + 127/127 forge тестов + 25/25 Halmos symbolic proofs (каждая публичная функция contract'а pinned, включая no-retroactive-shrink гарантию на threshold и challenge window); pre-audit readiness doc в `docs/audit/smart-contracts-audit.md`; production deploy + incident-response runbooks в `docs/runbooks/` |
 | Hardware POC firmware | ✅ Skeleton — ESP32 + ATECC608B probe-only, bring-up в очереди |
 | Reference tools (CLI + libraries) | ✅ Опубликованы (Python, TypeScript, Solidity) |

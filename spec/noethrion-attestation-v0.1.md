@@ -3,9 +3,16 @@
 ```
 Internet Engineering Task Force                              A. Chursin
 Internet-Draft                                     Noethrion Foundation
-Intended status: Standards Track                             May 2026
-Expires: 12 November 2026
+Intended status: Standards Track                            July 2026
+Expires: 28 January 2027
 ```
+
+> **Note:** the current Internet-Draft is
+> [draft-chursin-rats-energy-attestation-01](https://datatracker.ietf.org/doc/draft-chursin-rats-energy-attestation/)
+> (posted 2026-11-01). Datatracker-ready RFC XML v3 and text renderings live in
+> `spec/draft-chursin-rats-energy-attestation-01.xml` / `.txt` (previous revision: `-00`,
+> posted 2026-07-27). This Markdown file remains the human-readable working source and
+> tracks -00; -01 adds EAR/CoRIM alignment, hourly claims and an expanded threat model.
 
 ## Hardware-Rooted Attestation Tokens for Electricity Generation
 
@@ -23,7 +30,7 @@ Expires: 12 November 2026
 
 ## Abstract
 
-This document specifies an attestation token format and verification protocol for hardware-rooted measurements of electricity generation. The protocol enables a tamper-evident chain of custody from a metering device to a publicly verifiable settlement layer, using ECDSA P-256 signatures generated inside a Common Criteria EAL5+ certified secure element. It defines: (a) the CBOR-encoded attestation token, aligned with the Entity Attestation Token format of [RFC9711] and the RATS architecture of [RFC9334]; (b) a Merkle-aggregation and on-chain commitment scheme for scalable verification; and (c) a registry mechanism for endorsing device public keys. The token is intended for use by relying parties — energy producers, consumers, regulators, and standards bodies — that require cryptographic provenance for clean-energy claims.
+This document specifies an attestation token format and verification protocol for hardware-rooted measurements of electricity generation. The protocol enables a tamper-evident chain of custody from a metering device to a publicly verifiable settlement layer, using ECDSA P-256 signatures generated inside a certified secure element and carried in a COSE_Sign1 structure [RFC9052]. It defines: (a) the CBOR-encoded attestation token, aligned with the Entity Attestation Token format of [RFC9711] and the RATS architecture of [RFC9334]; (b) a Merkle-aggregation and on-chain commitment scheme for scalable verification; and (c) a registry mechanism for endorsing device public keys. The token is intended for use by relying parties — energy producers, consumers, regulators, and standards bodies — that require cryptographic provenance for clean-energy claims.
 
 ## Table of Contents
 
@@ -44,11 +51,11 @@ This document specifies an attestation token format and verification protocol fo
 
 ## 1. Introduction
 
-Clean-energy claims today rest on accounting infrastructure — Renewable Energy Certificates (RECs) in the United States, Guarantees of Origin (GoOs) in the European Union, International RECs (I-RECs) elsewhere. These instruments are issued annually, traded through brokered email confirmations, and reconciled against grid-level dispatch records that the issuance system does not cryptographically verify. Analyses of major markets have identified discrepancies of up to 18 percent between dispatched generation and registered certificate issuance.
+Clean-energy claims today rest on accounting infrastructure — Renewable Energy Certificates (RECs) in the United States, Guarantees of Origin (GoOs) in the European Union, International RECs (I-RECs) elsewhere. These instruments are issued annually, traded through brokered email confirmations, and reconciled against grid-level dispatch records that the issuance system does not cryptographically verify. Published analyses of certificate markets have reported material discrepancies between dispatched generation and registered certificate issuance.
 
 Two regulatory and industrial trends, both effective in 2026, make this verification gap acute:
 
-1. **Twenty-four-hour, hourly carbon-free energy matching** has become a procurement requirement at multiple large compute-infrastructure operators, with multi-gigawatt power purchase agreements signed for dedicated nuclear capacity over 2024–2026. Hourly matching cannot be evidenced by annual certificate aggregation.
+1. **Twenty-four-hour, hourly carbon-free energy matching** has become a procurement requirement in several energy-intensive industrial and computing sectors, backed by long-term contracts for dedicated firm generation capacity. Hourly matching cannot be evidenced by annual certificate aggregation.
 
 2. **The European Union's Carbon Border Adjustment Mechanism (CBAM)**, effective 1 January 2026, requires importers of cement, iron, steel, aluminum, fertilizer, electricity, and hydrogen to demonstrate embedded carbon content at the source. There is no globally interoperable system for verifiable energy provenance that can satisfy this requirement.
 
@@ -71,12 +78,12 @@ The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **
 | **Relying Party (RP)** | An economic actor consuming an attestation as evidence of clean-energy generation (a producer, consumer, regulator, or integrator). |
 | **Endorser** | An entity that issues an endorsement linking a device's public key to a real-world identity (manufacturer, certification authority, or self-attested operator). |
 | **Reference Values** | The expected device configuration, firmware hash, and certification status against which Verifiers may assess an Attester. |
-| **Attestation Token** | A CBOR-encoded object carrying the signed measurement and ancillary claims. |
+| **Attestation Token** | A CBOR-encoded COSE_Sign1 object carrying the signed measurement and ancillary claims. |
 | **Settlement Layer** | A publicly accessible verifiable data structure on which Merkle roots of attestation batches are committed. In this version, the Settlement Layer is an EVM-compatible Layer 2 rollup; future revisions MAY broaden this. |
 | **Batch** | An ordered collection of attestation tokens whose hashes form the leaves of a single Merkle tree. |
 | **Epoch** | The sequence number identifying a batch in time. Epochs increase monotonically. |
 | **Challenge Window** | A configurable period following batch submission during which the batch can be challenged before finalization. |
-| **NOET** | The unit of accounting in the protocol. One NOET represents one verified kilowatt-hour. |
+| **NOET** | The attestation accounting unit of the protocol. One NOET represents one verified kilowatt-hour. NOET is a unit of attestation, not a payment instrument, currency, or store of value; this document specifies no transfer, pricing, or settlement-of-value semantics for it. |
 
 ## 3. Architecture and Roles
 
@@ -88,7 +95,7 @@ The Attester is composed of two physical components: a kilowatt-hour meter (the 
 
 - **MUST** generate the device's signing key inside the secure element using on-chip entropy.
 - **MUST NOT** expose the signing key outside the secure element under any operational condition.
-- **MUST** sign each attestation tuple with the device's private key before transmission.
+- **MUST** sign each evidence payload with the device's private key, as a COSE_Sign1 structure (Section 5.1), before transmission.
 - **SHOULD** include in each attestation a hash of the previous attestation produced by the same device, forming a per-device hash chain.
 - **MAY** include firmware version, model identifier, and configuration claims in the attestation token.
 
@@ -96,7 +103,7 @@ The Attester is composed of two physical components: a kilowatt-hour meter (the 
 
 The Verifier is software, executed by any interested party, that:
 
-- **MUST** validate the ECDSA signature over the canonical CBOR serialization of the attestation claims using the Attester's endorsed public key.
+- **MUST** validate the COSE_Sign1 signature of the attestation token, as specified in Section 5.1, using the Attester's endorsed public key, and **MUST** reject any token whose protected header names an algorithm the Verifier does not accept.
 - **MUST** verify the Merkle inclusion proof against the on-chain committed root for the corresponding epoch.
 - **SHOULD** check the endorsement chain of the Attester's public key against a trusted Endorser registry.
 - **MAY** apply additional Reference Values checks (firmware version, model, certification status) where required.
@@ -136,9 +143,13 @@ The Validator role is distinct from the Attester (the on-device measurer + signe
 
 ## 4. Attestation Token Format
 
-Attestation tokens are encoded in CBOR [RFC8949]. The token is a CBOR map with the claim set defined below. The serialization MUST use Canonical CBOR rules (deterministic encoding) so that signature inputs are unambiguous.
+An attestation token is a CBOR [RFC8949] object consisting of a claims map (the *evidence payload*, Section 4.1) enveloped in a COSE_Sign1 structure [RFC9052] (Section 5.1). Both the claims map and the COSE_Sign1 structure MUST be serialized using the deterministic encoding requirements of Section 4.2.1 of [RFC8949], so that signature inputs and leaf hashes are unambiguous.
+
+Throughout this document, "attestation token" refers to the complete tagged COSE_Sign1 structure, and "evidence payload" refers to the claims map that it carries.
 
 ### 4.1 Claim set
+
+The evidence payload is a CBOR map using the following integer labels. These labels are local to this profile and are scoped to the payload map only; they are independent of the COSE header labels used in the enveloping structure (Section 4.2).
 
 | Label | Claim | Type | Required | Description |
 |-------|-------|------|----------|-------------|
@@ -146,23 +157,89 @@ Attestation tokens are encoded in CBOR [RFC8949]. The token is a CBOR map with t
 | 2 | `iat` | uint | MUST | Issued-at timestamp — Unix seconds, UTC. |
 | 3 | `wh` | uint | MUST | Energy delta in watt-hours since the previous attestation from the same device. |
 | 4 | `seq` | uint | MUST | Per-device monotonic sequence number, starting at 1 and incremented for each emitted attestation. |
-| 5 | `prev` | bstr / nil | MUST | Hash of the previous attestation token from the same device. SHALL be CBOR `nil` for the first attestation (`seq == 1`). |
+| 5 | `prev` | bstr / null | MUST | Hash of the previous attestation token from the same device. SHALL be CBOR `null` for the first attestation (`seq == 1`). |
 | 6 | `fwv` | tstr | SHOULD | Firmware version string, e.g., `"noethrion-0.1.0"`. |
 | 7 | `mdl` | tstr | SHOULD | Device model identifier. |
 | 8 | `cfg` | bstr | MAY | Hash of the device configuration relevant to measurement integrity. |
-| 9 | `sig` | bstr | MUST | ECDSA P-256 signature; see Section 5. |
 
-Labels 1–8 correspond to a sub-map; the signature in label 9 is computed over the canonical CBOR encoding of that sub-map.
+The evidence payload carries no signature claim and no algorithm claim. The signature, the signature algorithm, and the key identifier are carried by the enveloping COSE_Sign1 structure as described in Section 4.2 and Section 5.1.
 
-### 4.2 Mapping to EAT
+### 4.2 Algorithm and key identification
 
-The claim set above is intentionally compatible with the Entity Attestation Token (EAT) format defined in [RFC9711]. Implementations MAY choose to additionally emit a fully EAT-conformant variant by mapping `iss`, `iat`, `seq` to their CWT-registered claim numbers. A formal EAT profile for energy attestation will be specified in a follow-up document.
+Algorithm agility in this protocol is provided exclusively by the COSE protected header of the enveloping COSE_Sign1 structure. Specifically:
+
+- The `alg` header parameter (COSE header label 1) identifies the signature algorithm. It MUST be present in the protected header. For this version of the protocol its value MUST be `-7` (`ES256`), as registered in [RFC9053].
+- The `kid` header parameter (COSE header label 4) identifies the endorsed device key used to produce the signature. It SHOULD be present in the protected header; where it is absent, a Verifier MUST resolve the key from the `iss` claim through the registry of Section 7.1.
+
+An implementation MUST NOT convey the signature algorithm as a claim inside the evidence payload. A Verifier that encounters an algorithm indication in the evidence payload MUST reject the token, because such an indication is not covered by the same integrity protection in the same way and would create two disagreeing sources of truth for algorithm selection.
+
+### 4.3 CDDL definition
+
+The following CDDL [RFC8610] defines the attestation token. It is normative for the structures it covers.
+
+```cddl
+; A Noethrion attestation token is a tagged COSE_Sign1 structure.
+Noethrion-Attestation = #6.18(Noethrion-Sign1)
+
+Noethrion-Sign1 = [
+  protected   : bstr .cbor Noethrion-Protected-Header,
+  unprotected : Noethrion-Unprotected-Header,
+  payload     : bstr .cbor Noethrion-Claims,
+  signature   : bstr
+]
+
+Noethrion-Protected-Header = {
+  1 => int,               ; alg; MUST be -7 (ES256) in this version
+  ? 4 => bstr,            ; kid; endorsed device key identifier
+  * cose-label => any
+}
+
+Noethrion-Unprotected-Header = {
+  * cose-label => any
+}
+
+Noethrion-Claims = {
+  1 => bstr,              ; iss:  secure element serial number
+  2 => uint,              ; iat:  issued-at, UTC seconds
+  3 => uint,              ; wh:   energy delta, watt-hours
+  4 => uint,              ; seq:  per-device monotonic counter, >= 1
+  5 => bstr / null,       ; prev: hash of previous token; null iff seq == 1
+  ? 6 => tstr,            ; fwv:  firmware version
+  ? 7 => tstr,            ; mdl:  device model identifier
+  ? 8 => bstr,            ; cfg:  device configuration hash
+}
+
+cose-label = int / tstr
+```
+
+The Merkle aggregation layer of Section 6 and the claim-record encoding of Section 6.3.1 are not yet expressed in CDDL. `[TBD: full CDDL covering the batch, inclusion-proof, and claim-record structures in -01]`
+
+### 4.4 Mapping to EAT
+
+The claim set above is intentionally compatible with the Entity Attestation Token (EAT) format defined in [RFC9711]; EAT is itself carried in COSE, so the envelope chosen in Section 5.1 is the same one an EAT profile would use. Implementations MAY choose to additionally emit a fully EAT-conformant variant by mapping `iss`, `iat`, `seq` to their CWT-registered claim numbers. A formal EAT profile for energy attestation will be specified in a follow-up document. `[TBD: EAT profile claim mapping table in -01]`
 
 ## 5. Signature Scheme
 
-This document specifies a single signature algorithm for v0.1: ECDSA over the NIST P-256 curve (secp256r1) with SHA-256, denoted `ES256` in [RFC8152].
+This document specifies a single signature algorithm for v0.1: ECDSA over the NIST P-256 curve (secp256r1) with SHA-256, denoted `ES256` and assigned COSE algorithm value `-7` in [RFC9053].
 
-### 5.1 Rationale
+### 5.1 Signature envelope
+
+Attestation tokens MUST be signed as a COSE_Sign1 structure as defined in [RFC9052], Section 4.2, tagged with CBOR tag 18. COSE_Sign1 is chosen over a bare signature field for three reasons:
+
+1. It is the envelope used by the Entity Attestation Token [RFC9711] and by the wider RATS ecosystem [RFC9334], so Noethrion evidence can be consumed by existing COSE and EAT tooling without a bespoke parser.
+2. It provides integrity protection over the algorithm and key identifiers themselves, through the protected header, which a bare signature over a claims map does not.
+3. It gives a single, already-specified path for algorithm rotation (Section 5.3).
+
+The signature is computed over the `Sig_structure` defined in [RFC9052], Section 4.4, with:
+
+- `context` set to the text string `"Signature1"`;
+- `body_protected` set to the serialized protected header;
+- `external_aad` set to a zero-length byte string (`h''`) in this version;
+- `payload` set to the deterministically encoded evidence payload of Section 4.1.
+
+Implementations MUST NOT emit an attestation token as a bare claims map with an adjacent signature field. Pre-standard implementations of this protocol, including the genesis deployment of the reference implementation, used such a bare encoding; that encoding is historical, is not conformant with this document, and MUST NOT be used for new deployments. Verifiers MAY retain support for it solely to re-verify pre-standard historical records.
+
+### 5.2 Rationale for P-256
 
 P-256 is selected because:
 
@@ -170,9 +247,9 @@ P-256 is selected because:
 2. It is broadly understood, has mature implementations, and is acceptable to relying parties whose internal cryptographic policies typically permit NIST curves.
 3. Performance on constrained microcontrollers is sufficient for the protocol's per-minute signing cadence.
 
-### 5.2 Post-quantum migration
+### 5.3 Post-quantum migration
 
-It is acknowledged that P-256 is not post-quantum secure. A migration path to a post-quantum signature scheme — anticipated to be ML-DSA (CRYSTALS-Dilithium) once finalized in [FIPS204] — is part of the protocol's long-term plan. The token format reserves room for an `alg` claim and a versioned key identifier to enable in-place algorithm rotation without breaking historical verifiability.
+It is acknowledged that P-256 is not post-quantum secure. A migration path to a post-quantum signature scheme — anticipated to be ML-DSA, standardized in [FIPS204] — is part of the protocol's long-term plan. No new format machinery is required for that migration: the `alg` and `kid` parameters of the COSE protected header (Section 4.2) are the algorithm and key rotation mechanism, and a future revision need only permit an additional `alg` value and specify the transition policy. Historical attestations remain verifiable because each token names, under integrity protection, the algorithm it was signed with.
 
 A future revision of this document SHALL specify the migration procedure, including dual-signing transitions and the policy under which historical P-256 attestations remain verifiable.
 
@@ -180,7 +257,7 @@ A future revision of this document SHALL specify the migration procedure, includ
 
 ### 6.1 Off-chain aggregation
 
-Attestation tokens are aggregated off-chain into Merkle trees. Each tree contains up to 2^16 (65,536) leaves, where each leaf is the SHA-256 hash of one canonically-encoded attestation token.
+Attestation tokens are aggregated off-chain into Merkle trees. Each tree contains up to 2^16 (65,536) leaves, where each leaf is the SHA-256 hash of the complete deterministically encoded, tagged COSE_Sign1 attestation token of Section 4.
 
 Interior nodes are computed with a commutative sorted-pair construction:
 
@@ -190,7 +267,7 @@ parent = keccak256(min(a, b) || max(a, b))
 
 where `a` and `b` are the two 32-byte child hashes and `min`/`max` denote lexicographic byte-wise ordering. Sorting each pair before hashing makes the construction order-independent: an inclusion proof carries only the sibling hashes, with no left/right position flags. This is exactly the construction implemented by the OpenZeppelin `MerkleProof` library used by the on-chain reference contract and by the reference off-chain Verifier tooling. Off-chain builders MUST use this pair hash for any tree whose root is committed on-chain.
 
-**Note on leaf domain separation.** This construction deliberately omits the per-level domain-separation prefixes (`0x00` for leaves, `0x01` for interior nodes) defined by [RFC6962]. The second-preimage class those prefixes guard against — reinterpreting an interior node as a leaf, or vice versa — is structurally closed here by preimage length: an interior-node preimage is exactly 64 bytes (two concatenated 32-byte hashes), whereas leaf preimages are never 64 bytes. The on-chain claim-record leaf (Section 6.3.1) hashes a 160-byte `abi.encode` payload, and the attestation-evidence leaf hashes a canonical CBOR token, which is substantially longer than 64 bytes for any token carrying the required claims of Section 4.1 (and additionally uses a different hash function, SHA-256, than the keccak256 node hash). [RFC6962] informed the design of this layer and is listed as an Informative reference.
+**Note on leaf domain separation.** This construction deliberately omits the per-level domain-separation prefixes (`0x00` for leaves, `0x01` for interior nodes) defined by [RFC9162]. The second-preimage class those prefixes guard against — reinterpreting an interior node as a leaf, or vice versa — is structurally closed here by preimage length: an interior-node preimage is exactly 64 bytes (two concatenated 32-byte hashes), whereas leaf preimages are never 64 bytes. The on-chain claim-record leaf (Section 6.3.1) hashes a 160-byte `abi.encode` payload, and the attestation-evidence leaf hashes a tagged COSE_Sign1 token, which is substantially longer than 64 bytes for any token carrying the required claims of Section 4.1 together with a 64-byte ECDSA P-256 signature (and additionally uses a different hash function, SHA-256, than the keccak256 node hash). [RFC9162] informed the design of this layer and is listed as an Informative reference.
 
 A batch is identified by a monotonically increasing epoch number. The aggregator MAY be operated by the device owner, by a service provider, or by the Noethrion Foundation reference implementation; the choice does not affect verifiability.
 
@@ -215,18 +292,18 @@ A challenge window (configurable; default one hour) follows submission. In the v
 A Verifier resolves a single attestation as follows:
 
 1. Receive the candidate attestation token and a Merkle inclusion proof (siblings along the tree path).
-2. Compute the SHA-256 leaf hash from the canonical CBOR encoding.
+2. Compute the SHA-256 leaf hash over the deterministically encoded, tagged COSE_Sign1 token.
 3. Apply the inclusion proof to derive the candidate Merkle root.
 4. Look up the on-chain commitment for the corresponding epoch.
 5. Confirm the candidate root equals the committed root.
 6. Confirm the batch is finalized (i.e., the challenge window has elapsed without successful challenge).
-7. Validate the ECDSA signature against the **device Attester's** endorsed public key — the secure-element-bound key from Section 3.1, not the on-chain Attester contract from Section 6.2.
+7. Validate the COSE_Sign1 signature (Section 5.1) against the **device Attester's** endorsed public key — the secure-element-bound key from Section 3.1, not the on-chain Attester contract from Section 6.2.
 
 All seven steps MUST succeed for the attestation to be accepted.
 
 #### 6.3.1 Note on the two-layer leaf encoding
 
-The Merkle tree described in Section 6.1 — leaves = SHA-256 of canonically-encoded attestation tokens — is the **attestation-evidence layer**. It proves that a particular signed measurement was included in a committed batch.
+The Merkle tree described in Section 6.1 — leaves = SHA-256 of deterministically encoded, tagged COSE_Sign1 attestation tokens — is the **attestation-evidence layer**. It proves that a particular signed measurement was included in a committed batch.
 
 The on-chain `claim()` function in the v0.2 reference contract enforces a **claim-record layer**: each on-chain leaf is `keccak256(abi.encode(block.chainid, address(attester), beneficiary, amount, epoch))`, identifying a specific redemption (which address gets how many NOET against which epoch) bound to a specific Attester instance on a specific chain. The first two fields act as a domain separator so a Merkle tree built for one Attester cannot be replayed against a fork or sibling deployment. The two layers are related but not identical: each claim record aggregates one or more attestation tokens whose summed kWh underwrites the redemption amount.
 
@@ -339,17 +416,19 @@ Future revisions of this document may request additional CBOR tag allocations an
 ### 12.1 Normative
 
 - **[RFC2119]** Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels," BCP 14, RFC 2119, DOI 10.17487/RFC2119, March 1997.
-- **[RFC8152]** Schaad, J., "CBOR Object Signing and Encryption (COSE)," RFC 8152, DOI 10.17487/RFC8152, July 2017.
 - **[RFC8174]** Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words," BCP 14, RFC 8174, DOI 10.17487/RFC8174, May 2017.
+- **[RFC8610]** Birkholz, H., Vigano, C., and C. Bormann, "Concise Data Definition Language (CDDL): A Notational Convention to Express Concise Binary Object Representation (CBOR) and JSON Data Structures," RFC 8610, DOI 10.17487/RFC8610, June 2019.
 - **[RFC8949]** Bormann, C. and P. Hoffman, "Concise Binary Object Representation (CBOR)," STD 94, RFC 8949, DOI 10.17487/RFC8949, December 2020.
-- **[RFC9334]** Birkholz, H., Thaler, D., Richardson, M., Smith, N., and W. Pan, "Remote ATtestation procedureS (RATS) Architecture," RFC 9334, DOI 10.17487/RFC9334, January 2023.
+- **[RFC9052]** Schaad, J., "CBOR Object Signing and Encryption (COSE): Structures and Process," STD 96, RFC 9052, DOI 10.17487/RFC9052, August 2022.
+- **[RFC9053]** Schaad, J., "CBOR Object Signing and Encryption (COSE): Initial Algorithms," RFC 9053, DOI 10.17487/RFC9053, August 2022.
 - **[RFC9711]** Lundblade, L., Mandyam, G., O'Donoghue, J., and C. Wallace, "The Entity Attestation Token (EAT)," RFC 9711, DOI 10.17487/RFC9711, December 2024.
 
 ### 12.2 Informative
 
+- **[RFC9334]** Birkholz, H., Thaler, D., Richardson, M., Smith, N., and W. Pan, "Remote ATtestation procedureS (RATS) Architecture," RFC 9334, DOI 10.17487/RFC9334, January 2023. *Architectural context; referenced informatively to avoid a downref from this Standards Track document.*
 - **[FIPS204]** National Institute of Standards and Technology, "Module-Lattice-Based Digital Signature Standard," FIPS 204, August 2024.
 - **[CBAM]** European Commission, "Carbon Border Adjustment Mechanism," Regulation (EU) 2023/956, May 2023.
-- **[RFC6962]** Laurie, B., Langley, A., and E. Kasper, "Certificate Transparency," RFC 6962, DOI 10.17487/RFC6962, June 2013. *Design inspiration for the Merkle aggregation layer; the construction actually used differs — see Section 6.1.*
+- **[RFC9162]** Laurie, B., Messeri, E., and R. Stradling, "Certificate Transparency Version 2.0," RFC 9162, DOI 10.17487/RFC9162, December 2021. *Design inspiration for the Merkle aggregation layer; the construction actually used differs — see Section 6.1.*
 
 ### 12.3 Reference implementation
 

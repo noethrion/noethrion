@@ -1,0 +1,1344 @@
+
+
+
+
+Network Working Group                                         A. Chursin
+Internet-Draft                                      Noethrion Foundation
+Intended status: Standards Track                            27 July 2026
+Expires: 28 January 2027
+
+
+     Hardware-Rooted Attestation Tokens for Electricity Generation
+                draft-chursin-rats-energy-attestation-00
+
+Abstract
+
+   This document specifies an attestation token format and verification
+   protocol for hardware-rooted measurements of electricity generation.
+   The protocol enables a tamper-evident chain of custody from the
+   secure element at a metering device to a publicly verifiable
+   settlement layer, using ECDSA P-256 signatures generated inside a
+   certified secure element and carried in a COSE_Sign1 structure.  It
+   defines: (a) the CBOR-encoded attestation token, aligned with the
+   Entity Attestation Token format of RFC 9711 and the Remote
+   ATtestation procedureS (RATS) architecture of RFC 9334; (b) a Merkle-
+   aggregation and on-chain commitment scheme for scalable verification;
+   and (c) a registry mechanism for endorsing device public keys.  The
+   token is intended for use by relying parties, such as energy
+   producers, consumers, regulators, and standards bodies, that require
+   cryptographic provenance for clean-energy claims.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 28 January 2027.
+
+Copyright Notice
+
+   Copyright (c) 2026 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+
+
+
+Chursin                  Expires 28 January 2027                [Page 1]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3
+   2.  Conventions and Terminology . . . . . . . . . . . . . . . . .   4
+     2.1.  Terms . . . . . . . . . . . . . . . . . . . . . . . . . .   4
+   3.  Architecture and Roles  . . . . . . . . . . . . . . . . . . .   5
+     3.1.  Attester  . . . . . . . . . . . . . . . . . . . . . . . .   5
+     3.2.  Verifier  . . . . . . . . . . . . . . . . . . . . . . . .   6
+     3.3.  Relying Party . . . . . . . . . . . . . . . . . . . . . .   6
+     3.4.  Endorser  . . . . . . . . . . . . . . . . . . . . . . . .   6
+     3.5.  Validator . . . . . . . . . . . . . . . . . . . . . . . .   7
+   4.  Attestation Token Format  . . . . . . . . . . . . . . . . . .   8
+     4.1.  Claim Set . . . . . . . . . . . . . . . . . . . . . . . .   8
+     4.2.  Algorithm and Key Identification  . . . . . . . . . . . .   9
+     4.3.  CDDL Definition . . . . . . . . . . . . . . . . . . . . .  10
+     4.4.  Mapping to EAT  . . . . . . . . . . . . . . . . . . . . .  11
+   5.  Signature Scheme  . . . . . . . . . . . . . . . . . . . . . .  12
+     5.1.  Signature Envelope  . . . . . . . . . . . . . . . . . . .  12
+     5.2.  Rationale for P-256 . . . . . . . . . . . . . . . . . . .  13
+     5.3.  Post-Quantum Migration  . . . . . . . . . . . . . . . . .  13
+   6.  Merkle Aggregation and Settlement . . . . . . . . . . . . . .  13
+     6.1.  Off-Chain Aggregation . . . . . . . . . . . . . . . . . .  13
+     6.2.  On-Chain Commitment . . . . . . . . . . . . . . . . . . .  14
+     6.3.  Verification Path . . . . . . . . . . . . . . . . . . . .  15
+       6.3.1.  Note on the Two-Layer Leaf Encoding . . . . . . . . .  16
+   7.  Endorsement and Verification  . . . . . . . . . . . . . . . .  16
+     7.1.  Public Key Registry . . . . . . . . . . . . . . . . . . .  16
+     7.2.  Endorser Revocation . . . . . . . . . . . . . . . . . . .  17
+     7.3.  Device-Level Revocation . . . . . . . . . . . . . . . . .  17
+   8.  Threat Model  . . . . . . . . . . . . . . . . . . . . . . . .  17
+     8.1.  Compromised Host MCU  . . . . . . . . . . . . . . . . . .  17
+     8.2.  Meter Substitution and Physical Tampering . . . . . . . .  17
+     8.3.  Secure-Element Key Extraction . . . . . . . . . . . . . .  19
+     8.4.  Validator Collusion . . . . . . . . . . . . . . . . . . .  19
+     8.5.  Replay Attacks  . . . . . . . . . . . . . . . . . . . . .  20
+     8.6.  Side-Channel Observation  . . . . . . . . . . . . . . . .  20
+   9.  Privacy Considerations  . . . . . . . . . . . . . . . . . . .  20
+     9.1.  Inferences from Attestations  . . . . . . . . . . . . . .  20
+     9.2.  Mitigations . . . . . . . . . . . . . . . . . . . . . . .  20
+
+
+
+Chursin                  Expires 28 January 2027                [Page 2]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+     9.3.  Right to Opt Out  . . . . . . . . . . . . . . . . . . . .  21
+   10. Security Considerations . . . . . . . . . . . . . . . . . . .  21
+   11. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  22
+   12. References  . . . . . . . . . . . . . . . . . . . . . . . . .  22
+     12.1.  Normative References . . . . . . . . . . . . . . . . . .  22
+     12.2.  Informative References . . . . . . . . . . . . . . . . .  23
+   Appendix A.  Reference Implementation . . . . . . . . . . . . . .  24
+   Acknowledgements  . . . . . . . . . . . . . . . . . . . . . . . .  24
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  24
+
+1.  Introduction
+
+   Clean-energy claims today rest on accounting infrastructure:
+   Renewable Energy Certificates (RECs) in the United States, Guarantees
+   of Origin (GoOs) in the European Union, and International RECs
+   (I-RECs) elsewhere.  These instruments are issued annually, traded
+   through brokered email confirmations, and reconciled against grid-
+   level dispatch records that the issuance system does not
+   cryptographically verify.  Published analyses of certificate markets
+   have reported material discrepancies between dispatched generation
+   and registered certificate issuance.
+
+   Two regulatory and industrial trends, both effective in 2026, make
+   this verification gap acute:
+
+   1.  Twenty-four-hour, hourly carbon-free energy matching has become a
+       procurement requirement in several energy-intensive industrial
+       and computing sectors, backed by long-term contracts for
+       dedicated firm generation capacity.  Hourly matching cannot be
+       evidenced by annual certificate aggregation.
+
+   2.  The European Union's Carbon Border Adjustment Mechanism (CBAM)
+       [CBAM], effective 1 January 2026, requires importers of cement,
+       iron, steel, aluminum, fertilizer, electricity, and hydrogen to
+       demonstrate embedded carbon content at the source.  There is no
+       globally interoperable system for verifiable energy provenance
+       that can satisfy this requirement.
+
+   This document specifies an open standard intended to close that gap.
+   The protocol places a hardware secure element adjacent to a kilowatt-
+   hour meter; the secure element signs the tuple (energy delta,
+   timestamp, device identifier) with a private key that is generated
+   on-chip and cannot be extracted; the resulting attestation tokens are
+   aggregated into Merkle trees and committed to a public settlement
+   layer; any relying party holding the device's endorsed public key can
+   independently verify any single attestation.
+
+
+
+
+
+Chursin                  Expires 28 January 2027                [Page 3]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   The protocol is deliberately narrow in scope.  It defines
+   verification, not trading.  It does not specify payment rails,
+   market-clearing mechanisms, or currency-like token economics.  The
+   unit of accounting in the protocol (NOET) represents one verified
+   kilowatt-hour and is a verifiable attestation unit used internally by
+   the protocol.  It is not a payment instrument, a currency, or a
+   store-of-value asset, and this document specifies no transfer,
+   pricing, or settlement-of-value semantics for it.
+
+   This document is intended for review by the Remote ATtestation
+   procedureS (RATS) Working Group and other interested IETF
+   participants.  Comments are welcome at the address given in the
+   Authors' Addresses section.
+
+2.  Conventions and Terminology
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in BCP
+   14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.
+
+2.1.  Terms
+
+   Attester:  A metering device, paired with a secure element, that
+      produces attestation tokens.  This aligns with the Attester role
+      in the RATS architecture [RFC9334].
+
+   Verifier:  Any party that reconstructs and validates an attestation,
+      including its Merkle inclusion proof and on-chain commitment.
+
+   Relying Party (RP):  An economic actor consuming an attestation as
+      evidence of clean-energy generation: a producer, consumer,
+      regulator, or integrator.
+
+   Endorser:  An entity that issues an endorsement linking a device's
+      public key to a real-world identity, such as a manufacturer, a
+      certification authority, or a self-attested operator.
+
+   Reference Values:  The expected device configuration, firmware hash,
+      and certification status against which Verifiers may assess an
+      Attester.
+
+   Attestation Token:  A CBOR-encoded COSE_Sign1 object carrying the
+      signed measurement and ancillary claims.
+
+   Evidence Payload:  The CBOR claims map carried inside an Attestation
+      Token, as defined in Section 4.1.
+
+
+
+Chursin                  Expires 28 January 2027                [Page 4]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   Settlement Layer:  A publicly accessible verifiable data structure on
+      which Merkle roots of attestation batches are committed.  In this
+      version, the Settlement Layer is an EVM-compatible Layer 2 rollup;
+      future revisions MAY broaden this.
+
+   Batch:  An ordered collection of attestation tokens whose hashes form
+      the leaves of a single Merkle tree.
+
+   Epoch:  The sequence number identifying a batch in time.  Epochs
+      increase monotonically.
+
+   Challenge Window:  A configurable period following batch submission
+      during which the batch can be challenged before finalization.
+
+   NOET:  The attestation accounting unit of the protocol.  One NOET
+      represents one verified kilowatt-hour.  NOET is a unit of
+      attestation, not a payment instrument, a currency, or a store of
+      value; this document specifies no transfer, pricing, or
+      settlement-of-value semantics for it.
+
+3.  Architecture and Roles
+
+   This document follows the role decomposition of the RATS architecture
+   [RFC9334].  Each role has a specific scope of responsibility and
+   security boundary.
+
+3.1.  Attester
+
+   The Attester is composed of two physical components: a kilowatt-hour
+   meter (the measurer) and a secure element (the signer).  The
+   Attester:
+
+   *  MUST generate the device's signing key inside the secure element
+      using on-chip entropy.
+
+   *  MUST NOT permit the signing key to leave the secure element under
+      any operational condition.
+
+   *  MUST sign each evidence payload with the device's private key, as
+      a COSE_Sign1 structure (Section 5.1), before transmission.
+
+   *  SHOULD include in each attestation a hash of the previous
+      attestation produced by the same device, forming a per-device hash
+      chain.
+
+   *  MAY include firmware version, model identifier, and configuration
+      claims in the attestation token.
+
+
+
+
+Chursin                  Expires 28 January 2027                [Page 5]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+3.2.  Verifier
+
+   The Verifier is software, executed by any interested party, that:
+
+   *  MUST validate the COSE_Sign1 signature of the attestation token,
+      as specified in Section 5.1, using the Attester's endorsed public
+      key, and MUST reject any token whose protected header names an
+      algorithm the Verifier does not accept.
+
+   *  MUST verify the Merkle inclusion proof against the on-chain
+      committed root for the corresponding epoch.
+
+   *  SHOULD check the endorsement chain of the Attester's public key
+      against a trusted Endorser registry.
+
+   *  MAY apply additional Reference Values checks (firmware version,
+      model, certification status) where required.
+
+3.3.  Relying Party
+
+   The Relying Party consumes attestations and acts on them.  A Relying
+   Party:
+
+   *  MUST independently invoke a Verifier, either as a library or as a
+      service; it MUST NOT rely on an Attester's self-report alone.
+
+   *  SHOULD apply use-case-specific validity criteria beyond signature
+      verification, for example timestamp freshness or jurisdiction.
+
+3.4.  Endorser
+
+   An Endorser issues an endorsement binding a device public key to
+   identity metadata such as manufacturer, model, and certification
+   batch.  Endorsers:
+
+   *  MUST publish their own public key in a manner that is itself
+      verifiable, such as an X.509 certificate, a well-known DNS record,
+      or an on-chain registry.
+
+   *  SHOULD specify the procedure by which they obtain assurance that a
+      given public key originates from a tamper-evident secure element.
+
+   This document does not mandate a single Endorser hierarchy.  A
+   federation of Endorsers is expected to emerge in practice; relying
+   parties choose which Endorsers to trust.
+
+
+
+
+
+
+Chursin                  Expires 28 January 2027                [Page 6]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+3.5.  Validator
+
+   The Validator is an on-chain role responsible for confirming Merkle
+   root submissions before they are finalized for claim.  Validators
+   extend the RATS architecture; they exist because the on-chain
+   commitment layer requires a defined set of accountable parties whose
+   signed actions are the basis of finalization.  A Validator:
+
+   *  MUST hold the validator role granted by the holder of the
+      settlement contract's administrative role.  Production deployments
+      place that administrative role in a multi-signature wallet.
+
+   *  MUST independently verify the Merkle root it is voting on against
+      its own reconstruction of the underlying leaf set before
+      broadcasting a batch proposal or a vote.  A Validator that votes
+      without independent verification is a single point of trust and
+      defeats the m-of-n property the quorum is designed to provide.
+
+   *  SHOULD publish its identity (operator, jurisdiction, and contact)
+      so that fraud-proof challengers and relying parties can attribute
+      votes.
+
+   *  MAY be operated by the standards body, by a delegated operator, or
+      by an independent third party.  The m-of-n design treats
+      Validators as Byzantine-tolerant peers, not as trusted
+      authorities.
+
+   Validator accountability is enforced through two mechanisms whose
+   details appear in Section 8.4:
+
+   1.  Quorum.  No single Validator can cause finalization on its own;
+       the m-of-n threshold ensures that a minimum of "threshold"
+       distinct Validators must independently agree.  The threshold
+       value is a deployment parameter; production deployments SHOULD
+       select a threshold of at least ceil(2n/3) for Byzantine fault
+       tolerance, where n is the size of the active Validator set.
+
+   2.  Slashing.  A Validator proven to have voted for a fraudulent
+       batch loses the validator role and has the off-chain evidence
+       hash recorded on-chain.  A Validator that has been slashed for a
+       prior epoch retains the vote it cast before the slash: historical
+       votes are durable in order to preserve the audit trail.
+
+
+
+
+
+
+
+
+
+Chursin                  Expires 28 January 2027                [Page 7]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   The Validator role is distinct from the Attester (the on-device
+   measurer and signer) and from the Verifier (the relying-party-side
+   software).  The Attester proves a measurement was taken on certified
+   hardware; the Validator proves a quorum of independent parties agree
+   the measurement appeared in a legitimate batch; the Verifier checks
+   both layers when consuming an attestation.
+
+4.  Attestation Token Format
+
+   An attestation token is a CBOR [RFC8949] object consisting of a
+   claims map (the evidence payload, Section 4.1) enveloped in a
+   COSE_Sign1 structure [RFC9052] (Section 5.1).  Both the claims map
+   and the COSE_Sign1 structure MUST be serialized using the
+   deterministic encoding requirements of [RFC8949], Section 4.2.1, so
+   that signature inputs and leaf hashes are unambiguous.
+
+   Throughout this document, "attestation token" refers to the complete
+   tagged COSE_Sign1 structure, and "evidence payload" refers to the
+   claims map that it carries.
+
+4.1.  Claim Set
+
+   The evidence payload is a CBOR map using the integer labels listed in
+   Table 1.  These labels are local to this profile and are scoped to
+   the payload map only; they are independent of the COSE header labels
+   used in the enveloping structure (Section 4.2).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Chursin                  Expires 28 January 2027                [Page 8]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+    +=======+=======+======+==========+===============================+
+    | Label | Claim | Type | Required | Description                   |
+    +=======+=======+======+==========+===============================+
+    |     1 | iss   | bstr | MUST     | Device identifier: the 9-byte |
+    |       |       |      |          | serial number of the secure   |
+    |       |       |      |          | element.                      |
+    +-------+-------+------+----------+-------------------------------+
+    |     2 | iat   | uint | MUST     | Issued-at timestamp, in       |
+    |       |       |      |          | seconds since the UNIX epoch, |
+    |       |       |      |          | UTC.                          |
+    +-------+-------+------+----------+-------------------------------+
+    |     3 | wh    | uint | MUST     | Energy delta in watt-hours    |
+    |       |       |      |          | since the previous            |
+    |       |       |      |          | attestation from the same     |
+    |       |       |      |          | device.                       |
+    +-------+-------+------+----------+-------------------------------+
+    |     4 | seq   | uint | MUST     | Per-device monotonic sequence |
+    |       |       |      |          | number, starting at 1 and     |
+    |       |       |      |          | incremented for each emitted  |
+    |       |       |      |          | attestation.                  |
+    +-------+-------+------+----------+-------------------------------+
+    |     5 | prev  | bstr | MUST     | Hash of the previous          |
+    |       |       | /    |          | attestation token from the    |
+    |       |       | null |          | same device.  It is CBOR null |
+    |       |       |      |          | for the first attestation,    |
+    |       |       |      |          | that is when seq equals 1.    |
+    +-------+-------+------+----------+-------------------------------+
+    |     6 | fwv   | tstr | SHOULD   | Firmware version string.      |
+    +-------+-------+------+----------+-------------------------------+
+    |     7 | mdl   | tstr | SHOULD   | Device model identifier.      |
+    +-------+-------+------+----------+-------------------------------+
+    |     8 | cfg   | bstr | MAY      | Hash of the device            |
+    |       |       |      |          | configuration relevant to     |
+    |       |       |      |          | measurement integrity.        |
+    +-------+-------+------+----------+-------------------------------+
+
+                    Table 1: Evidence payload claim set
+
+   The evidence payload carries no signature claim and no algorithm
+   claim.  The signature, the signature algorithm, and the key
+   identifier are carried by the enveloping COSE_Sign1 structure as
+   described in Section 4.2 and Section 5.1.
+
+4.2.  Algorithm and Key Identification
+
+   Algorithm agility in this protocol is provided exclusively by the
+   COSE protected header of the enveloping COSE_Sign1 structure.
+   Specifically:
+
+
+
+Chursin                  Expires 28 January 2027                [Page 9]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   *  The "alg" header parameter (COSE header label 1) identifies the
+      signature algorithm.  It MUST be present in the protected header.
+      For this version of the protocol its value MUST be -7 (ES256), as
+      registered in [RFC9053].
+
+   *  The "kid" header parameter (COSE header label 4) identifies the
+      endorsed device key used to produce the signature.  It SHOULD be
+      present in the protected header.  Where it is absent, a Verifier
+      MUST resolve the key from the "iss" claim through the registry of
+      Section 7.1.
+
+   An implementation MUST NOT convey the signature algorithm as a claim
+   inside the evidence payload.  A Verifier that encounters an algorithm
+   indication inside the evidence payload MUST reject the token, because
+   such an indication would create a second and possibly disagreeing
+   source of truth for algorithm selection.
+
+4.3.  CDDL Definition
+
+   The following CDDL [RFC8610] defines the attestation token.  It is
+   normative for the structures it covers.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Chursin                  Expires 28 January 2027               [Page 10]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   ; A Noethrion attestation token is a tagged COSE_Sign1 structure.
+   Noethrion-Attestation = #6.18(Noethrion-Sign1)
+
+   Noethrion-Sign1 = [
+     protected   : bstr .cbor Noethrion-Protected-Header,
+     unprotected : Noethrion-Unprotected-Header,
+     payload     : bstr .cbor Noethrion-Claims,
+     signature   : bstr
+   ]
+
+   Noethrion-Protected-Header = {
+     1 => int,               ; alg; MUST be -7 (ES256) in this version
+     ? 4 => bstr,            ; kid; endorsed device key identifier
+     * cose-label => any
+   }
+
+   Noethrion-Unprotected-Header = {
+     * cose-label => any
+   }
+
+   Noethrion-Claims = {
+     1 => bstr,              ; iss:  secure element serial number
+     2 => uint,              ; iat:  issued-at, UTC seconds
+     3 => uint,              ; wh:   energy delta, watt-hours
+     4 => uint,              ; seq:  per-device monotonic counter, >= 1
+     5 => bstr / null,       ; prev: hash of previous token;
+                             ;       null if and only if seq == 1
+     ? 6 => tstr,            ; fwv:  firmware version
+     ? 7 => tstr,            ; mdl:  device model identifier
+     ? 8 => bstr,            ; cfg:  device configuration hash
+   }
+
+   cose-label = int / tstr
+
+   The Merkle aggregation layer of Section 6 and the claim-record
+   encoding of Section 6.3.1 are not yet expressed in CDDL.  [TBD: full
+   CDDL covering the batch, inclusion-proof, and claim-record structures
+   in -01]
+
+4.4.  Mapping to EAT
+
+   The claim set above is intentionally compatible with the Entity
+   Attestation Token (EAT) format defined in [RFC9711].  EAT is itself
+   carried in COSE, so the envelope chosen in Section 5.1 is the same
+   one an EAT profile would use.  Implementations MAY choose to
+   additionally emit a fully EAT-conformant variant by mapping "iss",
+   "iat", and "seq" to their CWT-registered claim numbers.  A formal EAT
+   profile for energy attestation will be specified in a follow-up
+
+
+
+Chursin                  Expires 28 January 2027               [Page 11]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   document.  [TBD: EAT profile claim mapping table in -01]
+
+5.  Signature Scheme
+
+   This document specifies a single signature algorithm for this version
+   of the protocol: ECDSA over the NIST P-256 curve (secp256r1) with
+   SHA-256, denoted ES256 and assigned COSE algorithm value -7 in
+   [RFC9053].
+
+5.1.  Signature Envelope
+
+   Attestation tokens MUST be signed as a COSE_Sign1 structure as
+   defined in [RFC9052], Section 4.2, tagged with CBOR tag 18.
+   COSE_Sign1 is chosen over a bare signature field for three reasons:
+
+   1.  It is the envelope used by the Entity Attestation Token [RFC9711]
+       and by the wider RATS ecosystem [RFC9334], so that evidence
+       produced under this specification can be consumed by existing
+       COSE and EAT tooling without a bespoke parser.
+
+   2.  It provides integrity protection over the algorithm and key
+       identifiers themselves, through the protected header, which a
+       bare signature over a claims map does not.
+
+   3.  It gives a single, already-specified path for algorithm rotation
+       (Section 5.3).
+
+   The signature is computed over the Sig_structure defined in
+   [RFC9052], Section 4.4, with:
+
+   *  "context" set to the text string "Signature1";
+
+   *  "body_protected" set to the serialized protected header;
+
+   *  "external_aad" set to a zero-length byte string in this version;
+
+   *  "payload" set to the deterministically encoded evidence payload of
+      Section 4.1.
+
+   Implementations MUST NOT emit an attestation token as a bare claims
+   map with an adjacent signature field.  Pre-standard implementations
+   of this protocol, including the genesis deployment of the reference
+   implementation, used such a bare encoding.  That encoding is
+   historical, is not conformant with this document, and MUST NOT be
+   used for new deployments.  Verifiers MAY retain support for it solely
+   in order to re-verify pre-standard historical records.
+
+
+
+
+
+Chursin                  Expires 28 January 2027               [Page 12]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+5.2.  Rationale for P-256
+
+   P-256 is selected because:
+
+   1.  It is the curve natively supported by widely available secure
+       elements suitable for low-cost meter integration, including parts
+       certified to Common Criteria EAL5+.
+
+   2.  It is broadly understood, has mature implementations, and is
+       acceptable to relying parties whose internal cryptographic
+       policies typically permit NIST curves.
+
+   3.  Performance on constrained microcontrollers is sufficient for the
+       protocol's per-minute signing cadence.
+
+5.3.  Post-Quantum Migration
+
+   It is acknowledged that P-256 is not post-quantum secure.  A
+   migration path to a post-quantum signature scheme, anticipated to be
+   ML-DSA as standardized in [FIPS204], is part of the protocol's long-
+   term plan.  No new format machinery is required for that migration:
+   the "alg" and "kid" parameters of the COSE protected header
+   (Section 4.2) are the algorithm and key rotation mechanism, and a
+   future revision need only permit an additional "alg" value and
+   specify the transition policy.  Historical attestations remain
+   verifiable because each token names, under integrity protection, the
+   algorithm with which it was signed.
+
+   A future revision of this document SHALL specify the migration
+   procedure, including dual-signing transitions and the policy under
+   which historical P-256 attestations remain verifiable.
+
+6.  Merkle Aggregation and Settlement
+
+6.1.  Off-Chain Aggregation
+
+   Attestation tokens are aggregated off-chain into Merkle trees.  Each
+   tree contains up to 2^16 (65,536) leaves, where each leaf is the
+   SHA-256 hash of the complete deterministically encoded, tagged
+   COSE_Sign1 attestation token of Section 4.
+
+   Interior nodes are computed with a commutative sorted-pair
+   construction:
+
+   parent = keccak256(min(a, b) || max(a, b))
+
+
+
+
+
+
+Chursin                  Expires 28 January 2027               [Page 13]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   where a and b are the two 32-byte child hashes and min and max denote
+   lexicographic byte-wise ordering.  Sorting each pair before hashing
+   makes the construction order-independent: an inclusion proof carries
+   only the sibling hashes, with no left/right position flags.  This is
+   the construction implemented by the widely used Merkle proof library
+   employed by the on-chain reference contract and by the reference off-
+   chain Verifier tooling.  Off-chain builders MUST use this pair hash
+   for any tree whose root is committed on-chain.
+
+   Note on leaf domain separation: this construction deliberately omits
+   the per-level domain-separation prefixes (0x00 for leaves, 0x01 for
+   interior nodes) defined by [RFC9162].  The second-preimage class
+   those prefixes guard against, namely reinterpreting an interior node
+   as a leaf or vice versa, is structurally closed here by preimage
+   length: an interior-node preimage is exactly 64 bytes (two
+   concatenated 32-byte hashes), whereas leaf preimages are never 64
+   bytes.  The on-chain claim-record leaf (Section 6.3.1) hashes a
+   160-byte encoded payload, and the attestation-evidence leaf hashes a
+   tagged COSE_Sign1 token, which is substantially longer than 64 bytes
+   for any token carrying the required claims of Section 4.1 together
+   with a 64-byte ECDSA P-256 signature.  The attestation-evidence leaf
+   additionally uses a different hash function, SHA-256, from the
+   keccak256 node hash.  [RFC9162] informed the design of this layer and
+   is listed as an informative reference.
+
+   A batch is identified by a monotonically increasing epoch number.
+   The aggregator MAY be operated by the device owner, by a service
+   provider, or by the reference implementation; the choice does not
+   affect verifiability.
+
+6.2.  On-Chain Commitment
+
+   For each batch, the Merkle root is committed to a public EVM-
+   compatible Layer 2 settlement network through a reference smart
+   contract.  Note that the reference contract is named "Attester" for
+   historical reasons unrelated to the RATS Attester role of
+   Section 3.1; the two are distinct.  The on-chain commitment record
+   SHALL include, at minimum:
+
+   *  the epoch number;
+
+   *  the Merkle root (32 bytes);
+
+   *  the total watt-hour sum claimed in the batch, for cross-check
+      against grid-level dispatch records;
+
+   *  the proposing validator's address, and, through separate vote
+      events, the addresses of all validators who voted to reach quorum;
+
+
+
+Chursin                  Expires 28 January 2027               [Page 14]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   *  the block timestamp at submission;
+
+   *  the quorum threshold value active at the moment of submission.
+      Snapshotting this at submission, rather than reading live storage
+      at finalization, ensures that a subsequent administrative change
+      to the global threshold cannot retroactively pass or block this
+      specific batch;
+
+   *  the challenge-window value active at the moment of submission.
+      Snapshotting prevents retroactive shrinking, which would let an
+      administrator finalize batches early, and retroactive extension,
+      which would freeze finalization of legitimately voted batches.
+
+   The two snapshot fields close the symmetric retroactive-shift class
+   of administrative abuses.
+
+   A challenge window, configurable and defaulting to one hour, follows
+   submission.  In the current reference contract the fraud-proof path
+   during this window is off-chain: any party MAY report evidence of a
+   fraudulent batch to the contract operators and validators, who can
+   respond through the on-chain pause mechanism, blocking finalization,
+   and administratively triggered slashing (Section 8.4).  A dedicated
+   on-chain challenge entry point, allowing any party to publish a fraud
+   proof directly on-chain, is deferred to a future protocol extension,
+   together with fraud-proof-verified slashing.  After the challenge
+   window expires without the batch being rejected, the batch is
+   finalized; finalization is irreversible.
+
+6.3.  Verification Path
+
+   A Verifier resolves a single attestation as follows:
+
+   1.  Receive the candidate attestation token and a Merkle inclusion
+       proof, consisting of the sibling hashes along the tree path.
+
+   2.  Compute the SHA-256 leaf hash over the deterministically encoded,
+       tagged COSE_Sign1 token.
+
+   3.  Apply the inclusion proof to derive the candidate Merkle root.
+
+   4.  Look up the on-chain commitment for the corresponding epoch.
+
+   5.  Confirm that the candidate root equals the committed root.
+
+   6.  Confirm that the batch is finalized, that is, that the challenge
+       window has elapsed without a successful challenge.
+
+
+
+
+
+Chursin                  Expires 28 January 2027               [Page 15]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   7.  Validate the COSE_Sign1 signature (Section 5.1) against the
+       device Attester's endorsed public key: the secure-element-bound
+       key of Section 3.1, and not the on-chain contract of Section 6.2.
+
+   All seven steps MUST succeed for the attestation to be accepted.
+
+6.3.1.  Note on the Two-Layer Leaf Encoding
+
+   The Merkle tree described in Section 6.1, whose leaves are SHA-256
+   hashes of deterministically encoded, tagged COSE_Sign1 attestation
+   tokens, is the attestation-evidence layer.  It proves that a
+   particular signed measurement was included in a committed batch.
+
+   The on-chain claim function in the reference contract enforces a
+   separate claim-record layer: each on-chain leaf is the keccak256 hash
+   of the encoded tuple (chain identifier, contract address,
+   beneficiary, amount, epoch), identifying a specific redemption, that
+   is, which address receives how many NOET against which epoch, bound
+   to a specific contract instance on a specific chain.  The first two
+   fields act as a domain separator, so that a Merkle tree built for one
+   contract instance cannot be replayed against a fork or a sibling
+   deployment.  The two layers are related but not identical: each claim
+   record aggregates one or more attestation tokens whose summed energy
+   underwrites the redemption amount.
+
+   A future revision will document the aggregation function from
+   attestation tokens to claim records explicitly.  For this version,
+   off-chain builders MUST produce claim-record trees whose leaves match
+   the contract's encoding exactly, including the chain-identifier and
+   contract-address domain separator.  The attestation-evidence tree is
+   verified separately by the off-chain Verifier path above and is not
+   yet referenced on-chain.
+
+7.  Endorsement and Verification
+
+7.1.  Public Key Registry
+
+   Endorsed device public keys are recorded in a registry.  The registry
+   MAY be:
+
+   *  on-chain, as a smart-contract mapping from device serial number to
+      public key and endorsement metadata, with role-based mutation
+      rights restricted to Endorsers.  This is the reference deployment;
+
+   *  off-chain, distributed as signed JSON files at well-known URLs
+      maintained by Endorsers;
+
+   *  hybrid, with on-chain anchors and off-chain bulk distribution.
+
+
+
+Chursin                  Expires 28 January 2027               [Page 16]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   The choice is operational and does not affect the verification
+   semantics: a Verifier MUST be able to obtain a device's endorsed
+   public key, traceable to an Endorser whose own key is verifiable.
+
+7.2.  Endorser Revocation
+
+   An Endorser MAY revoke an endorsement, for example on discovery of a
+   compromised provisioning batch.  Revocations SHALL be timestamped; a
+   Verifier evaluating an attestation MUST consider revocations issued
+   before the attestation's "iat" timestamp.
+
+7.3.  Device-Level Revocation
+
+   A device's endorsement MAY be revoked individually, for example on
+   suspicion of physical tampering reported through the protocol's
+   challenge mechanism.  Attestations from a revoked device with an
+   "iat" value after the revocation timestamp MUST be rejected.
+
+8.  Threat Model
+
+   The following adversaries are explicitly considered.
+
+8.1.  Compromised Host MCU
+
+   The host microcontroller adjacent to the secure element may be
+   compromised.  Because the signing key is generated on-chip and never
+   leaves the secure element, a compromised host can lie about what to
+   sign but cannot forge signatures under the device's public key.
+
+   The protocol mitigates this through Reference Values, namely the
+   firmware hash and configuration hash included in the attestation
+   claims.  A Relying Party that knows the expected Reference Values can
+   detect a tampered host.
+
+8.2.  Meter Substitution and Physical Tampering
+
+   The Attester is composed of a measurer and a signer (Section 3.1).
+   Every cryptographic guarantee in this document applies to the signer:
+   a valid attestation proves that a particular secure element signed a
+   particular set of numbers.  It does not, on its own, prove that those
+   numbers came from the meter the Endorser expects, nor that they
+   correspond to physical energy flow.  The measurer-to-signer interface
+   is consequently the weakest link in the chain of custody, and it is
+   where the adversaries below operate.
+
+   Meter substitution.  An adversary with physical access may replace
+   the meter, or interpose on the measurer-to-signer interface, and
+   present fabricated readings to the secure element.  The secure
+
+
+
+Chursin                  Expires 28 January 2027               [Page 17]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   element signs them faithfully and verification succeeds at every
+   later stage: the signature is valid, the endorsement chain is intact,
+   the hash chain is continuous, and the on-chain commitment is well
+   formed.  Where the measurer-to-signer interface is unauthenticated,
+   as it is on a bare pulse output or an unauthenticated serial
+   connection, no mechanism defined in this document detects this
+   attack.
+
+   Substitution after verification.  A measurer that is verified only
+   once, at commissioning or at Attester power-on, provides no
+   continuing guarantee: an adversary may satisfy the check with a
+   genuine meter and substitute afterwards.  Implementations MUST NOT
+   treat a commissioning-time verification of the measurer as evidence
+   about readings produced later.
+
+   Physical tampering of a genuine meter.  The meter or its sealing may
+   be tampered with in order to distort readings at the point of
+   measurement.  This protocol does not detect such tampering; the
+   existing physical-seal and audit regime of revenue-grade metering,
+   which predates this protocol, remains necessary.  That regime is
+   complementary to the mitigations below, not a substitute for them,
+   because a seal constrains the meter itself and says nothing about
+   what reaches the signer.
+
+   Secure-element substitution.  This case is detected, because the
+   device serial number changes and the new public key has no
+   endorsement chain.
+
+   The following mitigations apply to the measurer-to-signer interface.
+
+   *  Authenticated measurement.  The Attester SHOULD be built on a
+      meter whose metrology function authenticates each reading under a
+      key held in the meter's own protected storage, and the secure
+      element SHOULD verify that authentication before including a
+      reading in the claim set.
+
+   *  Continuous rather than one-time verification.  Where the interface
+      supports authentication, the Attester SHOULD verify it at every
+      reporting interval rather than only at commissioning, so that no
+      window exists in which a verified measurer can be exchanged for an
+      unverified one without detection.
+
+   *  Fail-closed behaviour.  If the measurer cannot be authenticated,
+      becomes unavailable, or returns readings inconsistent with the
+      Attester's monotonic energy counter, the Attester MUST NOT emit an
+      attestation covering the affected interval.  Emitting an
+      attestation over unauthenticated readings, or falling back to an
+      unauthenticated interface, defeats the purpose of signing them.  A
+
+
+
+Chursin                  Expires 28 January 2027               [Page 18]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+      Relying Party MUST treat the absence of an attestation as the
+      absence of attested generation, and MUST NOT substitute an
+      unattested reading in its place.
+
+   Residual risk.  Deployments whose measurer-to-signer interface is
+   unauthenticated retain the full meter-substitution risk described
+   above.  For those deployments the assurance offered by this protocol
+   degrades from "this quantity of energy was generated" to "this secure
+   element reported this quantity", and the binding to physical
+   generation rests entirely on out-of-band procedures.  Deployments
+   supporting regulatory or financial settlement SHOULD use an
+   authenticated measurement interface for this reason.  A claim
+   conveying the class of measurer-to-signer protection, so that a
+   Relying Party can apply policy to it rather than assuming it, is [TBD
+   in -01].
+
+8.3.  Secure-Element Key Extraction
+
+   Extraction of the signing key from a Common Criteria EAL5+ secure
+   element is currently considered infeasible against the design
+   assumptions of state-of-the-art parts.  If such an extraction becomes
+   feasible, the affected device family's endorsements SHALL be revoked.
+   The protocol's per-device hash chain, carried in the "prev" claim,
+   limits the value of an extracted key for back-dating, because all
+   historical attestations are anchored on-chain.
+
+8.4.  Validator Collusion
+
+   A validator could withhold attestations or propose a batch with a
+   Merkle root that does not correspond to the claimed leaves.  Three
+   mechanisms address this in combination:
+
+   1.  m-of-n threshold quorum.  Finalization requires a threshold
+       number of distinct validator votes through the propose, vote, and
+       finalize sequence.  A single party cannot cause a batch to be
+       finalized.  The threshold MUST be selected such that coalition
+       cost exceeds expected fraud value; analogous systems typically
+       use ceil(2n/3) for Byzantine fault tolerance.
+
+   2.  Challenge window.  Independently of the threshold mechanism,
+       between submission and earliest finalization any party MAY report
+       evidence of fraud.  In the current reference implementation this
+       path is off-chain: evidence is reported to operators and
+       validators, who block finalization through the pause mechanism
+       and apply slashing.  An on-chain challenge entry point is
+       deferred to a future revision (Section 6.2).  A batch
+       successfully challenged within the window is never finalized.
+
+
+
+
+Chursin                  Expires 28 January 2027               [Page 19]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   3.  Slashing.  Validators proven to have voted for fraudulent batches
+       MAY be slashed: the validator role is revoked and the off-chain
+       evidence hash is recorded on-chain.  The current reference
+       contract implements administratively triggered slashing; on-chain
+       fraud-proof verification feeding slashing automatically is
+       deferred to a future revision.
+
+   A coalition of threshold-many validators colluding within the
+   challenge window can still finalize a fraudulent batch.  This is the
+   residual risk; it shrinks but does not disappear with the threshold
+   mechanism.  Production deployments SHOULD treat the challenge-window
+   fraud-proof path as load-bearing.
+
+8.5.  Replay Attacks
+
+   The combination of the per-device monotonic "seq" claim and the
+   previous-attestation hash chain, carried in "prev", prevents replay
+   of an old attestation as a new one.  A Verifier that observes a "seq"
+   value that is not strictly greater than the highest previously
+   observed value for the same device MUST reject the attestation.
+
+8.6.  Side-Channel Observation
+
+   Side-channel attacks against the secure element, including power
+   analysis, electromagnetic analysis, and fault injection, are
+   mitigated by the Common Criteria certification regime governing the
+   part.  Operators SHOULD follow vendor guidance on physical deployment
+   in order to reduce exposure.
+
+9.  Privacy Considerations
+
+   The protocol produces a public, durable record of per-device energy
+   generation.  This has direct privacy implications, particularly for
+   small-scale producers such as residential rooftop solar
+   installations.
+
+9.1.  Inferences from Attestations
+
+   A continuous record of per-device generation timestamps can be
+   correlated with consumption patterns in order to infer the occupancy
+   and behavior of a household.  Aggregation and timestamp rounding
+   mitigate but do not eliminate this risk.
+
+9.2.  Mitigations
+
+   *  Timestamp rounding.  Producers MAY round "iat" to a coarser
+      resolution, for example ten-minute buckets, at the cost of reduced
+      verification granularity.
+
+
+
+Chursin                  Expires 28 January 2027               [Page 20]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   *  Batch padding.  Aggregators SHOULD pad batches with dummy leaves
+      so that a small-scale producer's contribution count is not
+      distinguishable.
+
+   *  Optional zero-knowledge extensions.  A future revision will
+      specify an optional zero-knowledge-friendly attestation variant in
+      which the per-device identifier is replaced by a commitment, with
+      selective-disclosure proofs available to authorized auditors.
+
+9.3.  Right to Opt Out
+
+   Participation in the protocol is, by design, voluntary.  Operators
+   are not required to publish attestations; the protocol's value
+   derives from voluntary adoption by parties that wish to be
+   cryptographically credible.
+
+10.  Security Considerations
+
+   In addition to the threat model in Section 8, implementers are
+   advised of the following.
+
+   *  Measurement-interface integrity.  The protocol binds a signature
+      to a set of readings, not to a physical quantity.  The strength of
+      the overall system is bounded by the protection of the measurer-
+      to-signer interface, and an implementation that authenticates
+      every other link while leaving that one open gains little.  See
+      Section 8.2.
+
+   *  Time source integrity.  The "iat" timestamp depends on the
+      device's local clock.  Implementations MUST authenticate the time
+      source, for example by using NTP with cryptographic verification
+      or GNSS-based time, in order to prevent clock-manipulation
+      attacks.
+
+   *  Key provisioning.  Endorsement integrity depends on a trustworthy
+      provisioning ceremony, in which the device's public key is read
+      from the secure element under chain-of-custody guarantees.
+      Implementations SHOULD use vendor-provided pre-provisioning
+      programs where available.
+
+   *  Smart-contract risk.  The on-chain commitment contract is a
+      security-critical component.  Implementations SHOULD subject it to
+      independent audit prior to production deployment and SHOULD
+      support upgradability only through a transparent governance
+      process.
+
+
+
+
+
+
+Chursin                  Expires 28 January 2027               [Page 21]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   *  Settlement-layer reliance.  The protocol depends on the liveness
+      and integrity of the chosen settlement layer.  Operators SHOULD
+      evaluate the settlement layer's security model, including its
+      consensus assumptions and its fault-recovery procedures.
+
+   *  Algorithm agility.  Because the signature algorithm is named only
+      in the COSE protected header (Section 4.2), it is covered by the
+      signature itself.  Verifiers MUST apply a local policy for
+      acceptable algorithms rather than trusting the value found in the
+      token, in order to avoid algorithm-downgrade attacks.
+
+11.  IANA Considerations
+
+   This document requests that IANA register the following media type in
+   the "Media Types" registry.
+
+   Type name:  application
+   Subtype name:  noethrion+cbor
+   Required parameters:  N/A
+   Optional parameters:  profile (a URI identifying the attestation
+      profile in use)
+   Encoding considerations:  binary
+   Security considerations:  See Section 10 of this document.
+   Interoperability considerations:  See Section 4 of this document.
+   Published specification:  This document.
+   Applications that use this media type:  Producers and consumers of
+      energy attestation tokens as defined in this document.
+   Fragment identifier considerations:  N/A
+   Additional information:  Magic number(s): N/A; File extension(s): N/
+      A; Macintosh file type code(s): N/A
+   Person and email address to contact for further information:  IETF
+      RATS Working Group (rats@ietf.org)
+   Intended usage:  COMMON
+   Restrictions on usage:  N/A
+   Author:  See the Authors' Addresses section of this document.
+   Change controller:  IETF
+
+   Future revisions of this document may request additional CBOR tag
+   allocations and CoAP profile registrations.
+
+12.  References
+
+12.1.  Normative References
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+
+
+Chursin                  Expires 28 January 2027               [Page 22]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+
+   [RFC8610]  Birkholz, H., Vigano, C., and C. Bormann, "Concise Data
+              Definition Language (CDDL): A Notational Convention to
+              Express Concise Binary Object Representation (CBOR) and
+              JSON Data Structures", RFC 8610, DOI 10.17487/RFC8610,
+              June 2019, <https://www.rfc-editor.org/info/rfc8610>.
+
+   [RFC8949]  Bormann, C. and P. Hoffman, "Concise Binary Object
+              Representation (CBOR)", STD 94, RFC 8949,
+              DOI 10.17487/RFC8949, December 2020,
+              <https://www.rfc-editor.org/info/rfc8949>.
+
+   [RFC9052]  Schaad, J., "CBOR Object Signing and Encryption (COSE):
+              Structures and Process", STD 96, RFC 9052,
+              DOI 10.17487/RFC9052, August 2022,
+              <https://www.rfc-editor.org/info/rfc9052>.
+
+   [RFC9053]  Schaad, J., "CBOR Object Signing and Encryption (COSE):
+              Initial Algorithms", RFC 9053, DOI 10.17487/RFC9053,
+              August 2022, <https://www.rfc-editor.org/info/rfc9053>.
+
+   [RFC9711]  Lundblade, L., Mandyam, G., O'Donoghue, J., and C.
+              Wallace, "The Entity Attestation Token (EAT)", RFC 9711,
+              DOI 10.17487/RFC9711, April 2025,
+              <https://www.rfc-editor.org/info/rfc9711>.
+
+12.2.  Informative References
+
+   [CBAM]     European Union, "Regulation (EU) 2023/956 establishing a
+              carbon border adjustment mechanism", May 2023,
+              <https://eur-lex.europa.eu/eli/reg/2023/956/oj>.
+
+   [FIPS204]  National Institute of Standards and Technology, "Module-
+              Lattice-Based Digital Signature Standard", FIPS 204,
+              DOI 10.6028/NIST.FIPS.204, August 2024,
+              <https://doi.org/10.6028/NIST.FIPS.204>.
+
+   [RFC9162]  Laurie, B., Messeri, E., and R. Stradling, "Certificate
+              Transparency Version 2.0", RFC 9162, DOI 10.17487/RFC9162,
+              December 2021, <https://www.rfc-editor.org/info/rfc9162>.
+
+   [RFC9334]  Birkholz, H., Thaler, D., Richardson, M., Smith, N., and
+              W. Pan, "Remote ATtestation procedureS (RATS)
+              Architecture", RFC 9334, DOI 10.17487/RFC9334, January
+              2023, <https://www.rfc-editor.org/info/rfc9334>.
+
+
+
+Chursin                  Expires 28 January 2027               [Page 23]
+
+Internet-Draft          Energy Attestation Tokens              July 2026
+
+
+Appendix A.  Reference Implementation
+
+   A reference implementation of the Attester (firmware) and of the
+   Verifier (settlement contract plus off-chain library) is available
+   from the project repository identified on the author's organization
+   web site.  The reference implementation is provided for
+   interoperability testing and is not normative; where it differs from
+   this document, this document prevails.
+
+Acknowledgements
+
+   The author thanks the participants of the RATS and COSE working
+   groups whose published work this specification builds upon.
+
+Author's Address
+
+   Aleksey Chursin
+   Noethrion Foundation
+   Email: team@noethrion.com
+   URI:   https://noethrion.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Chursin                  Expires 28 January 2027               [Page 24]
