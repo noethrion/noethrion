@@ -9,6 +9,10 @@ pragma solidity 0.8.24;
 //   - OpenZeppelin TimelockController holds the entire ADMIN_ROLE on the
 //     Attester (every admin action — slash, setThreshold, setChallengeWindow,
 //     setTokenContract — passes through the 24h delay).
+//   - The same TimelockController holds ADMIN_ROLE on the Token (minter
+//     rotation via authorizeMinter/revokeMinter passes through the 24h
+//     delay). Mirrors the attester model — see the 2026-07-27 residual-role
+//     fix: the deployer previously kept token.ADMIN_ROLE after handoff.
 //   - All initial validators get VALIDATOR_ROLE directly from the Safe via
 //     the DEFAULT_ADMIN_ROLE (no timelock — granting validator role at
 //     genesis is a setup step, not an ongoing admin action).
@@ -124,7 +128,7 @@ contract DeployProduction is Script {
 
         // ─── 2. Deploy + wire + handoff ───────────────────────────────────
 
-        (NoethrionAttester attester, NoethrionToken token) = _deployAndHandoff(
+        (NoethrionAttester attester, NoethrionToken token) = deployAndHandoff(
             deployerPk, deployer, safe, timelock, challengeWindow, thresholdArg, validators
         );
 
@@ -142,6 +146,7 @@ contract DeployProduction is Script {
         console2.log("Attester ADMIN_ROLE        : Timelock (24h)");
         console2.log("Attester PAUSER_ROLE       : Safe (no delay)");
         console2.log("Token    DEFAULT_ADMIN_ROLE: Safe");
+        console2.log("Token    ADMIN_ROLE        : Timelock (24h)");
         console2.log("Deployer roles             : NONE");
         console2.log("");
         console2.log("Next: announce the deploy with the Safe address, the");
@@ -151,7 +156,13 @@ contract DeployProduction is Script {
 
     // ─── helpers (extracted to keep run() under the 16-local stack limit) ───
 
-    function _deployAndHandoff(
+    // PUBLIC on purpose: test/DeployProductionHandoff.t.sol calls this exact
+    // function instead of re-implementing the handoff sequence. A hand-written
+    // copy of the sequence in the test is what let the 2026-07-27 residual
+    // token.ADMIN_ROLE bug pass green — the copy reproduced the bug verbatim.
+    // Single source of truth: if the script's sequence changes, the tests
+    // exercise the changed sequence automatically.
+    function deployAndHandoff(
         uint256 deployerPk,
         address deployer,
         address safe,
@@ -159,7 +170,7 @@ contract DeployProduction is Script {
         uint256 challengeWindow,
         uint256 thresholdArg,
         address[] memory validators
-    ) internal returns (NoethrionAttester attester, NoethrionToken token) {
+    ) public returns (NoethrionAttester attester, NoethrionToken token) {
         vm.startBroadcast(deployerPk);
 
         token = new NoethrionToken(deployer);
@@ -186,14 +197,22 @@ contract DeployProduction is Script {
         attester.grantRole(pauserRole, safe);
         attester.grantRole(adminRole, timelock);
 
-        // Token admin handoff:
-        //   Safe     -> DEFAULT_ADMIN_ROLE (token has a single admin surface).
+        // Token admin handoff. The token has TWO admin surfaces:
+        //   - DEFAULT_ADMIN_ROLE (generic grantRole/revokeRole over all roles)
+        //   - ADMIN_ROLE (gates authorizeMinter/revokeMinter)
+        // Mirror the attester model:
+        //   Safe     -> DEFAULT_ADMIN_ROLE
+        //   Timelock -> ADMIN_ROLE (minter rotation goes through the 24h delay)
         token.grantRole(token.DEFAULT_ADMIN_ROLE(), safe);
+        token.grantRole(token.ADMIN_ROLE(), timelock);
 
-        // Deployer renounces every role it briefly held.
+        // Deployer renounces every role it briefly held. Renounces come
+        // strictly AFTER all grants above — once DEFAULT_ADMIN_ROLE is gone
+        // the deployer can no longer grant anything.
         attester.renounceRole(adminRole, deployer);
         attester.renounceRole(pauserRole, deployer);
         attester.renounceRole(defaultAdmin, deployer);
+        token.renounceRole(token.ADMIN_ROLE(), deployer);
         token.renounceRole(token.DEFAULT_ADMIN_ROLE(), deployer);
 
         vm.stopBroadcast();
@@ -212,16 +231,30 @@ contract DeployProduction is Script {
         bytes32 pauserRole = attester.PAUSER_ROLE();
         bytes32 validatorRole = attester.VALIDATOR_ROLE();
         bytes32 tokenDefaultAdmin = token.DEFAULT_ADMIN_ROLE();
+        bytes32 tokenAdmin = token.ADMIN_ROLE();
+        bytes32 tokenMinter = token.MINTER_ROLE();
 
         require(attester.hasRole(defaultAdmin, safe), "Safe missing DEFAULT_ADMIN");
         require(attester.hasRole(pauserRole, safe), "Safe missing PAUSER");
         require(attester.hasRole(adminRole, timelock), "Timelock missing ADMIN");
         require(token.hasRole(tokenDefaultAdmin, safe), "Safe missing Token DEFAULT_ADMIN");
+        require(token.hasRole(tokenAdmin, timelock), "Timelock missing Token ADMIN");
 
+        // The deployer must end holding ZERO roles on BOTH contracts.
+        // A residual token.ADMIN_ROLE here is exactly the authorizeMinter(self)
+        // -> mint(MAX_SUPPLY) hole reported 2026-07-27; fail the deploy loudly
+        // rather than leave it open.
         require(!attester.hasRole(defaultAdmin, deployer), "deployer still has DEFAULT_ADMIN");
         require(!attester.hasRole(adminRole, deployer), "deployer still has ADMIN");
         require(!attester.hasRole(pauserRole, deployer), "deployer still has PAUSER");
+        require(!attester.hasRole(validatorRole, deployer), "deployer still has VALIDATOR");
         require(!token.hasRole(tokenDefaultAdmin, deployer), "deployer still has Token DEFAULT_ADMIN");
+        require(!token.hasRole(tokenAdmin, deployer), "deployer still has Token ADMIN");
+        require(!token.hasRole(tokenMinter, deployer), "deployer still has Token MINTER");
+
+        // Defensive: the Safe MUST NOT hold token ADMIN_ROLE at deploy time —
+        // minter rotation is meant to pass through the 24h Timelock.
+        require(!token.hasRole(tokenAdmin, safe), "Safe unexpectedly holds Token ADMIN");
 
         // Defensive: the Timelock MUST NOT hold DEFAULT_ADMIN_ROLE — otherwise
         // it could grant itself any other role and short-circuit ADR-007.
