@@ -10,6 +10,11 @@ this changelog will adopt strict semver.
 
 ## Unreleased
 
+### 2026-11-01
+
+- `spec/draft-chursin-rats-energy-attestation-01.{xml,txt}` — Internet-Draft -01 posted to the IETF Datatracker
+  (EAR/CoRIM alignment, hourly claims, expanded threat model; `-00` posted 2026-07-27).
+
 Pre-launch work. The verifier node has its own tag line — `node-v0.1.1` is published with platform binaries
 and `SHA256SUMS` (see the GitHub Releases page). Everything else below is in main but not yet behind a tag;
 the protocol/spec itself remains untagged pending `v0.1.0-spec`.

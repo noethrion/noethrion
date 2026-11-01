@@ -7,10 +7,12 @@ Intended status: Standards Track                            July 2026
 Expires: 28 January 2027
 ```
 
-> **Note:** the datatracker-ready RFC XML v3 and text renderings of this document
-> are `spec/draft-chursin-rats-energy-attestation-00.xml` and
-> `spec/draft-chursin-rats-energy-attestation-00.txt`. This Markdown file remains
-> the human-readable working source.
+> **Note:** the current Internet-Draft is
+> [draft-chursin-rats-energy-attestation-01](https://datatracker.ietf.org/doc/draft-chursin-rats-energy-attestation/)
+> (posted 2026-11-01). Datatracker-ready RFC XML v3 and text renderings live in
+> `spec/draft-chursin-rats-energy-attestation-01.xml` / `.txt` (previous revision: `-00`,
+> posted 2026-07-27). This Markdown file remains the human-readable working source and
+> tracks -00; -01 adds EAR/CoRIM alignment, hourly claims and an expanded threat model.
 
 ## Hardware-Rooted Attestation Tokens for Electricity Generation
 
